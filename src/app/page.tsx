@@ -1,7 +1,6 @@
 // app/page.tsx
 import Link from 'next/link';
 import Head from 'next/head';
-import Image from 'next/image';
 import DoctorCard from "@/components/ui/doctor/DoctorCard";
 
 export default function Home() {
@@ -29,21 +28,21 @@ export default function Home() {
         name: "BS. Nguyễn Văn A",
         specialty: "Nội tổng quát",
         hospital: "Bệnh viện Chợ Rẫy",
-        image: "https://i.pravatar.cc/100?img=1",
+        image: "https://randomuser.me/api/portraits/men/70.jpg",
     },
     {
         id: 2,
         name: "BS. Trần Thị B",
         specialty: "Nhi khoa",
         hospital: "BV Nhi Đồng 1",
-        image: "https://i.pravatar.cc/100?img=2",
+        image: "https://randomuser.me/api/portraits/men/78.jpg",
     },
     {
         id: 3,
         name: "BS. Lê Văn C",
         specialty: "Tim mạch",
         hospital: "BV Tim Tâm Đức",
-        image: "https://i.pravatar.cc/100?img=3",
+        image: "https://randomuser.me/api/portraits/men/75.jpg",
     },
 ];
 

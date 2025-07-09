@@ -1,0 +1,26 @@
+'use client';
+import { motion } from 'framer-motion';
+
+export default function HealthTimeline() {
+  const healthTimeline = {
+    '3 months': 'Tình trạng ổn định, huyết áp bình thường (120/80 mmHg).',
+    '6 months': 'Phát hiện cholesterol cao (210 mg/dL), được khuyên ăn kiêng.',
+    '12 months': 'Tái khám, cholesterol giảm (180 mg/dL), thêm kiểm tra đường huyết (95 mg/dL).',
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-xl shadow-lg p-8"
+    >
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Tình hình sức khỏe</h2>
+      <div className="space-y-4 text-gray-700">
+        <p>3 tháng: {healthTimeline['3 months']}</p>
+        <p>6 tháng: {healthTimeline['6 months']}</p>
+        <p>12 tháng: {healthTimeline['12 months']}</p>
+      </div>
+    </motion.div>
+  );
+}

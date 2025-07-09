@@ -1,4 +1,5 @@
-'use client'
+// components/Header.tsx
+'use client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -11,45 +12,47 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
+    <header className="bg-gradient-to-r from-blue-700 to-blue-500 text-white sticky top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center">
+        <div className="flex items-center space-x-2">
           <Image
             src="/images/logo.png"
             alt="Healthcare Logo"
             width={40}
             height={40}
-            className="mr-2"
+            className="rounded-full"
           />
           <h1 className="text-xl font-bold">Healthcare System</h1>
         </div>
 
-        {/* Menu Desktop */}
+        {/* Navigation Desktop */}
         <nav className="hidden md:flex space-x-6">
-          <Link href="/" className="hover:underline hover:text-blue-200">
-            Trang chủ
-          </Link>
-          <Link href="/booking" className="hover:underline hover:text-blue-200">
-            Đặt lịch
-          </Link>
-          <Link href="/results" className="hover:underline hover:text-blue-200">
-            Kết quả
-          </Link>
-          <Link href="/payment" className="hover:underline hover:text-blue-200">
-            Thanh toán
-          </Link>
-          <Link href="/profile" className="hover:underline hover:text-blue-200">
-            Hồ sơ
-          </Link>
-          <Link href="/auth/login" className="hover:underline hover:text-blue-200">
-            Đăng nhập
-          </Link>
+          {[
+            { name: 'Trang chủ', path: '/' },
+            { name: 'Đặt lịch', path: '/booking' },
+            { name: 'Kết quả', path: '/results' },
+            { name: 'Đội ngữ bác sĩ', path: '/doctors' },
+            { name: 'Hồ sơ', path: '/profile' },
+            { name: 'Đăng nhập', path: '/login' },
+          ].map((item) => (
+            <Link
+              key={item.name}
+              href={item.path}
+              className="relative text-sm font-medium hover:text-white transition-all duration-300"
+            >
+              {item.name}
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full" />
+            </Link>
+          ))}
         </nav>
 
-        {/* Menu Mobile */}
+        {/* Mobile Menu Button */}
         <div className="md:hidden">
-          <button onClick={toggleMenu} className="focus:outline-none">
+          <button
+            onClick={toggleMenu}
+            className="p-2 rounded-full hover:bg-blue-600 transition-colors focus:outline-none"
+          >
             <svg
               className="w-6 h-6"
               fill="none"
@@ -68,28 +71,27 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Menu Mobile Dropdown */}
+      {/* Mobile Menu */}
       {isMenuOpen && (
-        <nav className="md:hidden mt-4 flex flex-col space-y-2">
-          <Link href="/" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Trang chủ
-          </Link>
-          <Link href="/booking" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Đặt lịch
-          </Link>
-          <Link href="/results" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Kết quả
-          </Link>
-          <Link href="/payment" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Thanh toán
-          </Link>
-          <Link href="/profile" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Hồ sơ
-          </Link>
-          <Link href="/auth/login" className="hover:underline hover:text-blue-200" onClick={toggleMenu}>
-            Đăng nhập
-          </Link>
-        </nav>
+        <div className="md:hidden bg-blue-600 p-4 space-y-2">
+          {[
+            { name: 'Trang chủ', path: '/' },
+            { name: 'Đặt lịch', path: '/booking' },
+            { name: 'Kết quả', path: '/results' },
+            { name: 'Thanh toán', path: '/payment' },
+            { name: 'Hồ sơ', path: '/profile' },
+            { name: 'Đăng nhập', path: '/login' },
+          ].map((item) => (
+            <Link
+              key={item.name}
+              href={item.path}
+              className="block px-2 py-1 hover:bg-blue-700 rounded-md transition-colors font-medium text-sm"
+              onClick={toggleMenu}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
       )}
     </header>
   );
