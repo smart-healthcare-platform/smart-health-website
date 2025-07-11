@@ -2,43 +2,49 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  // Optimize toggle function
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
+  // Prefetch pages for faster navigation
+  const menuItems = [
+    { name: 'Trang chủ', path: '/' },
+    { name: 'Đặt lịch', path: '/booking' },
+    // { name: 'Kết quả', path: '/results' },
+    { name: 'Đội ngữ bác sĩ', path: '/doctors' },
+    { name: 'Hồ sơ', path: '/profile' },
+    { name: 'Đăng nhập', path: '/login' },
+  ];
 
   return (
     <header className="bg-gradient-to-r from-blue-700 to-blue-500 text-white sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center space-x-2">
-          <Image
+          {/* <Image
             src="/images/logo.png"
             alt="Healthcare Logo"
             width={40}
             height={40}
             className="rounded-full"
-          />
+            priority // Prioritize loading logo
+          /> */}
           <h1 className="text-xl font-bold">Healthcare System</h1>
         </div>
 
         {/* Navigation Desktop */}
         <nav className="hidden md:flex space-x-6">
-          {[
-            { name: 'Trang chủ', path: '/' },
-            { name: 'Đặt lịch', path: '/booking' },
-            { name: 'Kết quả', path: '/results' },
-            { name: 'Đội ngữ bác sĩ', path: '/doctors' },
-            { name: 'Hồ sơ', path: '/profile' },
-            { name: 'Đăng nhập', path: '/login' },
-          ].map((item) => (
+          {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.path}
+              prefetch // Enable prefetch for faster navigation
               className="relative text-sm font-medium hover:text-white transition-all duration-300"
             >
               {item.name}
@@ -74,17 +80,11 @@ export default function Header() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-blue-600 p-4 space-y-2">
-          {[
-            { name: 'Trang chủ', path: '/' },
-            { name: 'Đặt lịch', path: '/booking' },
-            { name: 'Kết quả', path: '/results' },
-            { name: 'Thanh toán', path: '/payment' },
-            { name: 'Hồ sơ', path: '/profile' },
-            { name: 'Đăng nhập', path: '/login' },
-          ].map((item) => (
+          {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.path}
+              prefetch
               className="block px-2 py-1 hover:bg-blue-700 rounded-md transition-colors font-medium text-sm"
               onClick={toggleMenu}
             >
