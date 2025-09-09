@@ -1,95 +1,93 @@
-'use client';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Star, MapPin, Users, Calendar, Eye } from 'lucide-react';
+"use client"
+import Image from "next/image"
+import Link from "next/link"
+import { Calendar, Clock, Eye, Star, Award } from "lucide-react"
+import type { Doctor } from "@/types"
 
 interface DoctorCardProps {
-  doctor: {
-    id: number;
-    name: string;
-    specialty: string;
-    hospital: string;
-    image: string;
-    experience?: number;
-    rating?: number;
-    patients?: number;
-  };
-  onBook: (doctor: any) => void;
+  doctor: Doctor
+  onBook: (doctor: Doctor) => void
 }
 
 export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
   return (
-    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
-      {/* Doctor Image & Badge */}
-      <div className="relative p-6 pb-4">
-        <div className="relative mx-auto w-24 h-24">
+    <div className="bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 p-6 flex flex-col">
+      {/* Avatar + Rating */}
+      <div className="text-center mb-6">
+        <div className="relative w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-4 border-emerald-100 shadow-sm">
           <Image
-            src={doctor.image}
-            alt={doctor.name}
+            src={doctor.avatar || "https://randomuser.me/api/portraits/men/32.jpg"}
+            alt={doctor.full_name}
             width={96}
             height={96}
-            className="rounded-2xl object-cover border-4 border-white shadow-lg"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute -bottom-2 -right-2 bg-emerald-600 w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
+        </div>
+
+        {/* Rating */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-200"}`}
+              />
+            ))}
           </div>
+          <span className="text-sm text-gray-600">4.8 (127)</span>
         </div>
-        
-        {/* Verified Badge */}
-        <div className="absolute top-4 right-4 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">
-          Xác thực
+
+        {/* Name + Degree */}
+        <h3 className="text-xl font-bold text-gray-900">{doctor.display_name}</h3>
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
+            <Award className="w-4 h-4" />
+            {doctor.degree}
+          </span>
         </div>
+
+        <p className="text-sm text-gray-500 mt-2">{doctor.specialty}</p>
       </div>
 
-      {/* Doctor Info */}
-      <div className="px-6 pb-6">
-        <div className="text-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">
-            {doctor.name}
-          </h3>
-          <p className="text-emerald-600 font-semibold mb-1">{doctor.specialty}</p>
-          <div className="flex items-center justify-center text-gray-500 text-sm mb-3">
-            <MapPin className="w-4 h-4 mr-1" />
-            {doctor.hospital}
-          </div>
-        </div>
+      {/* Experience */}
+      <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-6">
+        <Clock className="w-4 h-4 text-emerald-500" />
+        <span>{doctor.experience_years} năm kinh nghiệm</span>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-          <div>
-            <div className="text-lg font-bold text-gray-900">{doctor.experience}+</div>
-            <div className="text-xs text-gray-500">Năm KN</div>
-          </div>
-          <div>
-            <div className="flex items-center justify-center">
-              <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-              <span className="text-lg font-bold text-gray-900">{doctor.rating}</span>
-            </div>
-            <div className="text-xs text-gray-500">Đánh giá</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-gray-900">{doctor.patients}+</div>
-            <div className="text-xs text-gray-500">Bệnh nhân</div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Link href={`/doctors/${doctor.id}`} className="block">
-            <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 group-hover:bg-emerald-50 group-hover:text-emerald-600">
-              <Eye className="w-4 h-4" />
-              <span>Xem chi tiết</span>
-            </button>
-          </Link>
+      {/* Buttons */}
+      <div className="grid grid-cols-2 gap-3 mt-auto">
+        <Link href={`/doctors/${doctor.id}`} className="w-full">
           <button
-            onClick={() => onBook(doctor)}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+            className="w-full py-3 px-5 
+              border border-emerald-500 text-emerald-600 
+              font-semibold rounded-xl 
+              bg-white hover:bg-emerald-50
+              shadow-sm hover:shadow-md 
+              transition-all duration-300 ease-in-out 
+              flex items-center justify-center gap-2 text-base
+              transform hover:scale-[1.02] active:scale-95"
           >
-            <Calendar className="w-4 h-4" />
-            <span>Đặt lịch khám</span>
+            <Eye className="w-5 h-5" />
+            Chi tiết
           </button>
-        </div>
+        </Link>
+
+        <button
+          onClick={() => onBook(doctor)}
+          className="w-full py-3 px-5 
+            bg-gradient-to-r from-emerald-600 to-emerald-500 
+            hover:from-emerald-700 hover:to-emerald-600
+            text-white font-semibold rounded-xl 
+            shadow-lg hover:shadow-xl 
+            transition-all duration-300 ease-in-out 
+            flex items-center justify-center gap-2 text-base
+            transform hover:scale-[1.02] active:scale-95"
+        >
+          <Calendar className="w-5 h-5" />
+          Đặt lịch
+        </button>
       </div>
     </div>
-  );
+  )
 }
