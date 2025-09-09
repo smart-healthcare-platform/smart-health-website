@@ -1,34 +1,45 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Heart } from "lucide-react"
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Heart } from "lucide-react";
 
 interface HealthMetrics {
-  age: string
-  gender: string
-  chestPainType: string
-  restingBP: string
-  cholesterol: string
-  fastingBS: string
-  restingECG: string
-  maxHR: string
-  exerciseAngina: string
-  oldpeak: string
-  stSlope: string
+  age: string;
+  gender: string;
+  chestPainType: string;
+  restingBP: string;
+  cholesterol: string;
+  fastingBS: string;
+  restingECG: string;
+  maxHR: string;
+  exerciseAngina: string;
+  oldpeak: string;
+  stSlope: string;
+  ca: string;
+  thal: string;
 }
 
 interface HealthMetricsFormProps {
-  onSubmit: (metrics: HealthMetrics) => void
-  isLoading: boolean
+  onSubmit: (metrics: HealthMetrics) => void;
+  isLoading: boolean;
 }
 
-export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProps) {
+export function HealthMetricsForm({
+  onSubmit,
+  isLoading,
+}: HealthMetricsFormProps) {
   const [metrics, setMetrics] = useState<HealthMetrics>({
     age: "",
     gender: "",
@@ -41,16 +52,18 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
     exerciseAngina: "",
     oldpeak: "",
     stSlope: "",
-  })
+    ca: "",
+    thal: "",
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(metrics)
-  }
+    e.preventDefault();
+    onSubmit(metrics);
+  };
 
   const updateMetric = (key: keyof HealthMetrics, value: string) => {
-    setMetrics((prev) => ({ ...prev, [key]: value }))
-  }
+    setMetrics((prev) => ({ ...prev, [key]: value }));
+  };
 
   return (
     <Card className="w-full border-green-200/50 shadow-lg bg-white backdrop-blur-sm overflow-hidden">
@@ -64,7 +77,9 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
             </div>
             Nhập thông tin sức khỏe
           </div>
-          <p className="text-white font-medium">Vui lòng điền đầy đủ các thông tin để có kết quả chính xác nhất</p>
+          <p className="text-white font-medium">
+            Vui lòng điền đầy đủ các thông tin để có kết quả chính xác nhất
+          </p>
         </div>
       </div>
 
@@ -90,7 +105,10 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
               <Label htmlFor="gender" className="text-gray-700 font-medium">
                 Giới tính
               </Label>
-              <Select value={metrics.gender} onValueChange={(value) => updateMetric("gender", value)}>
+              <Select
+                value={metrics.gender}
+                onValueChange={(value) => updateMetric("gender", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Chọn giới tính" />
                 </SelectTrigger>
@@ -102,18 +120,24 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="chestPainType" className="text-gray-700 font-medium">
+              <Label
+                htmlFor="chestPainType"
+                className="text-gray-700 font-medium"
+              >
                 Loại đau ngực
               </Label>
-              <Select value={metrics.chestPainType} onValueChange={(value) => updateMetric("chestPainType", value)}>
+              <Select
+                value={metrics.chestPainType}
+                onValueChange={(value) => updateMetric("chestPainType", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Chọn loại đau ngực" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="TA">Đau ngực điển hình</SelectItem>
-                  <SelectItem value="ATA">Đau ngực không điển hình</SelectItem>
-                  <SelectItem value="NAP">Đau không do tim</SelectItem>
-                  <SelectItem value="ASY">Không có triệu chứng</SelectItem>
+                  <SelectItem value="0">Đau ngực điển hình</SelectItem>
+                  <SelectItem value="1">Đau ngực không điển hình</SelectItem>
+                  <SelectItem value="2">Đau không do tim</SelectItem>
+                  <SelectItem value="3">Không có triệu chứng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -134,7 +158,10 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cholesterol" className="text-gray-700 font-medium">
+              <Label
+                htmlFor="cholesterol"
+                className="text-gray-700 font-medium"
+              >
                 Cholesterol (mg/dl)
               </Label>
               <Input
@@ -152,7 +179,10 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
               <Label htmlFor="fastingBS" className="text-gray-700 font-medium">
                 Đường huyết lúc đói
               </Label>
-              <Select value={metrics.fastingBS} onValueChange={(value) => updateMetric("fastingBS", value)}>
+              <Select
+                value={metrics.fastingBS}
+                onValueChange={(value) => updateMetric("fastingBS", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Chọn mức đường huyết" />
                 </SelectTrigger>
@@ -167,7 +197,10 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
               <Label htmlFor="restingECG" className="text-gray-700 font-medium">
                 Điện tâm đồ nghỉ
               </Label>
-              <Select value={metrics.restingECG} onValueChange={(value) => updateMetric("restingECG", value)}>
+              <Select
+                value={metrics.restingECG}
+                onValueChange={(value) => updateMetric("restingECG", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Chọn kết quả ECG" />
                 </SelectTrigger>
@@ -195,10 +228,16 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="exerciseAngina" className="text-gray-700 font-medium">
+              <Label
+                htmlFor="exerciseAngina"
+                className="text-gray-700 font-medium"
+              >
                 Đau thắt ngực khi tập
               </Label>
-              <Select value={metrics.exerciseAngina} onValueChange={(value) => updateMetric("exerciseAngina", value)}>
+              <Select
+                value={metrics.exerciseAngina}
+                onValueChange={(value) => updateMetric("exerciseAngina", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Có đau khi tập không?" />
                 </SelectTrigger>
@@ -229,14 +268,53 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
               <Label htmlFor="stSlope" className="text-gray-700 font-medium">
                 Độ dốc ST
               </Label>
-              <Select value={metrics.stSlope} onValueChange={(value) => updateMetric("stSlope", value)}>
+              <Select
+                value={metrics.stSlope}
+                onValueChange={(value) => updateMetric("stSlope", value)}
+              >
                 <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
                   <SelectValue placeholder="Chọn độ dốc ST" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Up">Tăng</SelectItem>
-                  <SelectItem value="Flat">Phẳng</SelectItem>
-                  <SelectItem value="Down">Giảm</SelectItem>
+                  <SelectItem value="0">Tăng</SelectItem>
+                  <SelectItem value="1">Phẳng</SelectItem>
+                  <SelectItem value="2">Giảm</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ca" className="text-gray-700 font-medium">
+                Số lượng mạch chính (0-3)
+              </Label>
+              <Input
+                id="ca"
+                type="number"
+                placeholder="0"
+                value={metrics.ca}
+                onChange={(e) => updateMetric("ca", e.target.value)}
+                className="border-green-200 focus:border-green-400 focus:ring-green-400/20"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="thal" className="text-gray-700 font-medium">
+                Thalassemia
+              </Label>
+              <Select
+                value={metrics.thal}
+                onValueChange={(value) => updateMetric("thal", value)}
+              >
+                <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-400/20">
+                  <SelectValue placeholder="Chọn loại Thalassemia" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Không có</SelectItem>
+                  <SelectItem value="1">Bình thường</SelectItem>
+                  <SelectItem value="2">Khiếm khuyết cố định</SelectItem>
+                  <SelectItem value="3">
+                    Khiếm khuyết có thể đảo ngược
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -259,5 +337,5 @@ export function HealthMetricsForm({ onSubmit, isLoading }: HealthMetricsFormProp
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
