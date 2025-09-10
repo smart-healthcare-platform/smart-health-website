@@ -1,7 +1,7 @@
 import React from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { Doctor} from '@/types/doctor'
-import DoctorCard from './DoctorCard';
+import DoctorCard from '../doctor/DoctorCard';
 
 interface BookingSidebarProps {
   selectedDoctor: Doctor | null;

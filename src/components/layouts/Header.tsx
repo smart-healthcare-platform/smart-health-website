@@ -2,9 +2,9 @@
 import Link from "next/link"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { clearAuth } from "@/store/slices/authSlice"
+import { clearAuth } from "@/redux/slices/authSlice"
 import { authService } from "@/services/authService"
-import type { RootState } from "@/store"
+import type { RootState } from "@/redux"
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)

@@ -1,3 +1,10 @@
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface Doctor {
   id: string;
   full_name: string;

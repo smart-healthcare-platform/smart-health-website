@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { store } from '../store'
-import { setCredentials, clearAuth } from '../store/slices/authSlice'
+import { store } from '../redux'
+import { setCredentials, clearAuth } from '../redux/slices/authSlice'
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,

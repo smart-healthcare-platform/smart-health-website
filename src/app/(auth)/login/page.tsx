@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Heart, Shield, Activity, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useDispatch } from "react-redux"
-import { setCredentials } from "@/store/slices/authSlice"
+import { setCredentials } from "@/redux/slices/authSlice"
 import { authService } from '@/services/authService';
 import { useRouter } from "next/navigation"
 export default function ModernHealthLogin() {

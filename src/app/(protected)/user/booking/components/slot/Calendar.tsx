@@ -6,7 +6,7 @@ interface CalendarComponentProps {
   onDateSelect: (date: Date) => void;
 }
 
-const CalendarComponent: React.FC<CalendarComponentProps> = ({ selectedDate, onDateSelect }) => {
+const Calendar: React.FC<CalendarComponentProps> = ({ selectedDate, onDateSelect }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const getDaysInMonth = (date: Date) => {
@@ -110,4 +110,4 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ selectedDate, onD
   );
 };
 
-export default CalendarComponent;
+export default Calendar;
