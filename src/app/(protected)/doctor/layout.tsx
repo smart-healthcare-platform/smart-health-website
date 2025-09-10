@@ -1,4 +1,5 @@
-import DoctorSidebar from '@/app/(protected)/doctor/sidebar/DoctorSidebar'
+import { DoctorSidebar } from "./sidebar/DoctorSidebar";
+
 
 export default function DoctorLayout({ children }: { children: React.ReactNode }) {
   return (

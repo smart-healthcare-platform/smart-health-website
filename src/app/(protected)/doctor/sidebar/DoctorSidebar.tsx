@@ -1,90 +1,109 @@
-'use client'
+"use client"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LayoutDashboard, Calendar, Users, FileText, Brain, User, Settings, LogOut, Heart } from "lucide-react"
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { clsx } from 'clsx'
-import { useState } from 'react'
-import {
-  FaHome,
-  FaCalendarAlt,
-  FaUser,
-  FaPrescription,
-  FaUserEdit,
-  FaCog,
-  FaSignOutAlt,
-} from 'react-icons/fa'
-
-const menu = [
-  { label: 'Trang chủ', href: '/doctor', icon: FaHome },
-  { label: 'Lịch hẹn', href: '/doctor/schedule', icon: FaCalendarAlt },
-  { label: 'Bệnh nhân', href: '/doctor/patients', icon: FaUser },
-  { label: 'Đơn thuốc', href: '/doctor/prescriptions', icon: FaPrescription },
-  { label: 'Hồ sơ cá nhân', href: '/doctor/setting', icon: FaUserEdit },
-  // { label: 'Cài đặt', href: '/doctor/setting', icon: FaCog },
+const navigation = [
+  {
+    name: "Bảng điều khiển",
+    href: "/doctor",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Lịch khám",
+    href: "/doctor/appointments",
+    icon: Calendar,
+  },
+  {
+    name: "Bệnh nhân",
+    href: "/doctor/patients",
+    icon: Users,
+  },
+  {
+    name: "Hồ sơ bệnh án",
+    href: "/doctor/medical-records",
+    icon: FileText,
+  },
+  {
+    name: "Chẩn đoán AI",
+    href: "/doctor/ai-diagnosis",
+    icon: Brain,
+  },
+  {
+    name: "Hồ sơ cá nhân",
+    href: "/doctor/profile",
+    icon: User,
+  },
 ]
 
-export default function DoctorSidebar() {
+export function DoctorSidebar() {
   const pathname = usePathname()
 
-  // Giả lập thông tin bác sĩ
-  const doctorInfo = {
-    name: 'Nguyễn Văn A',
-    specialty: 'Nội khoa',
-    avatar: 'https://randomuser.me/api/portraits/women/46.jpg',
-  }
-
   return (
-    <aside className="w-64 bg-gradient-to-br from-blue-900 to-blue-600 text-white h-screen p-6 flex flex-col justify-between">
-      {/* Thông tin bác sĩ */}
-      <div>
-        <div className="mb-10">
-          <div className="flex items-center space-x-4">
-            <img
-              src={doctorInfo.avatar}
-              alt={doctorInfo.name}
-              className="w-14 h-14 rounded-full border-2 border-white shadow-md"
-            />
-            <div>
-              <h3 className="text-xl font-bold">{doctorInfo.name}</h3>
-              <p className="text-sm text-gray-100">{doctorInfo.specialty}</p>
-            </div>
+    <div className="flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">
+      {/* Logo */}
+      {/* <div className="flex items-center gap-2 p-6 border-b border-sidebar-border">
+        <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+          <Heart className="w-5 h-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-sidebar-foreground">HealthSmart</h2>
+          <p className="text-xs text-muted-foreground">Bác sĩ</p>
+        </div>
+      </div> */}
+
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
+          <Avatar className="w-12 h-12">
+            <AvatarImage src="/caring-doctor.png" />
+            <AvatarFallback>BS</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-sidebar-accent-foreground truncate">Bác sĩ Nguyễn Văn A</p>
+            <p className="text-xs text-muted-foreground truncate">Chuyên khoa Tim mạch</p>
+            <p className="text-xs text-primary font-medium">Đang hoạt động</p>
           </div>
         </div>
-
-        {/* Menu chính */}
-        <nav className="space-y-2">
-          <ul className="space-y-1">
-            {menu.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={clsx(
-                    'flex items-center px-4 py-2 rounded-xl hover:bg-blue-500 hover:bg-opacity-30 transition-colors duration-200',
-                    pathname === item.href && 'bg-blue-700 text-white font-semibold'
-                  )}
-                >
-                  <item.icon className="mr-3 text-lg" />
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
 
-      {/* Đăng xuất */}
-      <div>
-        <Link
-          href="/logout"
-          className={clsx(
-            'flex items-center px-4 py-2 rounded-xl hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200',
-            pathname === '/logout' && 'bg-red-700 text-white font-semibold'
-          )}
-        >
-          <FaSignOutAlt className="mr-3 text-lg" />
-          Đăng xuất
-        </Link>
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant={isActive ? "default" : "ghost"}
+                className={cn(
+                  "w-full justify-start gap-3 h-11",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.name}
+              </Button>
+            </Link>
+          )
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" className="flex-1 gap-2">
+            <Settings className="w-4 h-4" />
+            Cài đặt
+          </Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-2">
+            <LogOut className="w-4 h-4" />
+            Đăng xuất
+          </Button>
+        </div>
       </div>
-    </aside>
+    </div>
   )
 }
