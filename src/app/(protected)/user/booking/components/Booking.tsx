@@ -1,16 +1,17 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import BookingTimeline from "./common/BookingTimeline";
 import DoctorSelection from "./doctor/DoctorSelection";
 import Calendar from "./slot/Calendar";
-import TimeSlotGrid, { TimeSlot } from "./slot/TimeSlotGrid";
+import TimeSlotGrid from "./slot/TimeSlotGrid";
 import PatientForm from "./form/PatientForm";
 import BookingSummary from "./form/BookingSummary";
 import DoctorCard from "./doctor/DoctorCard";
 import { Mail, Phone } from "lucide-react";
-import { Doctor } from "@/types";
+import type { Doctor } from "@/types";
 import { doctorService } from "@/services/doctorService";
 import useDebounce from "@/hooks/useDebounce";
+import { TimeSlot } from "@/types/timeSlot";
 
 const doctorsPerPage = 6;
 
@@ -18,8 +19,13 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
+  const [allSlots, setAllSlots] = useState<TimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Doctor list state
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -27,9 +33,8 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 500);
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -40,21 +45,14 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
     symptoms: "",
   });
 
-  // Debounce & refs to optimize search
-  const debouncedSearchRef = useRef(search);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const debouncedSearch = useDebounce(search, 500);
-
-  // Fetch doctors (optimized)
+  // Fetch doctors
   const fetchDoctors = useCallback(async () => {
     try {
       setLoading(true);
-      const searchTerm = debouncedSearch.trim();
       const res = await doctorService.getPublicDoctors(
         currentPage,
         doctorsPerPage,
-        searchTerm
+        debouncedSearch.trim()
       );
       setDoctors(res.data || []);
       setTotal(res.total || 0);
@@ -64,65 +62,64 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
       setTotal(0);
     } finally {
       setLoading(false);
-      setIsSearching(false);
     }
   }, [debouncedSearch, currentPage]);
 
   useEffect(() => {
     fetchDoctors();
   }, [fetchDoctors]);
+
+  // Fetch all slots of selected doctor
   useEffect(() => {
     const fetchSlots = async () => {
-      if (!selectedDoctor || !selectedDate) {
+      if (!selectedDoctor) {
+        setAllSlots([]);
+        setAvailableDates([]);
         setTimeSlots([]);
         return;
       }
-
       setLoadingSlots(true);
       try {
-        const allSlots = await doctorService.getDoctorSlots(selectedDoctor.id);
-
-        // Filter theo ngày đã chọn
-        const filteredSlots = allSlots.filter((slot) => {
-          const slotDate = new Date(
-            `${selectedDate.toDateString()} ${slot.time}`
-          );
-          return slotDate.toDateString() === selectedDate.toDateString();
-        });
-
-        setTimeSlots(filteredSlots);
+        const slots = await doctorService.getDoctorSlots(selectedDoctor.id);
+        setAllSlots(slots);
+        console;
+        // unique dates
+        const dates = Array.from(new Set(slots.map((s) => s.date)));
+        setAvailableDates(dates);
       } catch (err) {
         console.error(err);
-        setTimeSlots([]);
+        setAllSlots([]);
+        setAvailableDates([]);
       } finally {
         setLoadingSlots(false);
       }
     };
-
     fetchSlots();
-  }, [selectedDoctor, selectedDate]);
+  }, [selectedDoctor]);
 
-  // Debounced search update
-  const handleSearchChange = useCallback((newSearch: string) => {
-    setSearch(newSearch);
-    setIsSearching(true);
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+  // Update timeSlots when selectedDate changes
+  useEffect(() => {
+    if (!selectedDate) {
+      setTimeSlots([]);
+      setSelectedTime(null);
+      return;
+    }
 
-    searchTimeoutRef.current = setTimeout(() => {
-      if (debouncedSearchRef.current !== newSearch.trim()) {
-        setCurrentPage(1);
-        debouncedSearchRef.current = newSearch.trim();
-      }
-      setIsSearching(false);
-    }, 500);
-  }, []);
+    const dateStr = selectedDate.toISOString().split("T")[0];
 
-  // Handle doctor selection
-  const handleDoctorSelect = useCallback((doctor: Doctor) => {
-    setSelectedDoctor(doctor);
-  }, []);
+    const slotsForDay = allSlots
+      .filter((s) => s.date === dateStr)
+      .sort((a, b) => {
+        // Chuyển "HH:mm" -> số phút để sort
+        const [aH, aM] = a.time.split(":").map(Number);
+        const [bH, bM] = b.time.split(":").map(Number);
+        return aH * 60 + aM - (bH * 60 + bM);
+      });
 
-  // Memoized selected doctor card
+    setTimeSlots(slotsForDay);
+    setSelectedTime(null);
+  }, [selectedDate, allSlots]);
+
   const SelectedDoctorCard = useMemo(() => {
     if (!selectedDoctor) return null;
     return (
@@ -137,15 +134,15 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return selectedDoctor !== null;
+        return !!selectedDoctor;
       case 2:
-        return selectedDate && selectedTime;
+        return !!selectedDate && !!selectedTime;
       case 3:
         return (
-          formData.fullName &&
-          formData.phone &&
-          formData.birthDate &&
-          formData.gender
+          !!formData.fullName &&
+          !!formData.phone &&
+          !!formData.birthDate &&
+          !!formData.gender
         );
       default:
         return true;
@@ -153,14 +150,14 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Đặt lịch khám bệnh
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Kết nối bác sĩ, bệnh nhân cho trải nghiệm y tế đỉnh cao với công
             nghệ hiện đại nhất.
           </p>
@@ -174,13 +171,13 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
             {/* Step content */}
             {currentStep === 1 && (
               <>
-                <div className="mb-4">
+                <div className="mb-6">
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    placeholder="Nhập tên bác sĩ..."
-                    className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="🔍 Nhập tên bác sĩ hoặc chuyên khoa..."
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-lg"
                   />
                 </div>
 
@@ -188,13 +185,12 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
                   doctors={doctors}
                   loading={loading}
                   search={search}
-                  setSearch={handleSearchChange}
+                  setSearch={setSearch}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
                   total={total}
                   selectedDoctor={selectedDoctor}
-                  onDoctorSelect={handleDoctorSelect}
-                  isSearching={isSearching}
+                  onDoctorSelect={setSelectedDoctor}
                 />
               </>
             )}
@@ -204,12 +200,14 @@ const HealthSmartBooking = ({ doctorId }: { doctorId?: string }) => {
                 <Calendar
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}
+                  availableDates={availableDates}
                 />
                 <TimeSlotGrid
                   selectedTime={selectedTime}
                   onTimeSelect={setSelectedTime}
                   selectedDate={selectedDate}
                   timeSlots={timeSlots}
+                  loading={loadingSlots}
                 />
               </div>
             )}

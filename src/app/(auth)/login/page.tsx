@@ -25,8 +25,8 @@ export default function ModernHealthLogin() {
       dispatch(setCredentials({ token, user }))
       if (user.role === "Admin") {
         router.push("/admin/dashboard")
-      } else if (user.role === "Doctor") {
-        router.push("/doctor/home")
+      } else if (user.role === "DOCTOR") {
+        router.push("/doctor")
       } else {
         router.push("/")
       }

@@ -2,6 +2,8 @@
 export type TimeSlotStatus = "available" | "booked" | "off" | "expired";
 
 export interface TimeSlot {
-  time: string; // "HH:MM"
-  status: TimeSlotStatus;
+  date: string      // yyyy-mm-dd
+  time: string      // HH:mm
+  status: TimeSlotStatus
 }
+

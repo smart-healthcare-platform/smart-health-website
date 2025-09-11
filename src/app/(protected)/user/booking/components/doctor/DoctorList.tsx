@@ -11,7 +11,6 @@ interface DoctorListProps {
   onDoctorSelect: (doctor: Doctor) => void;
   searchValue: string;
   setSearch: (value: string) => void;
-  isSearching: boolean;
 }
 
 export default function DoctorList({
@@ -21,11 +20,10 @@ export default function DoctorList({
   onDoctorSelect,
   searchValue,
   setSearch,
-  isSearching,
 }: DoctorListProps) {
   if (loading && doctors.length === 0) return <Loading />;
 
-  if (!doctors.length && !isSearching) {
+  if (!doctors.length) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <p className="text-gray-500 text-lg">

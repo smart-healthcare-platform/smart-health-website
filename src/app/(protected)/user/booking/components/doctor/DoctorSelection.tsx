@@ -14,7 +14,6 @@ interface DoctorSelectionProps {
   total: number;
   selectedDoctor: Doctor | null;
   onDoctorSelect: (doctor: Doctor) => void;
-  isSearching: boolean;
 }
 
 export default function DoctorSelection({
@@ -27,7 +26,6 @@ export default function DoctorSelection({
   total,
   selectedDoctor,
   onDoctorSelect,
-  isSearching,
 }: DoctorSelectionProps) {
   return (
     <div className="space-y-6">
@@ -38,7 +36,6 @@ export default function DoctorSelection({
         onDoctorSelect={onDoctorSelect}
         searchValue={search}
         setSearch={setSearch}
-        isSearching={isSearching}
       />
       <AppPagination
         currentPage={currentPage}

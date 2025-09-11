@@ -1,46 +1,72 @@
-"use client"
-import * as Dialog from "@radix-ui/react-dialog" // Shadcn modal base
-import { useSelector } from "react-redux"
-import { selectIsLoggedIn } from "@/redux/selectors/authSelectors"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+"use client";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ShieldAlert } from "lucide-react"; // [MỚI] Thêm icon cho sinh động
+
+// [THAY ĐỔI] Import các component đã được style từ shadcn/ui
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { selectIsLoggedIn } from "@/redux/selectors/authSelectors";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isLoggedIn = useSelector(selectIsLoggedIn)
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const isLoggedIn = useSelector(selectIsLoggedIn);
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) setOpen(true)
-  }, [isLoggedIn])
+    // Chỉ mở modal nếu người dùng chưa đăng nhập
+    if (!isLoggedIn) {
+      setIsModalOpen(true);
+    }
+  }, [isLoggedIn]);
 
-  const handleOk = () => {
-    setOpen(false)
-    router.push("/login")
-  }
+  const handleRedirectToLogin = () => {
+    setIsModalOpen(false);
+    router.push("/login");
+  };
 
   if (!isLoggedIn) {
     return (
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg">
-          <Dialog.Title className="text-lg font-semibold mb-4">
-            Vui lòng đăng nhập để tiếp tục
-          </Dialog.Title>
-          <Button onClick={handleOk} className="bg-emerald-500 w-full">
-            OK
-          </Button>
-        </Dialog.Content>
-      </Dialog.Root>
-    )
+      <Dialog open={isModalOpen}>
+        <DialogContent
+          className="sm:max-w-[425px]"
+          // Ngăn người dùng đóng modal bằng cách click ra ngoài
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="text-yellow-500" />
+              Yêu cầu đăng nhập
+            </DialogTitle>
+            <DialogDescription>
+              Bạn cần đăng nhập để có thể truy cập vào trang này. Vui lòng đăng
+              nhập để tiếp tục.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleRedirectToLogin} className="w-full">
+              Đi đến trang đăng nhập
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
-  return <>{children}</>
-}
+  // Nếu đã đăng nhập, hiển thị nội dung được bảo vệ
+  return <>{children}</>;
+};
 
-export default ProtectedRoute
+export default ProtectedRoute;
