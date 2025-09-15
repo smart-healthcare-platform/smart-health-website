@@ -1,12 +1,15 @@
 import axios from 'axios'
-import { store } from '../store'
-import { setCredentials, clearAuth } from '../store/slices/authSlice'
+import { store } from '../redux'
+import { setCredentials, clearAuth } from '../redux/slices/authSlice'
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
 })
-
+const refreshApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  withCredentials: true,
+})
 // Request interceptor: gắn accessToken
 api.interceptors.request.use((config) => {
   const token = store.getState().auth.accessToken
@@ -33,26 +36,29 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Nếu là login hoặc register → đừng refresh
-    if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+    // Nếu là login/register/refresh → không retry
+    if (
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register') ||
+      originalRequest.url?.includes('/auth/refresh-token')
+    ) {
       return Promise.reject(error)
     }
 
-    // Nếu là 401 và chưa retry thì refresh
+    // Nếu là 401 và chưa retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
-        const res = await api.post('/auth/refresh-token')
+        const res = await refreshApi.post('/auth/refresh-token')  
         const { token, user } = res.data.data
 
-        // Cập nhật token mới
+        // Lưu token mới
         store.dispatch(setCredentials({ token, user }))
 
-        // Gắn lại header và retry
+        // Retry với token mới
         originalRequest.headers.Authorization = `Bearer ${token}`
         return api(originalRequest)
       } catch (err) {
-        // Refresh fail → clear auth & redirect login
         store.dispatch(clearAuth())
         if (typeof window !== 'undefined') {
           window.location.href = '/login'
@@ -63,5 +69,6 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
 
 export default api

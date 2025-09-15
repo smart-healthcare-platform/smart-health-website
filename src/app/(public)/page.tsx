@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { Bot, HeartPulse, CalendarCheck, Stethoscope, Shield, Clock, Star, ChevronDown } from "lucide-react";
 import Banner from '../../../public/image/home_banner.png';
-
+import { Button } from '@/components/ui/button';
 export default function Home() {
   const features = [
     {

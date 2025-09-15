@@ -1,63 +1,68 @@
-"use client"
-import Link from "next/link"
-import { useState, useCallback, useRef, useEffect } from "react"
-import { useSelector, useDispatch } from "react-redux"
-import { clearAuth } from "@/store/slices/authSlice"
-import { authService } from "@/services/authService"
-import type { RootState } from "@/store"
+"use client";
+import Link from "next/link";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { clearAuth } from "@/redux/slices/authSlice";
+import { authService } from "@/services/auth.service";
+import type { RootState } from "@/redux";
+import { useRouter } from "next/navigation";
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const userMenuRef = useRef<HTMLDivElement | null>(null)
-  const dispatch = useDispatch()
-
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const dispatch = useDispatch();
+  const router = useRouter();
   // Get user from Redux store
-  const { user, accessToken } = useSelector((state: RootState) => state.auth)
-  const isAuthenticated = !!accessToken && !!user
+  const { user, accessToken } = useSelector((state: RootState) => state.auth);
+  const isAuthenticated = !!accessToken && !!user;
 
   const toggleMenu = useCallback(() => {
-    setIsMenuOpen((prev) => !prev)
-  }, [])
+    setIsMenuOpen((prev) => !prev);
+  }, []);
 
   const toggleUserMenu = useCallback(() => {
-    setIsUserMenuOpen((prev) => !prev)
-  }, [])
+    setIsUserMenuOpen((prev) => !prev);
+  }, []);
 
   const handleLogout = useCallback(async () => {
     try {
-      await authService.logout()
+      await authService.logout();
     } catch (error) {
-      console.error("Logout failed:", error)
+      console.error("Logout failed:", error);
     } finally {
       // luôn luôn clear client
-      dispatch(clearAuth())
-      localStorage.clear()
-      sessionStorage.clear()
-      setIsUserMenuOpen(false)
+      dispatch(clearAuth());
+      localStorage.clear();
+      sessionStorage.clear();
+      setIsUserMenuOpen(false);
+      router.push("/doctor");
     }
-  }, [dispatch])
+  }, [dispatch]);
 
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false)
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Generate user avatar initials
   const getUserInitials = (username?: string) => {
-    if (!username) return "U"
-    return username.charAt(0).toUpperCase()
-  }
+    if (!username) return "U";
+    return username.charAt(0).toUpperCase();
+  };
 
   // Generate avatar background color based on username
   const getAvatarColor = (username?: string) => {
-    if (!username) return "bg-gray-500"
+    if (!username) return "bg-gray-500";
     const colors = [
       "bg-red-500",
       "bg-blue-500",
@@ -67,23 +72,28 @@ export default function Header() {
       "bg-indigo-500",
       "bg-yellow-500",
       "bg-teal-500",
-    ]
-    const index = username.charCodeAt(0) % colors.length
-    return colors[index]
-  }
+    ];
+    const index = username.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
 
   const menuItems = [
     { name: "Trang chủ", path: "/" },
-    { name: "Đặt lịch", path: "/user/booking" },
+    { name: "Đặt lịch", path: "/user/booking/step-1" },
     { name: "Bác sĩ", path: "/doctors" },
     { name: "Dịch vụ", path: "/services" },
     { name: "Hỗ trợ", path: "/support" },
     {
       name: "Chuẩn đoán AI",
       path: "/diagnosis",
-      isSpecial: true, 
+      isSpecial: true,
       icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -93,21 +103,31 @@ export default function Header() {
         </svg>
       ),
     },
-  ]
+  ];
 
   const userMenuItems = [
     {
       name: "Thông tin cá nhân",
       path: "/profile",
       icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
           />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         </svg>
       ),
     },
@@ -115,7 +135,12 @@ export default function Header() {
       name: "Lịch sử đặt khám",
       path: "/history",
       icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -129,18 +154,28 @@ export default function Header() {
       name: "Cài đặt",
       path: "/settings",
       icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
           />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         </svg>
       ),
     },
-  ]
+  ];
 
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 fixed top-0 w-full z-50 shadow-sm">
@@ -150,7 +185,12 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -207,23 +247,36 @@ export default function Header() {
                 >
                   {/* User Avatar */}
                   <div
-                    className={`w-8 h-8 ${getAvatarColor(user.username)} rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg`}
+                    className={`w-8 h-8 ${getAvatarColor(
+                      user.username
+                    )} rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg`}
                   >
                     {getUserInitials(user.username)}
                   </div>
                   {/* User Name */}
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.username}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {user.role}
+                    </p>
                   </div>
                   {/* Dropdown Arrow */}
                   <svg
-                    className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                      isUserMenuOpen ? "rotate-180" : ""
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
@@ -234,13 +287,19 @@ export default function Header() {
                     <div className="px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center space-x-3">
                         <div
-                          className={`w-10 h-10 ${getAvatarColor(user.username)} rounded-full flex items-center justify-center text-white font-semibold shadow-lg`}
+                          className={`w-10 h-10 ${getAvatarColor(
+                            user.username
+                          )} rounded-full flex items-center justify-center text-white font-semibold shadow-lg`}
                         >
                           {getUserInitials(user.username)}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{user.username}</p>
-                          <p className="text-sm text-gray-500 capitalize">{user.role}</p>
+                          <p className="font-medium text-gray-900">
+                            {user.username}
+                          </p>
+                          <p className="text-sm text-gray-500 capitalize">
+                            {user.role}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -264,7 +323,12 @@ export default function Header() {
                         onClick={handleLogout}
                         className="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-all duration-200 w-full text-left"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -284,7 +348,12 @@ export default function Header() {
                 href="/login"
                 className="hidden sm:flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -302,12 +371,21 @@ export default function Header() {
               className="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50"
               aria-label="Toggle menu"
             >
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                  d={
+                    isMenuOpen
+                      ? "M6 18L18 6M6 6l12 12"
+                      : "M4 6h16M4 12h16M4 18h16"
+                  }
                 />
               </svg>
             </button>
@@ -347,5 +425,5 @@ export default function Header() {
         )}
       </div>
     </header>
-  )
+  );
 }

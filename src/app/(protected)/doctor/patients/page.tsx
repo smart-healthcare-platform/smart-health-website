@@ -1,11 +1,10 @@
-// 📁 src/app/doctor/patients/page.tsx
-import PatientTable from './components/PatientTable'
+import { PatientManager } from "./components/patient-manager";
 
-export default function PatientsPage() {
+
+export default function HomePage() {
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Danh sách bệnh nhân</h1>
-      <PatientTable />
-    </div>
+    <main className="container mx-auto py-8 px-4">
+      <PatientManager />
+    </main>
   )
 }
