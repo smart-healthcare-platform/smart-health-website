@@ -11,18 +11,19 @@ import { useEffect, useState } from "react";
 import LoginRequiredDialog from "@/components/ui/require-login-dialog";
 import { appointmentService } from "@/services/appointment.service";
 import { CreateAppointmentPayload } from "@/types";
+import MessageDialog from "@/components/ui/mesage-dialog";
 
 export default function BookingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { doctor, date, time, formData } = useSelector((state: RootState) => state.booking);
+  const { doctor, slot_id, slot_start_time, formData } = useSelector((state: RootState) => state.booking);
   const { user } = useSelector((state: RootState) => state.auth);
 
   const step = parseInt(pathname.split("-")[1] || "1");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const [showMessage, setShowMessage] = useState(false);
   useEffect(() => {
     if (step === 1) {
       dispatch(resetBooking());
@@ -37,7 +38,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
 
   const canProceed = () => {
     if (step === 1) return !!doctor;
-    if (step === 2) return !!date && !!time;
+    if (step === 2) return !!slot_id && !!slot_start_time;
     if (step === 3)
       return (
         formData.fullName &&
@@ -59,28 +60,26 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
   const handleBack = () => router.push(`/user/booking/step-${step - 1}`);
 
   const handleConfirmBooking = async () => {
-    if (!doctor || !date || !time || !user) return;
+    if (!doctor || !slot_id || !slot_start_time || !user) return;
 
     setLoading(true);
-    // const payload: CreateAppointmentPayload = {
-    //   doctorId: doctor.id,
-    //   slotId: doctor.slotId || "", // giả sử slotId lưu từ Step-2
-    //   patientId: user.id,
-    //   date: new Date(`${date}T${time}`).toISOString(),
-    //   reason: formData.symptoms || "Khám tổng quát",
-    //   // type: formData.appointmentType || "consultation",
-    //   notes: formData.notes,
-    // };
+
+    const payload: CreateAppointmentPayload = {
+      doctorId: doctor.id,
+      slotId: slot_id!,
+      patientId: user.id ?? "123",
+      date: new Date(slot_start_time).toISOString(),
+      reason: formData.symptoms || "Khám tổng quát",
+      notes: formData.notes || "",
+    };
 
     try {
-      // const appointment = await appointmentService.create(payload);
-      // alert("Đặt lịch thành công!");
-      // console.log("Appointment created:", appointment);
-      // dispatch(resetBooking());
-      // router.push("/user/booking/success"); // hoặc trang chi tiết appointment
+      await appointmentService.create(payload);
+      dispatch(resetBooking());
+      setShowMessage(true); 
     } catch (err: any) {
-      alert(err.message || "Đặt lịch thất bại!");
       console.error(err);
+      alert(err.message || "Đặt lịch thất bại!"); 
     } finally {
       setLoading(false);
     }
@@ -105,18 +104,11 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
             {doctor && (
               <div className="bg-white rounded-xl border p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Bác sĩ đã chọn</h3>
-                <DoctorCard doctor={doctor} isSelected onSelect={() => {}} />
+                <DoctorCard doctor={doctor} isSelected onSelect={() => { }} />
               </div>
             )}
 
-            {step === 4 && (
-              <BookingSummary
-                selectedDoctor={doctor}
-                selectedDate={date}
-                selectedTime={time}
-                formData={formData}
-              />
-            )}
+
 
             <div className="bg-white rounded-xl border p-6 space-y-4">
               {step < 4 ? (
@@ -127,7 +119,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
                     className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${canProceed()
                       ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     {step === 3 ? "Xem lại thông tin" : "Tiếp tục"}
                   </button>
@@ -166,6 +158,15 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
         open={showLoginDialog}
         onClose={() => setShowLoginDialog(false)}
         redirectPath={pathname}
+      />
+      <MessageDialog
+        open={showMessage}
+        onClose={() => {
+          setShowMessage(false);
+          router.push("/");
+        }}
+        type="success"
+        message="Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm."
       />
     </div>
   );

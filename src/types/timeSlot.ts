@@ -2,8 +2,9 @@
 export type TimeSlotStatus = "available" | "booked" | "off" | "expired";
 
 export interface TimeSlot {
-  date: string      // yyyy-mm-dd
-  time: string      // HH:mm
+  id: string
+  startTime: string // original start_time từ API (ISO)
+  date: string      // "yyyy-mm-dd"
+  time: string      // "HH:mm"
   status: TimeSlotStatus
 }
-

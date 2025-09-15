@@ -1,25 +1,22 @@
 "use client"
 
+import { TimeSlot } from "@/types/timeSlot"
 import type React from "react"
 
 export type TimeSlotStatus = "available" | "booked" | "off" | "expired"
 
-export interface TimeSlot {
-  time: string
-  status: TimeSlotStatus
-}
 
 interface TimeSlotGridProps {
-  selectedTime: string | null
-  onTimeSelect: (time: string) => void
+  selectedSlotId: string | null
+  onSlotSelect: (slot: TimeSlot) => void
   selectedDate: Date | null
   timeSlots: TimeSlot[]
   loading?: boolean
 }
 
 const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
-  selectedTime,
-  onTimeSelect,
+  selectedSlotId,
+  onSlotSelect,
   selectedDate,
   timeSlots,
   loading = false,
@@ -54,6 +51,7 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
 
       {selectedDate && !loading && timeSlots.length > 0 && (
         <>
+          {/* Legend */}
           <div className="flex flex-wrap gap-4 mb-4 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-emerald-100 border border-emerald-300 rounded"></div>
@@ -73,15 +71,17 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
             </div>
           </div>
 
+          {/* Time slots */}
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {timeSlots.map((slot) => {
               const isDisabled = slot.status !== "available"
-              const isSelected = selectedTime === slot.time
+              const isSelected = selectedSlotId === slot.id
+
 
               return (
                 <button
                   key={slot.time}
-                  onClick={() => !isDisabled && onTimeSelect(slot.time)}
+                  onClick={() => !isDisabled && onSlotSelect(slot)}
                   disabled={isDisabled}
                   className={`p-3 text-sm font-medium rounded-lg transition-all duration-200 border ${
                     slot.status === "available"

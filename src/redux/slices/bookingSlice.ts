@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { PatientFormData, Doctor, DoctorDetail } from "@/types";
+import { TimeSlot } from "@/types/timeSlot";
 
 interface FormData {
   fullName: string;
@@ -9,20 +10,24 @@ interface FormData {
   gender: string;
   address: string;
   symptoms: string;
+  notes: string
 }
 
 interface BookingState {
-  doctor: Doctor | DoctorDetail | null;
+  doctor: Doctor |DoctorDetail| null;
+  slot_id: string | null;
+  slot_start_time: string | null; // <-- thêm
   date: string | null;
   time: string | null;
   formData: PatientFormData;
 }
 
 const initialState: BookingState = {
+  slot_id: null,
   doctor: null,
   date: null,
   time: null,
-  notes:null,
+  slot_start_time: null,
   formData: {
     fullName: "",
     phone: "",
@@ -31,7 +36,7 @@ const initialState: BookingState = {
     gender: "",
     address: "",
     symptoms: "",
-
+    notes: ""
   },
 };
 
@@ -42,11 +47,16 @@ const bookingSlice = createSlice({
     setDoctor: (state, action: PayloadAction<Doctor | DoctorDetail>) => {
       state.doctor = action.payload;
     },
-    setDate: (state, action: PayloadAction<string>) => {
-      state.date = action.payload;
+    setDate(state, action: PayloadAction<string>) {
+      state.date = action.payload
+      // reset slot khi đổi ngày
+      state.slot_id = null
+      state.time = null
     },
-    setTime: (state, action: PayloadAction<string>) => {
-      state.time = action.payload;
+    setSlot(state, action: PayloadAction<TimeSlot>) {
+      state.slot_id = action.payload.id;
+      state.time = action.payload.time;
+      state.slot_start_time = action.payload.startTime;
     },
     setFormData: (state, action: PayloadAction<Partial<FormData>>) => {
       state.formData = { ...state.formData, ...action.payload };
@@ -55,6 +65,6 @@ const bookingSlice = createSlice({
   },
 });
 
-export const { setDoctor, setDate, setTime, setFormData, resetBooking } =
+export const { setDoctor, setDate, setSlot, setFormData, resetBooking } =
   bookingSlice.actions;
 export default bookingSlice.reducer;

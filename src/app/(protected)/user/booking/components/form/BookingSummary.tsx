@@ -31,9 +31,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               <p className="text-emerald-600 text-sm">{selectedDoctor.specialty}</p>
               <p className="text-gray-500 text-sm">{selectedDoctor.experience_years}</p>
             </div>
-            {/* <div className="text-right">
-              <p className="font-semibold text-gray-900">{selectedDoctor..toLocaleString()}đ</p>
-            </div> */}
           </div>
         )}
         
@@ -76,15 +73,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
           </div>
         </div>
         
-        {/* Total */}
-        {/* {selectedDoctor && (
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-900">Tổng cộng:</span>
-              <span className="text-2xl font-bold text-emerald-600">{selectedDoctor.price.toLocaleString()}đ</span>
-            </div>
-          </div>
-        )} */}
       </div>
     </div>
   );

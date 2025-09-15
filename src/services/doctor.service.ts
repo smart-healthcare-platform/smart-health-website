@@ -6,7 +6,7 @@ export const doctorService = {
   async getPublicDoctors(page = 1, limit = 6, search = "") {
     const res = await api.get<{ data: PaginatedResponse<Doctor> }>("/public/doctors", { params: { page, limit, search } })
     console.log(res.data)
-    return res.data
+    return res.data.data
   },
 
   async getDoctorById(id: string): Promise<DoctorDetail> {
@@ -16,16 +16,19 @@ export const doctorService = {
 
   async getDoctorSlots(doctorId: string): Promise<TimeSlot[]> {
     try {
-      const res = await api.get<{ success: boolean; data: any[] }>(`/public/doctors/appointment-slots/${doctorId}`)
+      const res = await api.get<{ success: boolean; data: any[] }>(
+        `/public/doctors/appointment-slots/${doctorId}`
+      )
       if (!res.data.success) return []
 
-      const slots: TimeSlot[] = res.data.data.map(slot => {
-        console.log("Raw slot from API:", slot)
-        const start = new Date(slot.start_time)
+      const slots: TimeSlot[] = res.data.data.map((s) => {
+        const start = new Date(s.start_time);
         return {
+          id: s.id,
+          startTime: s.start_time, // giữ nguyên từ API
           date: start.toISOString().split("T")[0],
           time: start.toLocaleTimeString("vi-VN", { hour12: false, hour: "2-digit", minute: "2-digit" }),
-          status: mapStatus(slot.status),
+          status: mapStatus(s.status),
         }
       })
 
@@ -34,7 +37,7 @@ export const doctorService = {
       console.error("Error fetching doctor slots:", err)
       return []
     }
-  },
+  }
 }
 
 // map API status -> TimeSlotStatus

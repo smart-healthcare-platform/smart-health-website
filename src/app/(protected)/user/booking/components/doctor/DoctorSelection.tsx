@@ -1,5 +1,6 @@
 // DoctorSelection.tsx
 "use client";
+import DoctorFilter from "@/app/(public)/doctors/components/DoctorFilter";
 import DoctorList from "./DoctorList";
 import AppPagination from "@/components/ui/AppPagination";
 import { Doctor, DoctorDetail } from "@/types";
