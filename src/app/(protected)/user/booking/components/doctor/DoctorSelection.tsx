@@ -2,7 +2,7 @@
 "use client";
 import DoctorList from "./DoctorList";
 import AppPagination from "@/components/ui/AppPagination";
-import { Doctor } from "@/types";
+import { Doctor, DoctorDetail } from "@/types";
 
 interface DoctorSelectionProps {
   doctors: Doctor[];
@@ -12,7 +12,7 @@ interface DoctorSelectionProps {
   currentPage: number;
   setCurrentPage: (p: number) => void;
   total: number;
-  selectedDoctor: Doctor | null;
+  selectedDoctor: Doctor |DoctorDetail | null;
   onDoctorSelect: (doctor: Doctor) => void;
 }
 

@@ -7,20 +7,21 @@ import {
   Search,
   Users,
   Filter,
-  ChevronLeft,
-  ChevronRight,
   Stethoscope,
   MapPin,
   Star,
 } from "lucide-react";
-import { doctorService } from "@/services/doctorService";
+import { doctorService } from "@/services/doctor.service";
 import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
 import useDebounce from "@/hooks/useDebounce";
 import AppPagination from "@/components/ui/AppPagination";
+import { useDispatch } from "react-redux";
+import { setDoctor } from "@/redux/slices/bookingSlice";
 
 export default function DoctorList() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const searchParams = useSearchParams();
 
   // Khởi tạo từ URL params
@@ -166,13 +167,8 @@ export default function DoctorList() {
   // Handle booking
   const handleBook = useCallback(
     (doctor: Doctor) => {
-      router.push(
-        `/booking?doctorId=${doctor.id}&doctorName=${encodeURIComponent(
-          doctor.full_name
-        )}&specialty=${encodeURIComponent(
-          doctor.specialty
-        )}&image=${encodeURIComponent(doctor.avatar || "")}`
-      );
+      dispatch(setDoctor(doctor));
+      router.push("/user/booking/step-2");
     },
     [router]
   );
@@ -309,38 +305,38 @@ export default function DoctorList() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12 min-h-[450px]">
           {doctors.length > 0
             ? // Render danh sách bác sĩ nếu có
-              doctors.map((doctor, index) => (
-                <div
-                  key={doctor.id}
-                  className="transform transition-all duration-300 hover:-translate-y-1 animate-fade-in" // Thêm animation cho mượt
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <DoctorCard doctor={doctor} onBook={handleBook} />
-                </div>
-              ))
+            doctors.map((doctor, index) => (
+              <div
+                key={doctor.id}
+                className="transform transition-all duration-300 hover:-translate-y-1 animate-fade-in" // Thêm animation cho mượt
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <DoctorCard doctor={doctor} onBook={handleBook} />
+              </div>
+            ))
             : // Render Empty State nếu không có bác sĩ và không đang loading
-              !loading &&
-              !isSearching && (
-                <div className="col-span-full flex flex-col items-center justify-center text-center py-16">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-12 h-12 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Không tìm thấy bác sĩ
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    {debouncedSearchRef.current
-                      ? `Không tìm thấy bác sĩ nào với từ khóa "${debouncedSearchRef.current}"`
-                      : "Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm"}
-                  </p>
-                  <button
-                    onClick={clearFilters}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl transition-colors"
-                  >
-                    Xóa bộ lọc
-                  </button>
+            !loading &&
+            !isSearching && (
+              <div className="col-span-full flex flex-col items-center justify-center text-center py-16">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-12 h-12 text-gray-400" />
                 </div>
-              )}
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Không tìm thấy bác sĩ
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {debouncedSearchRef.current
+                    ? `Không tìm thấy bác sĩ nào với từ khóa "${debouncedSearchRef.current}"`
+                    : "Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm"}
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl transition-colors"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            )}
         </div>
 
         {totalPages > 1 && (

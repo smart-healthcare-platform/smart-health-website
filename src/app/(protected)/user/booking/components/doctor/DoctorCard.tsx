@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
 import { Award, Clock, Star, Eye } from "lucide-react";
-import type { Doctor } from "@/types";
+import type { Doctor, DoctorDetail } from "@/types";
 
 interface Props {
-  doctor: Doctor;
+  doctor: Doctor | DoctorDetail;
   isSelected: boolean;
   onSelect: () => void;
 }
@@ -31,12 +31,12 @@ export default function DoctorCard({ doctor, isSelected, onSelect }: Props) {
 
         {/* Name + Degree */}
         <h3 className="text-xl font-bold text-gray-900">{doctor.display_name}</h3>
-        <div className="mt-2">
+        {/* <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
             <Award className="w-4 h-4" />
             {doctor.degree}
           </span>
-        </div>
+        </div> */}
 
         <p className="text-sm text-gray-500 mt-2">{doctor.specialty}</p>
       </div>

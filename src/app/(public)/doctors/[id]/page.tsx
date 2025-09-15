@@ -9,7 +9,9 @@ import { Calendar, Clock, Star, GraduationCap, Phone, Mail, Shield, CheckCircle,
 import type { DoctorDetail } from "@/types"
 import { doctorService } from "@/services/doctorService"
 import Loading from "@/components/ui/loading"
-
+import { useDispatch } from "react-redux"
+import { useRouter } from "next/navigation";
+import { setDoctor } from "@/redux/slices/bookingSlice";
 const dayTranslations: { [key: string]: string } = {
   mon: "Thứ 2",
   tue: "Thứ 3",
@@ -22,17 +24,18 @@ const dayTranslations: { [key: string]: string } = {
 
 export default function DoctorDetailPage() {
   const params = useParams()
-  const [doctor, setDoctor] = useState<DoctorDetail | null>(null)
+  const [doctorDetail, setDoctorDetail] = useState<DoctorDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  const dispatch = useDispatch();
+  const router = useRouter();
   useEffect(() => {
     const doctorId = Array.isArray(params.id) ? params.id[0] : params.id
     if (!doctorId) return
 
     doctorService
       .getDoctorById(doctorId)
-      .then(setDoctor)
+      .then(setDoctorDetail)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [params.id])
@@ -41,10 +44,6 @@ export default function DoctorDetailPage() {
     if (ratings.length === 0) return 0
     const sum = ratings.reduce((acc, rating) => acc + rating.rating, 0)
     return (sum / ratings.length).toFixed(1)
-  }
-
-  const formatTime = (time: string) => {
-    return time.slice(0, 5)
   }
 
   const formatDate = (dateInput: string | Date | null) => {
@@ -83,7 +82,7 @@ export default function DoctorDetailPage() {
     )
   }
 
-  if (!doctor) {
+  if (!doctorDetail) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center p-6 bg-white rounded-lg shadow-md border border-gray-200">
@@ -93,8 +92,8 @@ export default function DoctorDetailPage() {
     )
   }
 
-  const degrees = doctor.certificates.filter((cert) => cert.type === "degree")
-  const licenses = doctor.certificates.filter((cert) => cert.type === "license")
+  const degrees = doctorDetail.certificates.filter((cert) => cert.type === "degree")
+  const licenses = doctorDetail.certificates.filter((cert) => cert.type === "license")
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -106,9 +105,9 @@ export default function DoctorDetailPage() {
               {/* Avatar */}
               <div className="relative shrink-0">
                 <Avatar className="w-28 h-28 ring-4 ring-emerald-100 shadow-md">
-                  <AvatarImage src={doctor.avatar || "/placeholder.svg"} alt={doctor.full_name} />
+                  <AvatarImage src={doctorDetail.avatar || "/placeholder.svg"} alt={doctorDetail.full_name} />
                   <AvatarFallback className="text-2xl bg-emerald-500 text-white">
-                    {doctor.full_name
+                    {doctorDetail.full_name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
@@ -119,30 +118,34 @@ export default function DoctorDetailPage() {
 
               {/* Thông tin bác sĩ */}
               <div className="text-left">
-                <h1 className="text-3xl font-bold text-gray-900">{doctor.display_name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{doctorDetail.display_name}</h1>
 
                 <div className="flex flex-wrap items-center gap-4 mt-2">
                   <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full 
                            bg-gradient-to-r from-emerald-500 to-emerald-600 
                            text-white font-medium shadow">
                     <HeartPulse className="w-4 h-4" />
-                    {doctor.specialty}
+                    {doctorDetail.specialty}
                   </span>
-                  <span className="text-gray-700 font-medium">{doctor.experience_years} năm kinh nghiệm</span>
+                  <span className="text-gray-700 font-medium">{doctorDetail.experience_years} năm kinh nghiệm</span>
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-gray-800 font-semibold">{calculateAverageRating(doctor.ratings)}</span>
-                    <span className="text-gray-500 text-sm">({doctor.ratings.length} đánh giá)</span>
+                    <span className="text-gray-800 font-semibold">{calculateAverageRating(doctorDetail.ratings)}</span>
+                    <span className="text-gray-500 text-sm">({doctorDetail.ratings.length} đánh giá)</span>
                   </div>
                 </div>
 
-                <p className="text-gray-600 mt-3 max-w-xl">{doctor.bio}</p>
+                <p className="text-gray-600 mt-3 max-w-xl">{doctorDetail.bio}</p>
               </div>
             </div>
 
             {/* Action bên phải */}
             <div className="shrink-0">
               <Button
+                onClick={() => {
+                  dispatch(setDoctor(doctorDetail)); // lưu bác sĩ vào redux
+                  router.push("/user/booking/step-2"); // nhảy thẳng Step 2
+                }}
                 className="
           px-8 py-3 
           bg-gradient-to-r from-emerald-600 to-emerald-500
@@ -174,15 +177,15 @@ export default function DoctorDetailPage() {
                   <Phone className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-500">Điện thoại</p>
-                    <p className="font-medium text-gray-800">{formatPhoneNumber(doctor.phone)}</p>
+                    <p className="font-medium text-gray-800">{formatPhoneNumber(doctorDetail.phone)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
                   <Mail className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium text-gray-800 truncate" title={doctor.email}>
-                      {doctor.email}
+                    <p className="font-medium text-gray-800 truncate" title={doctorDetail.email}>
+                      {doctorDetail.email}
                     </p>
                   </div>
                 </div>
@@ -244,7 +247,7 @@ export default function DoctorDetailPage() {
             {/* Ratings */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Đánh giá từ bệnh nhân</h2>
-              {doctor.ratings.map((rating) => (
+              {doctorDetail.ratings.map((rating) => (
                 <div key={rating.id} className="p-4 bg-gray-50 rounded-lg mb-3">
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center gap-2">
@@ -270,7 +273,7 @@ export default function DoctorDetailPage() {
               {/* Schedule */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Lịch làm việc</h3>
-                {doctor.availabilities.map((availability) => (
+                {doctorDetail.availabilities.map((availability) => (
                   <div
                     key={availability.id}
                     className="flex justify-between items-center p-3 bg-blue-50 rounded-lg mb-2"
@@ -278,12 +281,10 @@ export default function DoctorDetailPage() {
                     <span className="font-medium text-gray-800">
                       {dayTranslations[availability.day_of_week]}
                     </span>
-                    <div className="flex items-center gap-2 text-blue-600 text-sm">
+                    {/* <div className="flex items-center gap-2 text-blue-600 text-sm">
                       <Clock className="w-4 h-4" />
-                      <span>
-                        {formatTime(availability.start_time)} - {formatTime(availability.end_time)}
-                      </span>
-                    </div>
+                      <span>{shiftToTime[availability.] || "—"}</span>
+                    </div> */}
                   </div>
                 ))}
               </div>
@@ -294,18 +295,18 @@ export default function DoctorDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Tổng đánh giá</span>
-                    <span className="font-medium text-gray-800">{doctor.ratings.length}</span>
+                    <span className="font-medium text-gray-800">{doctorDetail.ratings.length}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Điểm trung bình</span>
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium text-gray-800">{calculateAverageRating(doctor.ratings)}</span>
+                      <span className="font-medium text-gray-800">{calculateAverageRating(doctorDetail.ratings)}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Kinh nghiệm</span>
-                    <span className="font-medium text-gray-800">{doctor.experience_years} năm</span>
+                    <span className="font-medium text-gray-800">{doctorDetail.experience_years} năm</span>
                   </div>
                 </div>
               </div>

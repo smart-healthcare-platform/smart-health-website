@@ -1,10 +1,10 @@
 import React from 'react';
 import { Calendar, Clock, User } from 'lucide-react';
-import { Doctor, PatientFormData } from '@/types';
+import { Doctor, DoctorDetail, PatientFormData } from '@/types';
 
 interface BookingSummaryProps {
-  selectedDoctor: Doctor | null;
-  selectedDate: Date | null;
+  selectedDoctor: Doctor|DoctorDetail | null;
+  selectedDate: string | null;   // 🔹 đổi từ Date sang string
   selectedTime: string | null;
   formData: PatientFormData;
 }
@@ -27,13 +27,13 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               <User className="w-8 h-8 text-gray-400" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">{selectedDoctor.name}</h4>
+              <h4 className="font-semibold text-gray-900">{selectedDoctor.display_name}</h4>
               <p className="text-emerald-600 text-sm">{selectedDoctor.specialty}</p>
-              <p className="text-gray-500 text-sm">{selectedDoctor.experience}</p>
+              <p className="text-gray-500 text-sm">{selectedDoctor.experience_years}</p>
             </div>
-            <div className="text-right">
-              <p className="font-semibold text-gray-900">{selectedDoctor.price.toLocaleString()}đ</p>
-            </div>
+            {/* <div className="text-right">
+              <p className="font-semibold text-gray-900">{selectedDoctor..toLocaleString()}đ</p>
+            </div> */}
           </div>
         )}
         
@@ -44,7 +44,9 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               <Calendar className="w-6 h-6 text-emerald-600" />
               <div>
                 <p className="text-sm text-gray-500">Ngày khám</p>
-                <p className="font-semibold">{selectedDate.toLocaleDateString('vi-VN')}</p>
+                <p className="font-semibold">
+                  {new Date(selectedDate).toLocaleDateString('vi-VN')}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
@@ -75,14 +77,14 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         </div>
         
         {/* Total */}
-        {selectedDoctor && (
+        {/* {selectedDoctor && (
           <div className="border-t pt-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900">Tổng cộng:</span>
               <span className="text-2xl font-bold text-emerald-600">{selectedDoctor.price.toLocaleString()}đ</span>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

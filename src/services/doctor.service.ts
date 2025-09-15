@@ -5,7 +5,8 @@ import { Doctor, DoctorDetail, PaginatedResponse } from "@/types"
 export const doctorService = {
   async getPublicDoctors(page = 1, limit = 6, search = "") {
     const res = await api.get<{ data: PaginatedResponse<Doctor> }>("/public/doctors", { params: { page, limit, search } })
-    return res.data.data
+    console.log(res.data)
+    return res.data
   },
 
   async getDoctorById(id: string): Promise<DoctorDetail> {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Heart, Shield, Activity, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useDispatch } from "react-redux"
 import { setCredentials } from "@/redux/slices/authSlice"
-import { authService } from '@/services/authService';
+import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
 export default function ModernHealthLogin() {
   const [email, setEmail] = useState('');
@@ -16,26 +16,33 @@ export default function ModernHealthLogin() {
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const { token, user } = await authService.login(email, password)
-      dispatch(setCredentials({ token, user }))
-      if (user.role === "Admin") {
-        router.push("/admin/dashboard")
+      const { token, user } = await authService.login(email, password);
+      dispatch(setCredentials({ token, user }));
+
+      // Lấy redirect từ query (nếu có)
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+
+      if (redirect) {
+        router.push(redirect); // quay về step-3
+      } else if (user.role === "Admin") {
+        router.push("/admin/dashboard");
       } else if (user.role === "DOCTOR") {
-        router.push("/doctor")
+        router.push("/doctor");
       } else {
-        router.push("/")
+        router.push("/");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Đăng nhập thất bại')
+      setError(err.response?.data?.message || "Đăng nhập thất bại");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 relative overflow-hidden">

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearAuth } from "@/redux/slices/authSlice";
-import { authService } from "@/services/authService";
+import { authService } from "@/services/auth.service";
 import type { RootState } from "@/redux";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function Header() {
 
   const menuItems = [
     { name: "Trang chủ", path: "/" },
-    { name: "Đặt lịch", path: "/user/booking" },
+    { name: "Đặt lịch", path: "/user/booking/step-1" },
     { name: "Bác sĩ", path: "/doctors" },
     { name: "Dịch vụ", path: "/services" },
     { name: "Hỗ trợ", path: "/support" },

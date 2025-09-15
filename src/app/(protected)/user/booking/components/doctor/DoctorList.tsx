@@ -2,12 +2,12 @@
 "use client";
 import DoctorCard from "./DoctorCard";
 import Loading from "@/components/ui/loading";
-import { Doctor } from "@/types";
+import { Doctor, DoctorDetail } from "@/types";
 
 interface DoctorListProps {
   doctors: Doctor[];
   loading: boolean;
-  selectedDoctor: Doctor | null;
+  selectedDoctor: Doctor |DoctorDetail| null;
   onDoctorSelect: (doctor: Doctor) => void;
   searchValue: string;
   setSearch: (value: string) => void;

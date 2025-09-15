@@ -4,7 +4,7 @@ import './globals.css'
 import { Provider, useDispatch } from 'react-redux'
 import { store } from '@/redux'
 import { useEffect } from 'react'
-import { authService } from '@/services/authService'
+import { authService } from '@/services/auth.service'
 import { setCredentials, clearAuth } from '@/redux/slices/authSlice'
 
 // Component client side để init auth khi load app
