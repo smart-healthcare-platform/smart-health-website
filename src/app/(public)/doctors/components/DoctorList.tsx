@@ -195,37 +195,6 @@ export default function DoctorList() {
     [total, doctorsPerPage]
   );
 
-  const specialties = useMemo(
-    () => Array.from(new Set(doctors.map((d) => d.specialty))),
-    [doctors]
-  );
-
-  // Pagination numbers
-  const paginationNumbers = useMemo(() => {
-    const pages = [];
-    const maxVisible = 5;
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else if (currentPage <= 3) {
-      for (let i = 1; i <= maxVisible; i++) {
-        pages.push(i);
-      }
-    } else if (currentPage >= totalPages - 2) {
-      for (let i = totalPages - 4; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
-  }, [currentPage, totalPages]);
-
   // Show loading only for initial load
   if (loading && doctors.length === 0) return <Loading />;
 

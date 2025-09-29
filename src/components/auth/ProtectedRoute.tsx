@@ -1,10 +1,10 @@
 "use client";
+
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ShieldAlert } from "lucide-react"; // [MỚI] Thêm icon cho sinh động
+import { ShieldAlert } from "lucide-react"; 
 
-// [THAY ĐỔI] Import các component đã được style từ shadcn/ui
 import {
   Dialog,
   DialogContent,
@@ -20,13 +20,12 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    // Chỉ mở modal nếu người dùng chưa đăng nhập
     if (!isLoggedIn) {
       setIsModalOpen(true);
     }
@@ -42,7 +41,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       <Dialog open={isModalOpen}>
         <DialogContent
           className="sm:max-w-[425px]"
-          // Ngăn người dùng đóng modal bằng cách click ra ngoài
           onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
@@ -51,8 +49,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
               Yêu cầu đăng nhập
             </DialogTitle>
             <DialogDescription>
-              Bạn cần đăng nhập để có thể truy cập vào trang này. Vui lòng đăng
-              nhập để tiếp tục.
+              Bạn cần đăng nhập để có thể truy cập vào trang này. 
+              Vui lòng đăng nhập để tiếp tục.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -65,8 +63,5 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Nếu đã đăng nhập, hiển thị nội dung được bảo vệ
   return <>{children}</>;
-};
-
-export default ProtectedRoute;
+}

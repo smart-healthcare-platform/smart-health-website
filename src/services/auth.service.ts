@@ -1,4 +1,4 @@
-import api from '@/lib/axios'
+import api, { apiNoAuth } from '@/lib/axios'
 
 export const authService = {
   refreshToken: async () => {
@@ -6,7 +6,7 @@ export const authService = {
     return res.data.data 
   },
   login: async (email: string, password: string) => {
-    const res = await api.post('/auth/login', { email, password })
+    const res = await apiNoAuth.post('/auth/login', { email, password })
     return res.data.data 
   },
   logout: async () => {

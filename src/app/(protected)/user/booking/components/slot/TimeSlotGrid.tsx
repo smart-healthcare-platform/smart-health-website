@@ -96,7 +96,7 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
                   }`}
                 >
                   {slot.time}
-                  {slot.status === "booked" && <div className="text-xs mt-1">Đã đặt</div>}
+                  {slot.status === "booked" && <div className="text-xs mt-1"></div>}
                   {slot.status === "off" && <div className="text-xs mt-1">Nghỉ</div>}
                 </button>
               )

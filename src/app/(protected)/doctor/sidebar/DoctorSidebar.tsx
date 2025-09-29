@@ -44,16 +44,6 @@ export function DoctorSidebar() {
 
   return (
     <div className="flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">
-      {/* Logo */}
-      {/* <div className="flex items-center gap-2 p-6 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-          <Heart className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-sidebar-foreground">HealthSmart</h2>
-          <p className="text-xs text-muted-foreground">Bác sĩ</p>
-        </div>
-      </div> */}
 
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">

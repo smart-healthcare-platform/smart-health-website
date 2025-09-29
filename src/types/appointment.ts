@@ -1,35 +1,25 @@
-import { Patient } from "./patient"
-
 export interface Appointment {
   id: string
-  patientId: string
-  patient: Patient
-
-  // Scheduling
-  date: string
-  startTime: string
-  endTime: string
-  duration: number // in minutes
-
-  // Appointment Details
-  type: "consultation" | "follow-up" | "checkup" | "surgery" | "emergency"
-  reason: string
-  notes?: string
-  status: "scheduled" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show"
-
-  // Provider & Location
   doctorId: string
   doctorName: string
-  department: string
-  roomNumber?: string
-
-  // Integration
-  googleEventId?: string
-  googleCalendarId?: string
-
-  // System fields
+  patientId: string
+  patientName:string
+  slotId: string
+  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show"
+  type: "Khám bệnh" | "Tái khám"
+  notes: string
   createdAt: string
   updatedAt: string
+  startAt:string
+}
+
+export interface AppointmentResponse {
+
+  appointments: Appointment[]
+  total: number
+  page: number
+  limit: number
+
 }
 
 export type ViewMode = "table" | "calendar"
@@ -44,12 +34,14 @@ export interface AppointmentFilters {
   doctorId?: string
   department?: string
 }
+
 export interface CreateAppointmentPayload {
   doctorId: string
   slotId: string
-  patientId: string
+  userId: string
   date: string
-  reason: string
   type?: Appointment["type"]
-  notes?: string
+  notes?: string,
+  doctorName: string
+  startAt:string
 }

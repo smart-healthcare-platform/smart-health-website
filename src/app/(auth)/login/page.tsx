@@ -5,6 +5,8 @@ import { useDispatch } from "react-redux"
 import { setCredentials } from "@/redux/slices/authSlice"
 import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
+import { patientService } from '@/services/patient.service';
+import { apiNoAuth } from '@/lib/axios';
 export default function ModernHealthLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,16 +24,29 @@ export default function ModernHealthLogin() {
 
     try {
       const { token, user } = await authService.login(email, password);
-      dispatch(setCredentials({ token, user }));
+
+      let patientId = "";
+      if (user.role === "PATIENT") {
+        const patient = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res => res.data);
+        patientId = patient.data.id;
+      }
+
+      // Dispatch vào Redux
+      dispatch(setCredentials({
+        token,
+        user: { ...user, patientId }
+      }));
 
       // Lấy redirect từ query (nếu có)
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect");
 
       if (redirect) {
-        router.push(redirect); // quay về step-3
-      } else if (user.role === "Admin") {
-        router.push("/admin/dashboard");
+        router.push(redirect);
+      } else if (user.role === "ADMIN") {
+        router.push("/admin");
       } else if (user.role === "DOCTOR") {
         router.push("/doctor");
       } else {
@@ -43,6 +58,7 @@ export default function ModernHealthLogin() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 relative overflow-hidden">

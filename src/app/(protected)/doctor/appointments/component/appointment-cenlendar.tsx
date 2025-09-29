@@ -1,209 +1,120 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useSelector } from "react-redux"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react"
+import { useAppointments } from "@/hooks/useAppointments"
+import Loading from "@/components/ui/loading"
+import { DayAppointmentsModal } from "@/components/ui/day-appointment-modal"
 import type { Appointment } from "@/types/appointment"
 
-interface AppointmentCalendarProps {
-  appointments: Appointment[]
-  loading?: boolean
-  onDateSelect?: (date: string) => void
-  onAppointmentClick?: (appointment: Appointment) => void
-}
+export function AppointmentCalendar() {
+  // 🔹 Lấy doctorId từ Redux (giả sử doctor slice có currentDoctor)
+  const doctorId = 'a84d38d8-eb22-48a7-aa5f-1927b83fcfd8'
 
-export function AppointmentCalendar({
-  appointments,
-  loading = false,
-  onDateSelect,
-  onAppointmentClick,
-}: AppointmentCalendarProps) {
+  const { appointments, loading } = useAppointments(doctorId)
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedAppointments, setSelectedAppointments] = useState<Appointment[]>([])
 
-  const today = new Date()
+  if (loading) return <Loading />
+
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
+  const today = new Date()
 
-  // Get first day of month and number of days
-  const firstDayOfMonth = new Date(year, month, 1)
-  const lastDayOfMonth = new Date(year, month + 1, 0)
-  const firstDayWeekday = firstDayOfMonth.getDay()
-  const daysInMonth = lastDayOfMonth.getDate()
+  const firstDay = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const offset = firstDay.getDay()
+  const calendarDays = [...Array(offset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
 
-  // Generate calendar days
-  const calendarDays = []
-
-  // Add empty cells for days before month starts
-  for (let i = 0; i < firstDayWeekday; i++) {
-    calendarDays.push(null)
-  }
-
-  // Add days of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day)
-  }
-
-  const navigateMonth = (direction: "prev" | "next") => {
-    setCurrentDate((prev) => {
-      const newDate = new Date(prev)
-      if (direction === "prev") {
-        newDate.setMonth(prev.getMonth() - 1)
-      } else {
-        newDate.setMonth(prev.getMonth() + 1)
-      }
-      return newDate
-    })
-  }
-
-  const getAppointmentsForDate = (day: number) => {
+  const getAppointmentsForDate = (day: number): Appointment[] => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-    return appointments.filter((apt) => apt.date === dateStr)
+    return appointments?.filter((apt) => apt.startAt?.startsWith(dateStr)) ?? []
   }
 
-  const isToday = (day: number) => {
-    return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
-  }
-
-  const getStatusColor = (status: Appointment["status"]) => {
-    const colors = {
-      confirmed: "bg-green-500",
-      pending: "bg-yellow-500",
-      cancelled: "bg-red-500",
-      completed: "bg-blue-500",
-    }
-    return colors[status]
-  }
-
-  const monthNames = [
-    "Tháng 1",
-    "Tháng 2",
-    "Tháng 3",
-    "Tháng 4",
-    "Tháng 5",
-    "Tháng 6",
-    "Tháng 7",
-    "Tháng 8",
-    "Tháng 9",
-    "Tháng 10",
-    "Tháng 11",
-    "Tháng 12",
-  ]
-
-  const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-muted-foreground">Đang tải lịch...</div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const getStatusColor = (status: Appointment["status"]) => ({
+    confirmed: "bg-green-500",
+    pending: "bg-yellow-500",
+    "in-progress": "bg-purple-500",
+    completed: "bg-blue-500",
+    cancelled: "bg-red-500",
+    "no-show": "bg-gray-400",
+  }[status])
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
-            Lịch hẹn
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex gap-2 items-center">
+            <CalendarIcon className="w-5 h-5" /> Lịch hẹn
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")}>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date(year, month - 1, 1))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <div className="text-lg font-medium min-w-[140px] text-center">
-              {monthNames[month]} {year}
+            <div className="font-medium min-w-[120px] text-center">
+              Tháng {month + 1} {year}
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigateMonth("next")}>
+            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date(year, month + 1, 1))}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {dayNames.map((day) => (
-            <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-              {day}
-            </div>
-          ))}
-        </div>
 
+      <CardContent>
         <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, index) => {
-            if (day === null) {
-              return <div key={index} className="p-2 h-24" />
-            }
+          {calendarDays.map((day, idx) => {
+            if (!day) return <div key={idx} className="h-24" />
 
             const dayAppointments = getAppointmentsForDate(day)
-            const isCurrentDay = isToday(day)
 
             return (
               <div
                 key={day}
-                className={`
-                  p-2 h-24 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50
-                  ${isCurrentDay ? "bg-primary/10 border-primary" : "border-border"}
-                `}
+                className={`p-2 h-24 border rounded-lg cursor-pointer hover:bg-muted/50 ${
+                  today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
+                    ? "bg-primary/10 border-primary"
+                    : ""
+                }`}
                 onClick={() => {
-                  const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                  onDateSelect?.(dateStr)
+                  setSelectedDate(`${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`)
+                  setSelectedAppointments(dayAppointments)
                 }}
               >
-                <div className={`text-sm font-medium mb-1 ${isCurrentDay ? "text-primary" : ""}`}>{day}</div>
-
+                <div className="font-medium">{day}</div>
                 <div className="space-y-1">
-                  {dayAppointments.slice(0, 2).map((appointment) => (
+                  {dayAppointments.slice(0, 2).map((apt) => (
                     <div
-                      key={appointment.id}
-                      className="text-xs p-1 rounded bg-card border cursor-pointer hover:bg-accent/50 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onAppointmentClick?.(appointment)
-                      }}
+                      key={apt.id}
+                      className="text-xs p-1 border rounded truncate flex items-center gap-1"
                     >
-                      <div className="flex items-center gap-1">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(appointment.status)}`} />
-                        <span className="truncate font-medium">{appointment.startTime}</span>
-                      </div>
-                      <div className="truncate text-muted-foreground">{appointment.patient}</div>
+                      <span className={`w-2 h-2 rounded-full ${getStatusColor(apt.status)}`} />
+                      <span>{apt.patientName}</span>
                     </div>
                   ))}
-
                   {dayAppointments.length > 2 && (
-                    <div className="text-xs text-muted-foreground text-center">+{dayAppointments.length - 2} khác</div>
+                    <div className="text-xs text-primary">+{dayAppointments.length - 2} lịch hẹn</div>
                   )}
                 </div>
               </div>
             )
           })}
         </div>
-
-        {/* Legend */}
-        <div className="mt-6 flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span>Đã xác nhận</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span>Chờ xác nhận</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span>Hoàn thành</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span>Đã hủy</span>
-          </div>
-        </div>
       </CardContent>
+
+      {/* TODO: Modal chi tiết lịch hẹn */}
+      {/* {selectedDate && (
+        <DayAppointmentsModal
+          open
+          date={selectedDate}
+          appointments={selectedAppointments}
+          onClose={() => setSelectedDate(null)}
+        />
+      )} */}
     </Card>
   )
 }

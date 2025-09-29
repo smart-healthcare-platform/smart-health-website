@@ -42,6 +42,7 @@ export default function Step1() {
   }, [fetchDoctors]);
 
   return (
+    
     <DoctorSelection
       doctors={doctors}
       loading={loading}
