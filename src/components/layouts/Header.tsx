@@ -10,56 +10,51 @@ import { useRouter } from "next/navigation";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  
+
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const router = useRouter();
 
-  // Header chỉ đọc state từ Redux
-  const { user, accessToken, isInitialized } = useSelector((state: RootState) => state.auth);
-  const isAuthenticated = !!accessToken && !!user;
+  const { user, isInitialized } = useSelector((state: RootState) => state.auth)
+  const isAuthenticated = !!user
 
-  // --- Toggle menus ---
-  const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
-  const toggleUserMenu = useCallback(() => setIsUserMenuOpen(prev => !prev), []);
+  const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), [])
+  const toggleUserMenu = useCallback(() => setIsUserMenuOpen((prev) => !prev), [])
 
   // --- Logout ---
   const handleLogout = useCallback(async () => {
     try {
-      await authService.logout();
+      await authService.logout()
     } catch (err) {
-      console.error("Logout failed:", err);
+      console.error("Logout failed:", err)
     } finally {
-      dispatch(clearAuth());
-      setIsUserMenuOpen(false);
-      router.push("/");
+      dispatch(clearAuth())
+      setIsUserMenuOpen(false)
+      router.push("/")
     }
-  }, [dispatch, router]);
+  }, [dispatch, router])
 
-  // --- Close user menu when clicking outside ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
+        setIsUserMenuOpen(false)
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
-  // --- Avatar helpers ---
-  const getUserInitials = (username?: string) => {
-    return username ? username.charAt(0).toUpperCase() : "U";
-  };
+  const getUserInitials = (username?: string) =>
+    username ? username.charAt(0).toUpperCase() : "U"
 
   const getAvatarColor = (username?: string) => {
-    if (!username) return "bg-gray-500";
+    if (!username) return "bg-gray-500"
     const colors = [
       "bg-red-500", "bg-blue-500", "bg-green-500", "bg-purple-500",
       "bg-pink-500", "bg-indigo-500", "bg-yellow-500", "bg-teal-500",
-    ];
-    return colors[username.charCodeAt(0) % colors.length];
-  };
+    ]
+    return colors[username.charCodeAt(0) % colors.length]
+  }
 
   // --- Static data ---
   const menuItems = [
@@ -80,7 +75,7 @@ export default function Header() {
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 fixed top-0 w-full z-50 shadow-sm">
       <div className="container mx-auto px-4 lg:px-6">
         <div className="flex justify-between items-center h-16">
-          
+
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -111,7 +106,7 @@ export default function Header() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            
+
             {/* User Menu hoặc Login Button với Loading State - Cố định kích thước */}
             <div className="hidden sm:block min-w-[120px]">
               {!isInitialized ? (
@@ -205,7 +200,7 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
-              
+
               {/* Mobile Auth Section với kích thước cố định */}
               <div className="border-t border-gray-100 mt-4 pt-4">
                 <div className="min-h-[48px] flex items-center">

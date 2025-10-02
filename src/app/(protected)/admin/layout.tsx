@@ -5,7 +5,11 @@ import { AdminSidebar } from "./common/admin-sidebar";
 import { AdminHeader } from "./common/admin-header";
 import GuardWrapper from "@/components/auth/GuardWrapper";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <GuardWrapper allowedRoles={["ADMIN"]}>
       <div className="min-h-screen">

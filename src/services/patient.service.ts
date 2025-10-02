@@ -1,5 +1,4 @@
-import api from '@/lib/axios'
-import { Patient } from '@/types';
+import { api } from '@/lib/axios';
 
 export const patientService = {
     getByUserId: async (userId: string, token?: string) => {

@@ -1,24 +1,24 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface User {
-  id: string
-  username: string
-  role: string
-  createdAt: string
-  patientId?: string
+  id: string;
+  username: string;
+  role: string;
+  createdAt: string;
+  patientId?: string;
 }
 
 interface AuthState {
-  accessToken: string | null
-  user: User | null
-  isInitialized: boolean // Thêm field này
+  token: string | null;
+  user: User | null;
+  isInitialized: boolean;
 }
 
 const initialState: AuthState = {
-  accessToken: null,
+  token: null,
   user: null,
-  isInitialized: false, // Mặc định chưa khởi tạo
-}
+  isInitialized: false,
+};
 
 const authSlice = createSlice({
   name: "auth",
@@ -28,20 +28,20 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{ token: string; user: User }>
     ) => {
-      state.accessToken = action.payload.token
-      state.user = action.payload.user
-      state.isInitialized = true 
+      state.token = action.payload.token;
+      state.user = action.payload.user;
+      state.isInitialized = true;
     },
     clearAuth: (state) => {
-      state.accessToken = null
-      state.user = null
-      state.isInitialized = true
+      state.token = null;
+      state.user = null;
+      state.isInitialized = true;
     },
     setInitialized: (state) => {
-      state.isInitialized = true 
+      state.isInitialized = true;
     },
   },
-})
+});
 
-export const { setCredentials, clearAuth, setInitialized } = authSlice.actions
-export default authSlice.reducer
+export const { setCredentials, clearAuth, setInitialized } = authSlice.actions;
+export default authSlice.reducer;

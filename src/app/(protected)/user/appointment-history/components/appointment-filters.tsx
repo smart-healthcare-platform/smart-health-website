@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Calendar, Activity, ChevronDown, ChevronUp } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import useDebounce from "@/hooks/useDebounce"
+import useDebounce from "@/hooks/use-debounce"
 
 interface Filters {
   status: string

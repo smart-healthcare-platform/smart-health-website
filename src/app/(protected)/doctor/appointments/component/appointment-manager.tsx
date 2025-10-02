@@ -10,10 +10,10 @@ import type { ViewMode } from "@/types/appointment"
 
 export function AppointmentManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("calendar")
-
+  const doctorId='c3b06848-1d8e-4ec8-ae63-d4b9f4f69a9b'
   const handleCreateAppointment = () => {
+    // mở modal hoặc điều hướng sang trang tạo lịch hẹn
     console.log("Create new appointment")
-    // TODO: mở modal thêm lịch hẹn
   }
 
   return (
@@ -33,7 +33,7 @@ export function AppointmentManager() {
       </div>
 
       {/* Toggle view */}
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+      <Tabs value={viewMode} onValueChange={(val) => setViewMode(val as ViewMode)}>
         <TabsList className="grid w-fit grid-cols-2">
           <TabsTrigger value="table" className="gap-2">
             <Table className="w-4 h-4" />
@@ -45,15 +45,14 @@ export function AppointmentManager() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Bảng */}
+        {/* View: Bảng */}
         <TabsContent value="table" className="mt-6">
-          {/* TODO: hiển thị bảng lịch hẹn */}
           {/* <AppointmentTable /> */}
         </TabsContent>
 
-        {/* Lịch */}
+        {/* View: Lịch */}
         <TabsContent value="calendar" className="mt-6">
-          <AppointmentCalendar />
+          <AppointmentCalendar doctorId={doctorId} />
         </TabsContent>
       </Tabs>
     </div>

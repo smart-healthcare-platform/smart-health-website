@@ -14,7 +14,7 @@ import {
 import { doctorService } from "@/services/doctor.service";
 import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
-import useDebounce from "@/hooks/useDebounce";
+import useDebounce from "@/hooks/use-debounce";
 import AppPagination from "@/components/ui/AppPagination";
 import { useDispatch } from "react-redux";
 import { setDoctor } from "@/redux/slices/bookingSlice";

@@ -2,11 +2,11 @@ import axios from 'axios'
 import { store } from '../redux'
 import { setCredentials, clearAuth } from '../redux/slices/authSlice'
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
 })
-const refreshApi = axios.create({
+export const refreshApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
 })
@@ -16,7 +16,7 @@ export const apiNoAuth = axios.create({
 });
 // Request interceptor: gắn accessToken
 api.interceptors.request.use(async (config) => {
-  let token = store.getState().auth.accessToken
+  let token = store.getState().auth.token
 
   // Nếu chưa có token → chờ Redux cập nhật tối đa 2s
   if (!token) {
@@ -27,7 +27,7 @@ api.interceptors.request.use(async (config) => {
       }, 2000) // ⏱️ chờ tối đa 2s
 
       const unsubscribe = store.subscribe(() => {
-        token = store.getState().auth.accessToken
+        token = store.getState().auth.token
         if (token) {
           clearTimeout(timeout)
           unsubscribe()
@@ -85,4 +85,4 @@ api.interceptors.request.use(async (config) => {
 // )
 
 
-export default api
+

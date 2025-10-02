@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { selectUser, selectIsLoggedIn } from "@/redux/selectors/authSelectors";
+import {
+  selectUser,
+  selectIsLoggedIn,
+  selectIsInitialized,
+} from "@/redux/selectors/authSelectors";
 import Loading from "../ui/loading";
 
 interface GuardWrapperProps {
@@ -17,29 +21,33 @@ export default function GuardWrapper({
 }: GuardWrapperProps) {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const user = useSelector(selectUser);
+  const isInitialized = useSelector(selectIsInitialized);
   const router = useRouter();
-  const [status, setStatus] = useState<"checking" | "denied" | "allowed">(
+
+  const [status, setStatus] = useState<"checking" | "allowed" | "denied">(
     "checking"
   );
 
   useEffect(() => {
+    if (!isInitialized) return; 
+
     if (!isLoggedIn) {
+      setStatus("denied");
       router.replace("/login");
-      setStatus("denied");
     } else if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      router.replace("/unauthorized");
       setStatus("denied");
+      router.replace("/unauthorized");
     } else {
       setStatus("allowed");
     }
-  }, [isLoggedIn, user, allowedRoles, router]);
+  }, [isInitialized, isLoggedIn, user, allowedRoles, router]);
 
   if (status === "checking") {
-    return <Loading fullScreen />; 
+    return <Loading fullScreen />;
   }
 
   if (status === "denied") {
-    return null; 
+    return null;
   }
 
   return <>{children}</>;

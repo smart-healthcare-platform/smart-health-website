@@ -1,4 +1,4 @@
-import api from '@/lib/axios'
+import { api } from '@/lib/axios';
 import { Appointment, AppointmentResponse, CreateAppointmentPayload } from '@/types';
 
 export const appointmentService = {
@@ -11,14 +11,12 @@ export const appointmentService = {
     return res.data.data
   },
 
-  // Lấy tất cả appointment
   async getAll(): Promise<Appointment[]> {
     const res = await api.get<{ success: boolean; data: Appointment[] }>("/appointments")
     if (!res.data.success) return []
     return res.data.data
   },
 
-  // Lấy chi tiết appointment theo id
   async getById(id: string): Promise<Appointment> {
     const res = await api.get<{ success: boolean; data: Appointment }>(`/appointments/${id}`)
     if (!res.data.success) {
@@ -27,7 +25,7 @@ export const appointmentService = {
     return res.data.data
   },
 
-  // Lấy appointment theo bệnh nhân (có phân trang, filter)
+
   async getByPatientId(
     patientId: string,
     page = 1,
@@ -51,10 +49,10 @@ export const appointmentService = {
     page = 1,
     limit = 10,
     status: 'confirmed' | 'completed' | 'cancelled' | 'all' = "all",
-    start?: string,   // thêm
-    end?: string      // thêm
-  ): Promise<AppointmentResponse> {
-    const res = await api.get<{ success: boolean; data: AppointmentResponse }>(
+    start?: string,   
+    end?: string     
+  ): Promise<Appointment[]> {
+    const res = await api.get<{ success: boolean; data: Appointment[] }>(
       `/appointments/doctor/${doctorId}`,
       { params: { page, limit, status, start, end } }
     );
@@ -64,7 +62,7 @@ export const appointmentService = {
     return res.data.data;
   },
 
-  // 🔹 Lấy appointment trong khoảng ngày (cho UI calendar, lọc từ-to)
+
   async getByDateRange(start: string, end: string): Promise<Appointment[]> {
     const res = await api.get<{ success: boolean; data: Appointment[] }>(
       `/appointments`,
@@ -74,7 +72,6 @@ export const appointmentService = {
     return res.data.data
   },
 
-  // 🔹 Cập nhật appointment
   async update(id: string, payload: Partial<CreateAppointmentPayload>): Promise<Appointment> {
     const res = await api.patch<{ success: boolean; data: Appointment }>(`/appointments/${id}`, payload)
     if (!res.data.success) {
@@ -83,7 +80,6 @@ export const appointmentService = {
     return res.data.data
   },
 
-  // Xóa appointment
   async remove(id: string): Promise<void> {
     const res = await api.delete<{ success: boolean; message: string }>(`/appointments/${id}`)
     if (!res.data.success) {

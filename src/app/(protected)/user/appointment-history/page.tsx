@@ -9,7 +9,7 @@ import { Calendar, Clock, CheckCircle, XCircle, Filter as FilterIcon } from "luc
 import type { Appointment, AppointmentResponse } from "@/types/appointment"
 import { appointmentService } from "@/services/appointment.service"
 import { RootState } from "@/redux/index"
-import useDebounce from "@/hooks/useDebounce"
+import useDebounce from "@/hooks/use-debounce"
 import Loading from "@/components/ui/loading"
 
 export default function AppointmentHistoryPage() {
