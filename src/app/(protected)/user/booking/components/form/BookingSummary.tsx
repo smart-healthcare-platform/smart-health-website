@@ -64,10 +64,10 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div><span className="text-gray-500">Điện thoại:</span> <span className="font-medium">{formData.phone || "---"}</span></div>
             <div><span className="text-gray-500">Email:</span> <span className="font-medium">{formData.email || "---"}</span></div>
             <div><span className="text-gray-500">Ngày sinh:</span> <span className="font-medium">{formData.birthDate || "---"}</span></div>
-            {formData.symptoms && (
+            {formData.notes && (
               <div className="md:col-span-2">
                 <span className="text-gray-500">Triệu chứng:</span> 
-                <span className="font-medium ml-2">{formData.symptoms}</span>
+                <span className="font-medium ml-2">{formData.notes}</span>
               </div>
             )}
           </div>

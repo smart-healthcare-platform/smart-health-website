@@ -1,12 +1,12 @@
-import api from '@/lib/axios'
+import{ apiNoAuth, refreshApi,api } from '@/lib/axios'
 
 export const authService = {
   refreshToken: async () => {
-    const res = await api.post('/auth/refresh-token')
+    const res = await refreshApi.post('/auth/refresh-token')
     return res.data.data 
   },
   login: async (email: string, password: string) => {
-    const res = await api.post('/auth/login', { email, password })
+    const res = await apiNoAuth.post('/auth/login', { email, password })
     return res.data.data 
   },
   logout: async () => {

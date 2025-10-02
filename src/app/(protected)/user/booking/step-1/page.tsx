@@ -6,7 +6,7 @@ import { setDoctor } from "@/redux/slices/bookingSlice";
 import DoctorSelection from "../components/doctor/DoctorSelection";
 import { useState, useEffect, useCallback } from "react";
 import { doctorService } from "@/services/doctor.service";
-import useDebounce from "@/hooks/useDebounce";
+import useDebounce from "@/hooks/use-debounce";
 import { Doctor } from "@/types";
 
 const doctorsPerPage = 6;
@@ -42,6 +42,7 @@ export default function Step1() {
   }, [fetchDoctors]);
 
   return (
+    
     <DoctorSelection
       doctors={doctors}
       loading={loading}

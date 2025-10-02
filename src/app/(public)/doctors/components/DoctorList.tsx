@@ -14,7 +14,7 @@ import {
 import { doctorService } from "@/services/doctor.service";
 import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
-import useDebounce from "@/hooks/useDebounce";
+import useDebounce from "@/hooks/use-debounce";
 import AppPagination from "@/components/ui/AppPagination";
 import { useDispatch } from "react-redux";
 import { setDoctor } from "@/redux/slices/bookingSlice";
@@ -194,37 +194,6 @@ export default function DoctorList() {
     () => Math.ceil(total / doctorsPerPage),
     [total, doctorsPerPage]
   );
-
-  const specialties = useMemo(
-    () => Array.from(new Set(doctors.map((d) => d.specialty))),
-    [doctors]
-  );
-
-  // Pagination numbers
-  const paginationNumbers = useMemo(() => {
-    const pages = [];
-    const maxVisible = 5;
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else if (currentPage <= 3) {
-      for (let i = 1; i <= maxVisible; i++) {
-        pages.push(i);
-      }
-    } else if (currentPage >= totalPages - 2) {
-      for (let i = totalPages - 4; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
-  }, [currentPage, totalPages]);
 
   // Show loading only for initial load
   if (loading && doctors.length === 0) return <Loading />;

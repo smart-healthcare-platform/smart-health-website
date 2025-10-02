@@ -1,4 +1,4 @@
-import api from "@/lib/axios"
+import { api } from "@/lib/axios"
 import { TimeSlot, TimeSlotStatus } from "@/types/timeSlot"
 import { Doctor, DoctorDetail, PaginatedResponse } from "@/types"
 

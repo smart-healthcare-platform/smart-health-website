@@ -6,46 +6,43 @@ import { RootState } from "@/redux/index";
 import { resetBooking } from "@/redux/slices/bookingSlice";
 import BookingTimeline from "@/app/(protected)/user/booking/components/common/BookingTimeline";
 import DoctorCard from "@/app/(protected)/user/booking/components/doctor/DoctorCard";
-import BookingSummary from "./components/form/BookingSummary";
 import { useEffect, useState } from "react";
 import LoginRequiredDialog from "@/components/ui/require-login-dialog";
 import { appointmentService } from "@/services/appointment.service";
 import { CreateAppointmentPayload } from "@/types";
-import MessageDialog from "@/components/ui/mesage-dialog";
+import SuccessDialog from "@/components/ui/success-dialog";
+import ErrorDialog from "@/components/ui/error-dialog";
 
 export default function BookingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { doctor, slot_id, slot_start_time, formData } = useSelector((state: RootState) => state.booking);
+  const { doctor, slot_id, slot_start_time, formData } = useSelector(
+    (state: RootState) => state.booking
+  );
   const { user } = useSelector((state: RootState) => state.auth);
 
   const step = parseInt(pathname.split("-")[1] || "1");
+
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   useEffect(() => {
-    if (step === 1) {
-      dispatch(resetBooking());
-    }
+    if (step === 1) dispatch(resetBooking());
   }, [step, dispatch]);
 
   useEffect(() => {
-    if (step === 3 && !user) {
-      setShowLoginDialog(true);
-    }
+    if (step === 3 && !user) setShowLoginDialog(true);
   }, [step, user]);
 
   const canProceed = () => {
     if (step === 1) return !!doctor;
     if (step === 2) return !!slot_id && !!slot_start_time;
     if (step === 3)
-      return (
-        formData.fullName &&
-        formData.phone &&
-        formData.birthDate &&
-        formData.gender
-      );
+      return formData.fullName && formData.phone && formData.birthDate && formData.gender;
     return true;
   };
 
@@ -59,27 +56,34 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
 
   const handleBack = () => router.push(`/user/booking/step-${step - 1}`);
 
+  const showSuccess = () => setSuccessDialogOpen(true);
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setErrorDialogOpen(true);
+  };
+
   const handleConfirmBooking = async () => {
     if (!doctor || !slot_id || !slot_start_time || !user) return;
 
     setLoading(true);
-
     const payload: CreateAppointmentPayload = {
       doctorId: doctor.id,
-      slotId: slot_id!,
-      patientId: user.id ?? "123",
+      slotId: slot_id,
+      userId: user.id,
       date: new Date(slot_start_time).toISOString(),
-      reason: formData.symptoms || "Khám tổng quát",
+      type: "Khám bệnh",
       notes: formData.notes || "",
+      doctorName:doctor.display_name,
+      startAt:slot_start_time
     };
 
     try {
       await appointmentService.create(payload);
       dispatch(resetBooking());
-      setShowMessage(true); 
+      showSuccess();
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Đặt lịch thất bại!"); 
+      showError(err.message || "Đặt lịch thất bại!");
     } finally {
       setLoading(false);
     }
@@ -108,8 +112,6 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
               </div>
             )}
 
-
-
             <div className="bg-white rounded-xl border p-6 space-y-4">
               {step < 4 ? (
                 <>
@@ -117,8 +119,8 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
                     onClick={handleNext}
                     disabled={!canProceed()}
                     className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${canProceed()
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }`}
                   >
                     {step === 3 ? "Xem lại thông tin" : "Tiếp tục"}
@@ -137,8 +139,9 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
                   <button
                     onClick={handleConfirmBooking}
                     disabled={loading}
-                    className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors"
+                    className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                   >
+                    {loading && <span className="animate-spin">⏳</span>}
                     {loading ? "Đang xử lý..." : "Xác nhận đặt lịch"}
                   </button>
                   <button
@@ -159,14 +162,24 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
         onClose={() => setShowLoginDialog(false)}
         redirectPath={pathname}
       />
-      <MessageDialog
-        open={showMessage}
+
+      <SuccessDialog
+        open={successDialogOpen}
         onClose={() => {
-          setShowMessage(false);
+          setSuccessDialogOpen(false);
           router.push("/");
         }}
-        type="success"
-        message="Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm."
+        message="Bạn đã đặt lịch khám thành công!"
+        onConfirm={() => {
+          setSuccessDialogOpen(false);
+          router.push("/");
+        }}
+      />
+
+      <ErrorDialog
+        open={errorDialogOpen}
+        onClose={() => setErrorDialogOpen(false)}
+        message={errorMessage}
       />
     </div>
   );
