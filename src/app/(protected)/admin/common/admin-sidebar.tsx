@@ -20,6 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import { useSelector } from "react-redux"
+import { RootState } from "@/redux"
 
 const navigation = [
   {

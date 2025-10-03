@@ -25,17 +25,27 @@ export default function ModernHealthLogin() {
     try {
       const { token, user } = await authService.login(email, password)
 
-      let patientId = ""
+      let referenceId: string | undefined;
+
       if (user.role === "PATIENT") {
-        const patient = await apiNoAuth
-          .get(`/patients/by-user/${user.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => res.data)
-        patientId = patient.data.id
+        const patient = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.data);
+
+        referenceId = patient.data.id;
+      }
+      else if (user.role === "DOCTOR") {
+        const doctor = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.data);
+
+        referenceId = doctor.data.id;
       }
 
-      dispatch(setCredentials({ token, user: { ...user, patientId } }))
+      dispatch(setCredentials({
+        token,
+        user: { ...user, referenceId }
+      }));
 
       // Redirect
       const params = new URLSearchParams(window.location.search)
