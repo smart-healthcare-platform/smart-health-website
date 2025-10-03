@@ -13,8 +13,29 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, Bell, Settings, User, LogOut, HelpCircle, CalendarDays } from "lucide-react"
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "@/redux"
+import { useCallback } from "react"
+import { authService } from "@/services/auth.service"
+import { clearAuth } from "@/redux/slices/authSlice"
+import { useRouter } from "next/navigation"  
 
 export function DoctorHeader() {
+  const { user } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
+  const router = useRouter()
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout() 
+    } catch (err) {
+      console.error("Logout failed:", err)
+    } finally {
+      dispatch(clearAuth())      
+      router.push("/login")      
+    }
+  }, [dispatch, router])
+
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
       {/* Search */}
@@ -59,21 +80,19 @@ export function DoctorHeader() {
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/avatars/doctor.png" alt="Doctor" />
-                <AvatarFallback>DR</AvatarFallback>
+                <AvatarFallback>BS</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
+            {/* <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Dr. Trương Văn Ơn
-                </p>
+                <p className="text-sm font-medium leading-none">{user?.username}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  doctor@smarthealth.com
+                {user?.username}
                 </p>
               </div>
-            </DropdownMenuLabel>
+            </DropdownMenuLabel> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
@@ -84,7 +103,7 @@ export function DoctorHeader() {
               <span>Cài đặt</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Đăng xuất</span>
             </DropdownMenuItem>

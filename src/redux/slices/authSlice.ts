@@ -5,7 +5,7 @@ interface User {
   username: string;
   role: string;
   createdAt: string;
-  patientId?: string;
+  referenceId?: string;
 }
 
 interface AuthState {
