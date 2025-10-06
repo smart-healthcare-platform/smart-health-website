@@ -43,25 +43,25 @@ const ChatHistoryPage: React.FC = () => {
  
   // Fetch conversations on component mount or when user changes
   useEffect(() => {
-    if (user?.referenceId) {
+    if (user?.id) {
       dispatch(fetchConversations()); // Call without userId
     }
-  }, [dispatch, user?.referenceId]);
- 
+  }, [dispatch, user?.id]);
+
   // Fetch messages when a conversation is selected
   useEffect(() => {
     if (selectedConversationId) {
       dispatch(fetchMessages({ conversationId: selectedConversationId })); // Use async thunk
     }
   }, [dispatch, selectedConversationId]);
- 
+
   // Scroll to bottom of messages when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, selectedConversationId]);
- 
+
   // Listen for incoming messages via Socket.IO
   useEffect(() => {
     if (isConnected) {
@@ -70,38 +70,38 @@ const ChatHistoryPage: React.FC = () => {
       });
     }
   }, [isConnected, onMessage, dispatch]);
- 
+
   const handleConversationSelect = (conversationId: string) => {
     dispatch(setSelectedConversationId(conversationId));
   };
- 
+
   const handleSendMessage = () => {
-    if (newMessage.trim() === '' || !selectedConversationId || !user?.referenceId) return;
- 
+    if (newMessage.trim() === '' || !selectedConversationId || !user?.id) return;
+
     const messageData: Message = { // Explicitly type messageData as Message
-      id: Date.now().toString(), // Temporary ID
+      id: `temp-${Date.now().toString()}`, // Temporary ID with prefix
       conversationId: selectedConversationId,
-      senderId: user.referenceId,
+      senderId: user.id,
       content: newMessage,
       contentType: 'text',
       isRead: false,
       createdAt: new Date().toISOString(),
     };
- 
+
     // Optimistically update UI
     dispatch(addMessage({ conversationId: selectedConversationId, message: messageData }));
     setNewMessage('');
- 
+
     // Find the other participant's ID
     const currentConversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
     let recipientId = '';
     if (currentConversation) {
-      const otherParticipant = currentConversation.participants?.find((p: Participant) => p.id !== user?.referenceId);
+      const otherParticipant = currentConversation.participants?.find((p: Participant) => p.id !== user?.id);
       if (otherParticipant) {
         recipientId = otherParticipant.id;
       }
     }
- 
+
     sendMessage('sendMessage', {
       conversationId: selectedConversationId,
       content: newMessage,
@@ -109,18 +109,18 @@ const ChatHistoryPage: React.FC = () => {
       recipientId: recipientId,
     });
   };
- 
+
   // Find the name of the other participant in the selected conversation
   const getOtherParticipantName = () => {
     if (!selectedConversationId) return '';
     const conversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
     if (conversation) {
-      const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.referenceId);
+      const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.id);
       return otherParticipant ? otherParticipant.name : '';
     }
     return '';
   };
- 
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Conversation List (Left Column) */}
@@ -133,10 +133,10 @@ const ChatHistoryPage: React.FC = () => {
           {error && <div className="p-4 text-center text-red-500">Lỗi: {error}</div>}
           {conversations && conversations.map((conversation: Conversation) => {
             const isActive = conversation.id === selectedConversationId;
-            const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.referenceId);
+            const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.id);
             const displayName = otherParticipant ? otherParticipant.name : 'Unknown';
             const lastMessageContent = conversation.lastMessage?.content || 'Không có tin nhắn';
- 
+
             return (
               <div
                 key={conversation.id}
@@ -157,7 +157,7 @@ const ChatHistoryPage: React.FC = () => {
           })}
         </div>
       </div>
- 
+
       {/* Chat Window (Right Column) */}
       <div className="w-2/3 flex flex-col">
         {selectedConversationId ? (
@@ -171,8 +171,9 @@ const ChatHistoryPage: React.FC = () => {
                   {messages[selectedConversationId]?.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg: Message) => {
                     const sender = conversations.find((c: Conversation) => c.id === selectedConversationId)
                                     ?.participants?.find((p: Participant) => p.id === msg.senderId);
-                    const senderName = sender ? sender.name : 'Unknown';
-                    const isCurrentUser = msg.senderId === user?.referenceId;
+                    const isCurrentUser = msg.senderId === user?.id;
+                    // Use the logged-in user's name from auth store if it's the current user, otherwise use name from conversation
+                    const senderName = isCurrentUser ? user?.username || 'Bạn' : (sender ? sender.name : 'Unknown');
 
                     return (
                       <div
