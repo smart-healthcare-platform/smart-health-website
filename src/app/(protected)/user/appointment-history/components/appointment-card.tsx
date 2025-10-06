@@ -120,26 +120,38 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
             </div>
           </div>
 
-          {appointment.notes && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="self-start lg:self-center"
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-2" />
-                  Thu gọn
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  Chi tiết
-                </>
-              )}
-            </Button>
-          )}
+          <div className="flex flex-col gap-2">
+            {(appointment.status === "completed" || appointment.status === "confirmed") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/user/chat-history')}
+                className="self-start lg:self-center"
+              >
+                Bắt đầu trò chuyện
+              </Button>
+            )}
+            {appointment.notes && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="self-start lg:self-center"
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-2" />
+                    Thu gọn
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Chi tiết
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         {isExpanded && appointment.notes && (
