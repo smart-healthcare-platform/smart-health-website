@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, Building2, StickyNote, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation" // Import useRouter for navigation
 import type { Appointment } from "@/types/appointment"
 
 interface AppointmentCardProps {
@@ -13,6 +14,7 @@ interface AppointmentCardProps {
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const router = useRouter(); // Initialize router for navigation
 
   const getStatusConfig = (status: string) => {
     switch (status) {

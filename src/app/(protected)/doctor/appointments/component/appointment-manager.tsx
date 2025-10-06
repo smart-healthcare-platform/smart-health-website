@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, Table, Plus } from "lucide-react"
-import { AppointmentTable } from "./appointment-table"
-import { AppointmentCalendar } from "./appointment-cenlendar"
-import type { ViewMode } from "@/types/appointment"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Table, Plus } from "lucide-react";
+import { AppointmentTable } from "./appointment-table";
+import { AppointmentCalendar } from "./appointment-cenlendar";
+import type { ViewMode } from "@/types/appointment";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux";
 
 export function AppointmentManager() {
-  const [viewMode, setViewMode] = useState<ViewMode>("calendar")
-  const doctorId='c3b06848-1d8e-4ec8-ae63-d4b9f4f69a9b'
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  const doctor = useSelector((state: RootState) => state.auth.user);
   const handleCreateAppointment = () => {
     // mở modal hoặc điều hướng sang trang tạo lịch hẹn
-    console.log("Create new appointment")
-  }
+    console.log("Create new appointment");
+  };
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,10 @@ export function AppointmentManager() {
       </div>
 
       {/* Toggle view */}
-      <Tabs value={viewMode} onValueChange={(val) => setViewMode(val as ViewMode)}>
+      <Tabs
+        value={viewMode}
+        onValueChange={(val) => setViewMode(val as ViewMode)}
+      >
         <TabsList className="grid w-fit grid-cols-2">
           <TabsTrigger value="table" className="gap-2">
             <Table className="w-4 h-4" />
@@ -52,9 +57,15 @@ export function AppointmentManager() {
 
         {/* View: Lịch */}
         <TabsContent value="calendar" className="mt-6">
-          <AppointmentCalendar doctorId={doctorId} />
+          <TabsContent value="calendar" className="mt-6">
+            {doctor?.referenceId ? (
+              <AppointmentCalendar doctorId={doctor.referenceId} />
+            ) : (
+              <p className="text-muted-foreground">Không tìm thấy Doctor ID</p>
+            )}
+          </TabsContent>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
