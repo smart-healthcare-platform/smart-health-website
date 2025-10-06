@@ -87,7 +87,19 @@ const chatSlice = createSlice({
       if (!state.messages[conversationId]) {
         state.messages[conversationId] = [];
       }
-      state.messages[conversationId].push(message);
+
+      // Check if the message is an optimistic update (has a temp ID)
+      const existingMessageIndex = state.messages[conversationId].findIndex(
+        (msg) => msg.id === message.id || (message.id.startsWith('temp-') && msg.id === message.id.substring(5))
+      );
+
+      if (existingMessageIndex !== -1) {
+        // If an optimistic message exists, update it with the real message from the server
+        state.messages[conversationId][existingMessageIndex] = message;
+      } else {
+        // Otherwise, add the new message
+        state.messages[conversationId].push(message);
+      }
  
       if (state.selectedConversationId !== conversationId) {
         state.unreadCounts[conversationId] = (state.unreadCounts[conversationId] || 0) + 1;
