@@ -88,19 +88,39 @@ const chatSlice = createSlice({
         state.messages[conversationId] = [];
       }
 
-      // Check if the message is an optimistic update (has a temp ID)
+      // Check if the message is an optimistic update (has a temp ID) by looking for a temp message with the same ID
       const existingMessageIndex = state.messages[conversationId].findIndex(
-        (msg) => msg.id === message.id || (message.id.startsWith('temp-') && msg.id === message.id.substring(5))
+        (msg) => msg.id === message.id
       );
 
       if (existingMessageIndex !== -1) {
-        // If an optimistic message exists, update it with the real message from the server
+        // If a message with the exact same ID exists, update it (e.g., server confirms with same ID or updates it)
         state.messages[conversationId][existingMessageIndex] = message;
       } else {
-        // Otherwise, add the new message
-        state.messages[conversationId].push(message);
+        // Check if this new message (not a temp message itself) might be a server confirmation/update for a *previously sent* temp message
+        // We look for a temp message in the same conversation with the same senderId and content (and roughly the same time)
+        if (!message.id.startsWith('temp-')) { // Only try to match non-temp incoming messages against temp outgoing ones
+          const matchingTempMessageIndex = state.messages[conversationId].findIndex(msg =>
+            msg.id.startsWith('temp-') &&
+            msg.senderId === message.senderId &&
+            msg.content === message.content &&
+            // Optionally check timestamp proximity, e.g., within 10 seconds
+            Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000
+          );
+
+          if (matchingTempMessageIndex !== -1) {
+            // Replace the optimistic temp message with the confirmed server message
+            state.messages[conversationId][matchingTempMessageIndex] = message;
+          } else {
+            // Add the new message (it's not a duplicate of a temp message)
+            state.messages[conversationId].push(message);
+          }
+        } else {
+          // Add the new temp message (e.g., from optimistic update in this client)
+          state.messages[conversationId].push(message);
+        }
       }
- 
+
       if (state.selectedConversationId !== conversationId) {
         state.unreadCounts[conversationId] = (state.unreadCounts[conversationId] || 0) + 1;
       }
