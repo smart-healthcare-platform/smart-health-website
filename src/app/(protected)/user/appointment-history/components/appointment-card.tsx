@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, Building2, StickyNote, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation" // Import useRouter for navigation
+import { useSelector } from "react-redux"; // Import useSelector to get user info
 import type { Appointment } from "@/types/appointment"
+import { createConversation } from "@/services/chat.service"; // Import createConversation from chat service
+import { RootState } from "@/redux"; // Import RootState for typing
 
 interface AppointmentCardProps {
   appointment: Appointment
@@ -15,6 +18,31 @@ interface AppointmentCardProps {
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const router = useRouter(); // Initialize router for navigation
+  const user = useSelector((state: RootState) => state.auth.user); // Get user from Redux store
+
+  const handleStartChat = async () => {
+    if (!user?.id || !appointment.doctorId) {
+      console.error("Missing user ID or doctor ID");
+      // TODO: Show error message to user
+      return;
+    }
+
+    try {
+      // Call the chat service to create a new conversation
+      // The backend expects recipientId and recipientRole. The sender is implicitly the authenticated user (patient).
+      const newConversation = await createConversation({
+        recipientId: appointment.doctorId, // Doctor ID (recipient)
+        recipientRole: 'doctor', // Role of the recipient
+      });
+
+      console.log("Conversation created:", newConversation);
+      // Navigate to the chat history page after successful creation
+      router.push(`/user/chat-history?conversationId=${newConversation.id}`); // Pass conversation ID in query
+    } catch (error) {
+      console.error("Failed to create conversation:", error);
+      // TODO: Show error message to user
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -122,15 +150,15 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
 
           <div className="flex flex-col gap-2">
             {(appointment.status === "completed" || appointment.status === "confirmed") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/user/chat-history')}
-                className="self-start lg:self-center"
-              >
-                Bắt đầu trò chuyện
-              </Button>
-            )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleStartChat} // Use the new handler function
+                            className="self-start lg:self-center"
+                          >
+                            Bắt đầu trò chuyện
+                          </Button>
+                        )}
             {appointment.notes && (
               <Button
                 variant="ghost"

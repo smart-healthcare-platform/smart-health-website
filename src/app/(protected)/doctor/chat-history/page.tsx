@@ -16,7 +16,8 @@ import { Message } from '@/types/socket'; // Import Message type from '@/types/s
 // Define types locally to match chatSlice and chat.service
 interface Participant {
   id: string;
-  name: string;
+  userId: string; // Thêm trường userId
+  fullName: string; // Trường được trả về từ API của chat service
   role: string; // Changed to string to match chatSlice and chat.service
 }
 
@@ -28,8 +29,8 @@ interface LastMessage {
 
 interface Conversation {
   id: string;
-  participants: Participant[];
-  lastMessage?: LastMessage;
+  participants: Participant[]; // Sử dụng Participant đã cập nhật
+ lastMessage?: LastMessage;
   unreadCount: number; // Added unreadCount to match chatSlice
 }
 
@@ -38,7 +39,7 @@ const DoctorChatHistoryPage = () => {
   const { conversations, selectedConversationId, messages, loading, error } = useSelector((state: RootState) => state.chat);
   const { user } = useSelector((state: RootState) => state.auth); // Get user from auth slice
   const [messageInput, setMessageInput] = useState('');
-  const socket = useSocket();
+ const socket = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversations when component mounts
@@ -74,6 +75,17 @@ const DoctorChatHistoryPage = () => {
     }
   }, [socket, selectedConversationId, dispatch, messages]);
 
+  // Debug: Log conversations when they change
+  useEffect(() => {
+    console.log("[Doctor Chat History] Fetched conversations:", conversations);
+    if (conversations && user?.id) {
+      conversations.forEach(conv => {
+        const otherParticipant = conv.participants?.find((p: Participant) => p.userId !== user?.id);
+        console.log(`[Doctor Chat History] Conversation ${conv.id} - Other participant:`, otherParticipant);
+      });
+    }
+  }, [conversations, user?.id]);
+
   // Handle selecting a conversation
   const handleSelectConversation = (conversationId: string) => {
     dispatch(setSelectedConversationId(conversationId)); // Changed to setSelectedConversationId
@@ -101,7 +113,7 @@ const DoctorChatHistoryPage = () => {
 
     // Find the other participant in the conversation to determine recipient
     const currentConversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
-    const recipient = currentConversation?.participants.find((p: Participant) => p.id !== user.id); // Compare with user.id
+    const recipient = currentConversation?.participants.find((p: Participant) => p.userId !== user.id); // Compare with user.id
     const recipientId = recipient ? recipient.id : '';
 
     // Send via Socket.IO
@@ -136,8 +148,8 @@ const DoctorChatHistoryPage = () => {
         <div className="flex-1 overflow-y-auto">
           {conversations && conversations.map((conversation: Conversation) => {
             const isActive = conversation.id === selectedConversationId;
-            const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.id);
-            const displayName = otherParticipant ? otherParticipant.name : 'Unknown';
+            const otherParticipant = conversation.participants?.find((p: Participant) => p.userId !== user?.id);
+            const displayName = otherParticipant ? otherParticipant.fullName : 'Unknown';
             const lastMessageContent = conversation.lastMessage?.content || 'Không có tin nhắn';
 
             return (
@@ -166,17 +178,17 @@ const DoctorChatHistoryPage = () => {
         {selectedConversationId ? (
           <>
             <div className="p-4 bg-white border-b border-gray-300">
-              <h2 className="text-xl font-semibold">{conversations.find((c: Conversation) => c.id === selectedConversationId)?.participants?.find((p: Participant) => p.id !== user?.id)?.name || 'Unknown'}</h2>
+              <h2 className="text-xl font-semibold">{conversations.find((c: Conversation) => c.id === selectedConversationId)?.participants?.find((p: Participant) => p.userId !== user?.id)?.fullName || 'Unknown'}</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {loading && selectedConversationId ? <div>Đang tải tin nhắn...</div> : (
                 <div className="space-y-2">
                   {messages[selectedConversationId]?.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg: Message) => {
                     const sender = conversations.find((c: Conversation) => c.id === selectedConversationId)
-                                    ?.participants?.find((p: Participant) => p.id === msg.senderId);
+                                    ?.participants?.find((p: Participant) => p.userId === msg.senderId);
                     const isCurrentUser = msg.senderId === user?.id;
                     // Use the logged-in user's name from auth store if it's the current user, otherwise use name from conversation
-                    const senderName = isCurrentUser ? user?.username || 'Bạn' : (sender ? sender.name : 'Unknown');
+                    const senderName = isCurrentUser ? user?.username || 'Bạn' : (sender ? sender.fullName : 'Unknown');
 
                     return (
                       <div

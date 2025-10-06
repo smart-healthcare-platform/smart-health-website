@@ -15,7 +15,8 @@ import { useSocket } from '@/hooks/useSocket';
 // Define types to match chatSlice and chat.service
 interface Participant {
   id: string;
-  name: string;
+  userId: string; // Thêm trường userId
+  fullName: string; // Trường được trả về từ API của chat service
   role: string;
 }
  
@@ -27,7 +28,7 @@ interface LastMessage {
  
 interface Conversation {
   id: string;
-  participants: Participant[];
+  participants: Participant[]; // Sử dụng Participant đã cập nhật
   lastMessage?: LastMessage;
   unreadCount: number;
 }
@@ -71,6 +72,17 @@ const ChatHistoryPage: React.FC = () => {
     }
   }, [isConnected, onMessage, dispatch]);
 
+  // Debug: Log conversations when they change
+  useEffect(() => {
+    console.log("[User Chat History] Fetched conversations:", conversations);
+    if (conversations && user?.id) {
+      conversations.forEach(conv => {
+        const otherParticipant = conv.participants?.find((p: Participant) => p.userId !== user?.id);
+        console.log(`[User Chat History] Conversation ${conv.id} - Other participant:`, otherParticipant);
+      });
+    }
+  }, [conversations, user?.id]);
+
   const handleConversationSelect = (conversationId: string) => {
     dispatch(setSelectedConversationId(conversationId));
   };
@@ -96,7 +108,7 @@ const ChatHistoryPage: React.FC = () => {
     const currentConversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
     let recipientId = '';
     if (currentConversation) {
-      const otherParticipant = currentConversation.participants?.find((p: Participant) => p.id !== user?.id);
+      const otherParticipant = currentConversation.participants?.find((p: Participant) => p.userId !== user?.id);
       if (otherParticipant) {
         recipientId = otherParticipant.id;
       }
@@ -115,8 +127,8 @@ const ChatHistoryPage: React.FC = () => {
     if (!selectedConversationId) return '';
     const conversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
     if (conversation) {
-      const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.id);
-      return otherParticipant ? otherParticipant.name : '';
+      const otherParticipant = conversation.participants?.find((p: Participant) => p.userId !== user?.id);
+      return otherParticipant ? otherParticipant.fullName : '';
     }
     return '';
   };
@@ -133,8 +145,8 @@ const ChatHistoryPage: React.FC = () => {
           {error && <div className="p-4 text-center text-red-500">Lỗi: {error}</div>}
           {conversations && conversations.map((conversation: Conversation) => {
             const isActive = conversation.id === selectedConversationId;
-            const otherParticipant = conversation.participants?.find((p: Participant) => p.id !== user?.id);
-            const displayName = otherParticipant ? otherParticipant.name : 'Unknown';
+            const otherParticipant = conversation.participants?.find((p: Participant) => p.userId !== user?.id);
+            const displayName = otherParticipant ? otherParticipant.fullName : 'Unknown';
             const lastMessageContent = conversation.lastMessage?.content || 'Không có tin nhắn';
 
             return (
@@ -170,10 +182,10 @@ const ChatHistoryPage: React.FC = () => {
                 <div className="space-y-2">
                   {messages[selectedConversationId]?.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg: Message) => {
                     const sender = conversations.find((c: Conversation) => c.id === selectedConversationId)
-                                    ?.participants?.find((p: Participant) => p.id === msg.senderId);
+                                    ?.participants?.find((p: Participant) => p.userId === msg.senderId);
                     const isCurrentUser = msg.senderId === user?.id;
                     // Use the logged-in user's name from auth store if it's the current user, otherwise use name from conversation
-                    const senderName = isCurrentUser ? user?.username || 'Bạn' : (sender ? sender.name : 'Unknown');
+                    const senderName = isCurrentUser ? user?.username || 'Bạn' : (sender ? sender.fullName : 'Unknown');
 
                     return (
                       <div
