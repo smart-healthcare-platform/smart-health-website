@@ -5,7 +5,7 @@ import { getConversations, getMessages, GetMessagesParams } from '@/services/cha
 interface ChatState {
   conversations: {
     id: string;
-    participants: { id: string; name: string; role: string }[]; // Simplified participant structure
+    participants: { id: string; fullName: string; role: string }[]; // Updated participant structure to use fullName
     lastMessage?: {
       content: string;
       createdAt: string;

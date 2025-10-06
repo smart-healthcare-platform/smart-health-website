@@ -17,14 +17,14 @@ export interface GetMessagesParams {
 }
 
 export interface CreateConversationParams {
-  participant1Id: string;
-  participant2Id: string;
+  recipientId: string;
+  recipientRole: string; // 'doctor' or 'patient'
 }
 
 // Define the response types from the backend API
 export interface ConversationResponse {
   id: string;
-  participants: { id: string; name: string; role: string }[];
+  participants: { id: string; fullName: string; role: string }[]; // Updated to use fullName
   lastMessage?: {
     content: string;
     createdAt: string;
