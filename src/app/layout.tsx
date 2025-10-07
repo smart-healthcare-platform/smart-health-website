@@ -1,12 +1,100 @@
-import './globals.css'
-import { ToastContainer } from 'react-toastify';
+"use client"
+
+import "./globals.css"
+import { Provider, useDispatch } from "react-redux"
+import { store } from "@/redux"
+import { useEffect } from "react"
+import { authService } from "@/services/auth.service"
+import { setCredentials, clearAuth, setInitialized } from "@/redux/slices/authSlice"
+import { apiNoAuth } from "@/lib/axios"
+
+function AuthInit() {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    const init = async () => {
+      const isLogin = localStorage.getItem("isLogin");
+      if (!isLogin) {
+        dispatch(setInitialized());
+        return;
+      }
+      try {
+        const { token, user } = await authService.refreshToken();
+        if (!token || !user) throw new Error("Refresh token không hợp lệ");
+
+        if (user.role === "PATIENT") {
+          const patientRes = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const patient = patientRes.data.data;
+
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "PATIENT",
+                referenceId: patient.id,
+                profile: {
+                  fullName: patient.full_name,
+                  gender: patient.gender,
+                  address: patient.address,
+                  dateOfBirth: patient.date_of_birth,
+                },
+              },
+            })
+          );
+        }
+
+        if (user.role === "DOCTOR") {
+          const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const doctor = doctorRes.data.data
+
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "DOCTOR",
+                referenceId: doctor.id,
+                profile: {
+                  fullName: doctor.full_name,
+                  gender: doctor.gender,
+                  specialty: doctor.specialty,
+                  dateOfBirth: doctor.date_of_birth,
+                  yearsOfExperience: doctor.experience_years,
+                  avatar: doctor.avatar
+                },
+              },
+            })
+          );
+        }
+
+        dispatch(setInitialized());
+      } catch (error) {
+        console.error("AuthInit error:", error)
+        dispatch(clearAuth())
+      } finally {
+        dispatch(setInitialized())
+      }
+    }
+
+    init()
+  }, [dispatch])
+
+  return null
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
       <body>
-        {children}
-        <ToastContainer />
+        <Provider store={store}>
+          <AuthInit />
+          {children}
+        </Provider>
       </body>
     </html>
   )
