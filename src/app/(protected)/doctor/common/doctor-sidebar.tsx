@@ -9,14 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import {
   LayoutDashboard,
   Users,
-  UserCheck,
   Calendar,
-  BarChart3,
   Settings,
   Activity,
   FileText,
-  Shield,
-  Database,
   ChevronLeft,
   ChevronRight,
   Brain,
@@ -25,24 +21,24 @@ import {
 
 const management = [
   {
-    name: "Dashboard",
+    name: "Bảng điều khiển",
     href: "/doctor",
     icon: LayoutDashboard,
   },
   {
-    name: "Appointments",
+    name: "Lịch hẹn",
     href: "/doctor/appointments",
     icon: Calendar,
     badge: "12",
   },
   {
-    name: "Patients",
+    name: "Bệnh nhân",
     href: "/doctor/patients",
     icon: Users,
     badge: "48",
   },
   {
-    name: "Medical Records",
+    name: "Hồ sơ y tế",
     href: "/doctor/medical-records",
     icon: FileText,
   },
@@ -50,12 +46,12 @@ const management = [
 
 const tools = [
   {
-    name: "AI Diagnosis",
+    name: "Chuẩn đoán AI",
     href: "/doctor/ai-diagnosis",
     icon: Brain,
   },
   {
-    name: "Profile",
+    name: "Hồ sơ cá nhân",
     href: "/doctor/profile",
     icon: User,
   },
@@ -63,7 +59,7 @@ const tools = [
 
 const system = [
   {
-    name: "Settings",
+    name: "Cài đặt hệ thống",
     href: "/doctor/settings",
     icon: Settings,
   },
@@ -89,11 +85,17 @@ export function DoctorSidebar() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-sidebar-foreground">Smart Health</h2>
-              <p className="text-xs text-muted-foreground">Doctor Panel</p>
+              <p className="text-xs text-muted-foreground">Cổng Bác Sĩ</p>
             </div>
           </div>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8 p-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCollapsed(!collapsed)}
+          className="h-8 w-8 p-0"
+          title={collapsed ? "Mở rộng" : "Thu gọn"}
+        >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
@@ -101,11 +103,11 @@ export function DoctorSidebar() {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
         <nav className="space-y-6 px-3">
-          {/* Main Navigation */}
+          {/* Quản lý */}
           <div>
             {!collapsed && (
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                Management
+                Quản lý
               </h3>
             )}
             <ul className="space-y-1">
@@ -140,10 +142,11 @@ export function DoctorSidebar() {
             </ul>
           </div>
 
+          {/* Công cụ */}
           <div>
             {!collapsed && (
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                Analytics
+                Công cụ hỗ trợ
               </h3>
             )}
             <ul className="space-y-1">
@@ -169,10 +172,12 @@ export function DoctorSidebar() {
             </ul>
           </div>
 
-          {/* System */}
+          {/* Hệ thống */}
           <div>
             {!collapsed && (
-              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">System</h3>
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                Hệ thống
+              </h3>
             )}
             <ul className="space-y-1">
               {system.map((item) => {

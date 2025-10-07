@@ -29,7 +29,9 @@ export default function GuardWrapper({
   );
 
   useEffect(() => {
-    if (!isInitialized) return; 
+    console.log("Redux: ", isInitialized)
+    console.log("Is loggin: ", isLoggedIn)
+    if (!isInitialized) return;
 
     if (!isLoggedIn) {
       setStatus("denied");
@@ -42,13 +44,11 @@ export default function GuardWrapper({
     }
   }, [isInitialized, isLoggedIn, user, allowedRoles, router]);
 
-  if (status === "checking") {
+  if (!isInitialized || status === "checking") {
     return <Loading fullScreen />;
   }
 
-  if (status === "denied") {
-    return null;
-  }
+  if (status === "denied") return null;
 
   return <>{children}</>;
 }

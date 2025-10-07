@@ -1,7 +1,7 @@
 
 "use client";
 import DoctorList from "./DoctorList";
-import AppPagination from "@/components/ui/AppPagination";
+import AppPagination from "@/components/ui/gloab-pagination";
 import { Doctor, DoctorDetail } from "@/types";
 
 interface DoctorSelectionProps {

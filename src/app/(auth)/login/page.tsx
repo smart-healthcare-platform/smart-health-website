@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { Heart, Shield, Activity, Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { setCredentials } from "@/redux/slices/authSlice"
 import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
 
 import { apiNoAuth } from '@/lib/axios';
+import { RootState, store } from '@/redux';
 export default function ModernHealthLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,37 +17,72 @@ export default function ModernHealthLogin() {
 
   const dispatch = useDispatch()
   const router = useRouter()
-
+  const setCookie = (name: string, value: string, days: number) => {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+    console.log(`Cookie set: ${name}=${value}`);
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
     try {
-      const { token, user } = await authService.login(email, password)
-
-      let referenceId: string | undefined;
-
+      const { token, user, refreshToken } = await authService.login(email, password)
+      if (refreshToken) {
+        setCookie('refreshToken', refreshToken, 7);
+        localStorage.setItem("isLogin", "true")
+      }
       if (user.role === "PATIENT") {
-        const patient = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(res => res.data);
+        const patientRes = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
 
-        referenceId = patient.data.id;
+        const patient = patientRes.data.data
+        dispatch(setCredentials({
+          token,
+          user: {
+            ...user,
+            role: "PATIENT",
+            referenceId: patient.id,
+            profile: {
+              fullName: patient.full_name,
+              gender: patient.gender,
+              address: patient.address,
+              dateOfBirth: patient.date_of_birth
+            }
+          }
+        }))
       }
-      else if (user.role === "DOCTOR") {
-        const doctor = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(res => res.data);
 
-        referenceId = doctor.data.id;
+      if (user.role === "DOCTOR") {
+        const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        const doctor = doctorRes.data.data
+        dispatch(setCredentials({
+          token,
+          user: {
+            ...user,
+            role: "DOCTOR",
+            referenceId: doctor.id,
+            profile: {
+              fullName: doctor.full_name,
+              gender: doctor.gender,
+              specialty: doctor.specialty,
+              dateOfBirth: doctor.date_of_birth,
+              yearsOfExperience: doctor.experience_years,
+              avatar: doctor.avatar
+            }
+          }
+        }))
       }
-
-      dispatch(setCredentials({
-        token,
-        user: { ...user, referenceId }
-      }));
-
       // Redirect
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get("redirect")

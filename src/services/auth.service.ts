@@ -1,16 +1,22 @@
-import{ apiNoAuth, refreshApi,api } from '@/lib/axios'
+import { apiNoAuth, apiAuth, apiRefresh } from '@/lib/axios'
 
 export const authService = {
   refreshToken: async () => {
-    const res = await refreshApi.post('/auth/refresh-token')
-    return res.data.data 
+    const res = await apiRefresh.post('/auth/refresh-token')
+    return res.data.data
   },
   login: async (email: string, password: string) => {
     const res = await apiNoAuth.post('/auth/login', { email, password })
-    return res.data.data 
+    return res.data.data
   },
   logout: async () => {
-    const res = await api.post('/auth/logout')
-    return res.data 
+    try {
+      await apiAuth.post('/auth/logout')
+    } catch (err) {
+      console.warn('Logout API failed:', err)
+    } finally {
+      localStorage.removeItem("isLogin")
+      // document.cookie = "refreshToken=; Max-Age=0; path=/;"
+    }
   },
 }

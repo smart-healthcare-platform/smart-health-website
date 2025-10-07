@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import AppointmentCard from "./appointment-card"
 import type { Appointment } from "@/types/appointment"
+import { Skeleton } from "@/components/ui/skeleton"
+import AppPagination from "@/components/ui/gloab-pagination"
 
 interface AppointmentListProps {
   appointments: Appointment[]
@@ -12,6 +14,7 @@ interface AppointmentListProps {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
+  loading?: boolean
 }
 
 export default function AppointmentList({
@@ -20,111 +23,63 @@ export default function AppointmentList({
   currentPage,
   totalPages,
   onPageChange,
+  loading = false,
 }: AppointmentListProps) {
-  const getStatusCounts = () => {
-    const counts = {
-      total: total,
-      completed: appointments.filter((apt) => apt.status === "completed").length,
-      confirmed: appointments.filter((apt) => apt.status === "confirmed").length,
-      cancelled: appointments.filter((apt) => apt.status === "cancelled").length,
-    }
-    return counts
-  }
-
-  const statusCounts = getStatusCounts()
+  const isEmpty = !loading && appointments.length === 0
 
   const handlePrevPage = () => {
-    if (currentPage > 1) {
-      onPageChange(currentPage - 1)
-    }
+    if (currentPage > 1) onPageChange(currentPage - 1)
   }
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage + 1)
-    }
+    if (currentPage < totalPages) onPageChange(currentPage + 1)
   }
 
   return (
     <div className="space-y-6">
+      {/* giữ chiều cao ổn định */}
+      <div className="min-h-[400px]">
+        {loading && !isEmpty ? (
 
-
-      {appointments.length > 0 ? (
-        <>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : appointments.length > 0 ? (
           <div className="grid gap-4">
             {appointments.map((appointment) => (
               <AppointmentCard key={appointment.id} appointment={appointment} />
             ))}
           </div>
+        ) : (
+          <Card className="flex items-center justify-center h-[400px] border-0 shadow-md">
+            <div className="text-center text-muted-foreground">
+              <div className="text-4xl mb-4">📅</div>
+              <h3 className="text-lg font-semibold mb-2">
+                Không có lịch hẹn nào
+              </h3>
+              <p className="text-sm">
+                Chưa có lịch hẹn nào phù hợp với bộ lọc hiện tại.
+              </p>
+            </div>
+          </Card>
+        )}
+      </div>
 
-          {totalPages > 1 && (
-            <Card className="p-4 border-0 shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Trang {currentPage} / {totalPages} • Tổng {total} lịch hẹn
-                </div>
+      {!loading && totalPages > 1 && (
+        <AppPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    className="bg-transparent"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Trước
-                  </Button>
-
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let page = i + 1
-                      if (totalPages > 5) {
-                        if (currentPage <= 3) {
-                          page = i + 1
-                        } else if (currentPage >= totalPages - 2) {
-                          page = totalPages - 4 + i
-                        } else {
-                          page = currentPage - 2 + i
-                        }
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => onPageChange(page)}
-                          className={currentPage === page ? "bg-primary text-primary-foreground" : "bg-transparent"}
-                        >
-                          {page}
-                        </Button>
-                      )
-                    })}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className="bg-transparent"
-                  >
-                    Sau
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-        </>
-      ) : (
-        <Card className="p-12 text-center border-0 shadow-md">
-          <div className="text-muted-foreground">
-            <div className="text-4xl mb-4">📅</div>
-            <h3 className="text-lg font-semibold mb-2">Không có lịch hẹn nào</h3>
-            <p className="text-sm">Chưa có lịch hẹn nào phù hợp với bộ lọc hiện tại.</p>
-          </div>
-        </Card>
       )}
     </div>
   )

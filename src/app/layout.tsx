@@ -13,37 +13,66 @@ function AuthInit() {
 
   useEffect(() => {
     const init = async () => {
+      const isLogin = localStorage.getItem("isLogin");
+      if (!isLogin) {
+        dispatch(setInitialized());
+        return;
+      }
       try {
-        const { token, user } = await authService.refreshToken()
-
-        // Nếu không có token hoặc user -> coi như fail
-        if (!token || !user) throw new Error("Refresh token không hợp lệ")
-
-        let referenceId: string
+        const { token, user } = await authService.refreshToken();
+        if (!token || !user) throw new Error("Refresh token không hợp lệ");
 
         if (user.role === "PATIENT") {
-          const patient = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+          const patientRes = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
             headers: { Authorization: `Bearer ${token}` },
-          }).then(res => res.data)
+          });
+          const patient = patientRes.data.data;
 
-          referenceId = patient.data.id
-        } else if (user.role === "DOCTOR") {
-          const doctor = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then(res => res.data)
-
-          referenceId = doctor.data.id
-        } else {
-          referenceId = ""
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "PATIENT",
+                referenceId: patient.id,
+                profile: {
+                  fullName: patient.full_name,
+                  gender: patient.gender,
+                  address: patient.address,
+                  dateOfBirth: patient.date_of_birth,
+                },
+              },
+            })
+          );
         }
 
-        if (!referenceId) throw new Error("Không lấy được referenceId")
+        if (user.role === "DOCTOR") {
+          const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const doctor = doctorRes.data.data
 
-        // Lưu redux
-        dispatch(setCredentials({
-          token,
-          user: { ...user, referenceId },
-        }))
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "DOCTOR",
+                referenceId: doctor.id,
+                profile: {
+                  fullName: doctor.full_name,
+                  gender: doctor.gender,
+                  specialty: doctor.specialty,
+                  dateOfBirth: doctor.date_of_birth,
+                  yearsOfExperience: doctor.experience_years,
+                  avatar: doctor.avatar
+                },
+              },
+            })
+          );
+        }
+
+        dispatch(setInitialized());
       } catch (error) {
         console.error("AuthInit error:", error)
         dispatch(clearAuth())

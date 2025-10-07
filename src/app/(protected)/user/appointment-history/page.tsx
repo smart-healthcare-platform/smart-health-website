@@ -5,8 +5,8 @@ import { useSelector } from "react-redux"
 import AppointmentFilters from "./components/appointment-filters"
 import AppointmentList from "./components/appointment-list"
 import { Card } from "@/components/ui/card"
-import { Calendar, Clock, CheckCircle, XCircle, Filter as FilterIcon } from "lucide-react"
-import type { Appointment, AppointmentResponse } from "@/types/appointment"
+import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react"
+import type { AppointmentResponse } from "@/types/appointment"
 import { appointmentService } from "@/services/appointment.service"
 import { RootState } from "@/redux/index"
 import useDebounce from "@/hooks/use-debounce"
@@ -32,11 +32,11 @@ export default function AppointmentHistoryPage() {
 
   // Fetch appointments
   const fetchAppointments = useCallback(async () => {
-    if (!user?.patientId) return
+    if (!user?.referenceId) return
     setLoadingList(true)
     try {
       const data = await appointmentService.getByPatientId(
-        user.patientId,
+        user.referenceId,
         currentPage,
         limit,
         debouncedSearch,
@@ -51,10 +51,9 @@ export default function AppointmentHistoryPage() {
       setLoadingList(false)
       setIsSearching(false)
     }
-  }, [user?.patientId, currentPage, debouncedSearch, filters.status, filters.dateRange])
+  }, [user?.referenceId, currentPage, debouncedSearch, filters.status, filters.dateRange])
 
   useEffect(() => {
-    // Only fetch if search changed
     if (debouncedSearchRef.current !== debouncedSearch) {
       debouncedSearchRef.current = debouncedSearch
       setCurrentPage(1) // Reset page when search changes
@@ -92,14 +91,20 @@ export default function AppointmentHistoryPage() {
       cancelled: apiData.appointments.filter((a) => a.status === "cancelled").length,
     }
   }, [apiData])
-  if (loadingList && apiData?.appointments?.length === 0) return <Loading />;
+
+  if (loadingList && !apiData) {
+    return <Loading fullScreen />
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Lịch sử khám bệnh</h1>
-          <p className="text-muted-foreground">Theo dõi và quản lý lịch sử các cuộc hẹn khám bệnh của bạn</p>
+          <p className="text-muted-foreground">
+            Theo dõi và quản lý lịch sử các cuộc hẹn khám bệnh của bạn
+          </p>
         </div>
 
         {/* Stats */}
@@ -152,16 +157,15 @@ export default function AppointmentHistoryPage() {
           onSearchChange={handleSearchChange}
         />
 
-
+        {/* List */}
         <AppointmentList
           appointments={apiData?.appointments || []}
           total={apiData?.total || 0}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
-        // className="animate-fade-in"
+          loading={loadingList}
         />
-
       </div>
     </div>
   )

@@ -12,11 +12,7 @@ interface CalendarBaseProps {
   onAppointmentClick?: (appointment: Appointment) => void
 }
 
-export function CalendarBase({
-  appointments = [],
-  loading = false,
-  onAppointmentClick,
-}: CalendarBaseProps) {
+export function CalendarBase({ appointments = [], loading = false, onAppointmentClick }: CalendarBaseProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedAppointments, setSelectedAppointments] = useState<Appointment[]>([])
@@ -34,22 +30,19 @@ export function CalendarBase({
   const getAppointmentsForDate = (day: number) => {
     return appointments.filter((apt) => {
       const d = new Date(apt.startAt)
-      return (
-        d.getFullYear() === year &&
-        d.getMonth() === month &&
-        d.getDate() === day
-      )
+      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day
     })
   }
 
-  const getStatusColor = (status: Appointment["status"]) => ({
-    confirmed: "bg-green-500",
-    pending: "bg-yellow-500",
-    "in-progress": "bg-purple-500",
-    completed: "bg-blue-500",
-    cancelled: "bg-red-500",
-    "no-show": "bg-gray-400",
-  }[status] ?? "bg-gray-200")
+  const getStatusColor = (status: Appointment["status"]) =>
+    ({
+      confirmed: "bg-green-500",
+      pending: "bg-yellow-500",
+      "in-progress": "bg-purple-500",
+      completed: "bg-blue-500",
+      cancelled: "bg-red-500",
+      "no-show": "bg-gray-400",
+    })[status] ?? "bg-gray-200"
 
   if (loading) {
     return (
@@ -69,21 +62,13 @@ export function CalendarBase({
             <CalendarIcon className="w-5 h-5" /> Lịch hẹn
           </CardTitle>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date(year, month - 1, 1))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <div className="font-medium min-w-[120px] text-center">
               Tháng {month + 1} {year}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date(year, month + 1, 1))}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -91,21 +76,19 @@ export function CalendarBase({
       </CardHeader>
 
       <CardContent>
-        {/* Lưới calendar */}
         <div className="grid grid-cols-7 gap-1 mb-4">
           {calendarDays.map((day, idx) => {
-            if (!day) return <div key={`empty-${idx}`} className="h-24" />
+            if (!day) return <div key={`empty-${idx}`} className="h-48" />
 
-            const dayAppointments = getAppointmentsForDate(day)
-            const isToday =
-              today.getDate() === day &&
-              today.getMonth() === month &&
-              today.getFullYear() === year
+            const dayAppointments = getAppointmentsForDate(day).sort(
+              (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+            )
+            const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
 
             return (
               <div
                 key={`day-${idx}-${day}`}
-                className={`p-2 h-24 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
+                className={`p-2 h-48 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors flex flex-col ${
                   isToday ? "bg-primary/10 border-primary" : ""
                 }`}
                 onClick={() => {
@@ -113,28 +96,28 @@ export function CalendarBase({
                   setSelectedAppointments(dayAppointments)
                 }}
               >
-                <div className={`font-medium ${isToday ? "text-primary" : ""}`}>
-                  {day}
-                </div>
-                <div className="space-y-1">
-                  {dayAppointments.slice(0, 2).map((apt) => (
-                    <div
-                      key={apt.id}
-                      className="text-xs p-1 border rounded truncate flex items-center gap-1 hover:bg-accent/50"
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full ${getStatusColor(
-                          apt.status
-                        )}`}
-                      />
-                      <span>{apt.patientName}</span>
-                    </div>
-                  ))}
-                  {dayAppointments.length > 2 && (
-                    <div className="text-xs text-primary">
-                      +{dayAppointments.length - 2} lịch hẹn
-                    </div>
-                  )}
+                <div className={`font-medium mb-1 ${isToday ? "text-primary" : ""}`}>{day}</div>
+                <div className="flex-1 overflow-y-auto space-y-0.5 scrollbar-thin">
+                  {dayAppointments.map((apt) => {
+                    const startTime = new Date(apt.startAt).toLocaleTimeString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                    return (
+                      <div
+                        key={apt.id}
+                        className="text-xs px-1.5 py-1 border rounded flex items-center gap-1.5 hover:bg-accent/50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAppointmentClick?.(apt)
+                        }}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusColor(apt.status)}`} />
+                        <span className="font-medium">{startTime}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -155,11 +138,7 @@ export function CalendarBase({
                   onClick={() => onAppointmentClick?.(apt)}
                 >
                   <div className="flex gap-2 items-center">
-                    <span
-                      className={`w-2 h-2 rounded-full ${getStatusColor(
-                        apt.status
-                      )}`}
-                    />
+                    <span className={`w-2 h-2 rounded-full ${getStatusColor(apt.status)}`} />
                     <span>{apt.patientName}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -171,9 +150,7 @@ export function CalendarBase({
                 </div>
               ))}
               {selectedAppointments.length === 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Không có lịch hẹn nào
-                </div>
+                <div className="text-sm text-muted-foreground">Không có lịch hẹn nào</div>
               )}
             </div>
           </div>

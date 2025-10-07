@@ -45,3 +45,25 @@ export interface CreateAppointmentPayload {
   doctorName: string
   startAt:string
 }
+
+export interface AppointmentDetailForDoctor {
+  id: string
+  doctorId: string
+  doctorName: string
+  patientId: string
+  patientName: string
+  slotId: string
+  type: string
+  status: "pending" | "confirmed" | "cancelled" | "completed" 
+  notes?: string
+  startAt: string
+  createdAt: string
+  updatedAt: string
+  patient: {
+    id: string
+    fullName: string
+    gender: "male" | "female" | "other"
+    dateOfBirth: string
+    address: string
+  }
+}

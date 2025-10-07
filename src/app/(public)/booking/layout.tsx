@@ -4,8 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/index";
 import { resetBooking } from "@/redux/slices/bookingSlice";
-import BookingTimeline from "@/app/(protected)/user/booking/components/common/BookingTimeline";
-import DoctorCard from "@/app/(protected)/user/booking/components/doctor/DoctorCard";
+import BookingTimeline from "./components/common/BookingTimeline";
+import DoctorCard from "./components/doctor/DoctorCard";
 import { useEffect, useState } from "react";
 import LoginRequiredDialog from "@/components/ui/require-login-dialog";
 import { appointmentService } from "@/services/appointment.service";
@@ -34,9 +34,6 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
     if (step === 1) dispatch(resetBooking());
   }, [step, dispatch]);
 
-  useEffect(() => {
-    if (step === 3 && !user) setShowLoginDialog(true);
-  }, [step, user]);
 
   const canProceed = () => {
     if (step === 1) return !!doctor;
@@ -47,14 +44,10 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
   };
 
   const handleNext = () => {
-    if (step === 2 && !user) {
-      setShowLoginDialog(true);
-      return;
-    }
-    router.push(`/user/booking/step-${step + 1}`);
+    router.push(`/booking/step-${step + 1}`);
   };
 
-  const handleBack = () => router.push(`/user/booking/step-${step - 1}`);
+  const handleBack = () => router.push(`/booking/step-${step - 1}`);
 
   const showSuccess = () => setSuccessDialogOpen(true);
   const showError = (message: string) => {
@@ -73,8 +66,8 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
       date: new Date(slot_start_time).toISOString(),
       type: "Khám bệnh",
       notes: formData.notes || "",
-      doctorName:doctor.display_name,
-      startAt:slot_start_time
+      doctorName: doctor.display_name,
+      startAt: slot_start_time
     };
 
     try {
@@ -119,8 +112,8 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
                     onClick={handleNext}
                     disabled={!canProceed()}
                     className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${canProceed()
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }`}
                   >
                     {step === 3 ? "Xem lại thông tin" : "Tiếp tục"}
@@ -169,7 +162,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
           setSuccessDialogOpen(false);
           router.push("/");
         }}
-        message="Bạn đã đặt lịch khám thành công!"
+        message="Yêu cầu đặt lịch đã được ghi nhận. Chúng tôi sẽ gửi thông báo sớm nhất đến bạn!"
         onConfirm={() => {
           setSuccessDialogOpen(false);
           router.push("/");
