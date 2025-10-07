@@ -1,74 +1,66 @@
 "use client"
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface CalendarProps {
   selectedDate: Date | null
   onDateSelect: (date: Date) => void
-  availableDates?: string[] // Added availableDates prop to match API integration
+  availableDates?: string[]
 }
 
 const Calendar = ({ selectedDate, onDateSelect, availableDates = [] }: CalendarProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
+  const [today, setToday] = useState<Date | null>(null)
 
-  const today = new Date()
+  useEffect(() => {
+    const now = new Date()
+    setCurrentMonth(now)
+    setToday(now)
+  }, [])
+
+  // tránh render trước khi có dữ liệu ngày
+  if (!currentMonth || !today) return null
+
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
 
   const monthNames = [
-    "Tháng 1",
-    "Tháng 2",
-    "Tháng 3",
-    "Tháng 4",
-    "Tháng 5",
-    "Tháng 6",
-    "Tháng 7",
-    "Tháng 8",
-    "Tháng 9",
-    "Tháng 10",
-    "Tháng 11",
-    "Tháng 12",
+    "Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6",
+    "Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12",
   ]
 
   const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
 
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = () =>
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
-  }
-
-  const goToNextMonth = () => {
+  const goToNextMonth = () =>
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
-  }
+
+  const isSameDate = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
 
   const isDateAvailable = (date: Date) => {
     const dateStr = date.toISOString().split("T")[0]
     return date >= today && availableDates.includes(dateStr)
   }
 
-  const isDateSelected = (date: Date) => {
-    return (
-      selectedDate &&
-      date.getDate() === selectedDate.getDate() &&
-      date.getMonth() === selectedDate.getMonth() &&
-      date.getFullYear() === selectedDate.getFullYear()
-    )
-  }
+  const isDateSelected = (date: Date) =>
+    selectedDate && isSameDate(date, selectedDate)
 
   const renderCalendarDays = () => {
     const days = []
-
-    // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(<div key={`empty-${i}`} className="p-2"></div>)
     }
 
-    // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
       const isAvailable = isDateAvailable(date)
       const isSelected = isDateSelected(date)
-      const isToday = date.toDateString() === today.toDateString()
+      const isToday = isSameDate(date, today)
 
       days.push(
         <button
@@ -77,22 +69,19 @@ const Calendar = ({ selectedDate, onDateSelect, availableDates = [] }: CalendarP
           disabled={!isAvailable}
           className={`p-2 text-sm rounded-lg transition-all duration-200 relative font-medium ${
             isSelected
-              ? "bg-emerald-600 text-white font-bold shadow-lg ring-2 ring-emerald-300 transform scale-105 border-1 border-emerald-700"
+              ? "bg-emerald-600 text-white font-bold shadow-lg ring-2 ring-emerald-300 transform scale-105"
               : isToday && isAvailable
-                ? "bg-emerald-100 text-emerald-800 font-semibold border-2 border-emerald-400"
-                : isAvailable
-                  ? "hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 border border-gray-200 hover:border-emerald-300 hover:shadow-sm"
-                  : "text-gray-400 cursor-not-allowed bg-gray-50 border border-gray-100"
+              ? "bg-emerald-100 text-emerald-800 font-semibold border-2 border-emerald-400"
+              : isAvailable
+              ? "hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 border border-gray-200 hover:border-emerald-300 hover:shadow-sm"
+              : "text-gray-400 cursor-not-allowed bg-gray-50 border border-gray-100"
           }`}
         >
           {day}
-          {isSelected && (
-            <div className="absolute rounded-full "></div>
-          )}
-        </button>,
+          {isSelected && <div className="absolute rounded-full "></div>}
+        </button>
       )
     }
-
     return days
   }
 

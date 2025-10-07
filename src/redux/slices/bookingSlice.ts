@@ -9,14 +9,13 @@ interface FormData {
   birthDate: string;
   gender: string;
   address: string;
-  symptoms: string;
   notes: string
 }
 
 interface BookingState {
-  doctor: Doctor |DoctorDetail| null;
+  doctor: Doctor | DoctorDetail | null;
   slot_id: string | null;
-  slot_start_time: string | null; // <-- thêm
+  slot_start_time: string | null;
   date: string | null;
   time: string | null;
   formData: PatientFormData;
@@ -35,8 +34,8 @@ const initialState: BookingState = {
     birthDate: "",
     gender: "",
     address: "",
-    symptoms: "",
-    notes: ""
+    notes: "",
+    type:""
   },
 };
 

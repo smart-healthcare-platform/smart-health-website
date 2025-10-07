@@ -1,103 +1,75 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useSelector } from "react-redux"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, User, Building2, StickyNote, ChevronDown, ChevronUp } from "lucide-react"
-import { useState } from "react"
-import { useRouter } from "next/navigation" // Import useRouter for navigation
-import { useSelector } from "react-redux"; // Import useSelector to get user info
+import { Calendar, Clock, Eye, ChevronDown, ChevronUp } from "lucide-react"
+import AppointmentDetailDialog from "./appointment-detail-dialog"
 import type { Appointment } from "@/types/appointment"
-import { createConversation } from "@/services/chat.service"; // Import createConversation from chat service
-import { RootState } from "@/redux"; // Import RootState for typing
+import { createConversation } from "@/services/chat.service"
+import { RootState } from "@/redux"
 
 interface AppointmentCardProps {
   appointment: Appointment
 }
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const router = useRouter(); // Initialize router for navigation
-  const user = useSelector((state: RootState) => state.auth.user); // Get user from Redux store
+  const router = useRouter()
+  const user = useSelector((state: RootState) => state.auth.user)
 
+  // 👉 Tạo cuộc trò chuyện
   const handleStartChat = async () => {
     if (!user?.id || !appointment.doctorId) {
-      console.error("Missing user ID or doctor ID");
-      // TODO: Show error message to user
-      return;
+      console.error("Thiếu user ID hoặc doctor ID")
+      return
     }
 
     try {
-      // Call the chat service to create a new conversation
-      // The backend expects recipientId and recipientRole. The sender is implicitly the authenticated user (patient).
       const newConversation = await createConversation({
-        recipientId: appointment.doctorId, // Doctor ID (recipient)
-        recipientRole: 'doctor', // Role of the recipient
-      });
+        recipientId: appointment.doctorId,
+        recipientRole: "doctor",
+      })
 
-      console.log("Conversation created:", newConversation);
-      // Navigate to the chat history page after successful creation
-      router.push(`/user/chat-history?conversationId=${newConversation.id}`); // Pass conversation ID in query
+      console.log("Conversation created:", newConversation)
+      router.push(`/user/chat-history?conversationId=${newConversation.id}`)
     } catch (error) {
-      console.error("Failed to create conversation:", error);
-      // TODO: Show error message to user
-    }
-  };
-
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "completed":
-        return {
-          label: "Đã hoàn thành",
-          variant: "default" as const,
-          className: "bg-success text-success-foreground",
-        }
-      case "confirmed":
-        return {
-          label: "Đã xác nhận",
-          variant: "secondary" as const,
-          className: "bg-info text-info-foreground",
-        }
-      case "pending":
-        return {
-          label: "Chờ xác nhận",
-          variant: "outline" as const,
-          className: "bg-warning text-warning-foreground",
-        }
-      case "in-progress":
-        return {
-          label: "Đang khám",
-          variant: "secondary" as const,
-          className: "bg-blue-500 text-white",
-        }
-      case "cancelled":
-        return {
-          label: "Đã hủy",
-          variant: "destructive" as const,
-          className: "bg-destructive text-destructive-foreground",
-        }
-      case "no-show":
-        return {
-          label: "Không đến",
-          variant: "outline" as const,
-          className: "bg-gray-500 text-white",
-        }
-      default:
-        return {
-          label: "Không xác định",
-          variant: "outline" as const,
-          className: "",
-        }
+      console.error("Lỗi khi tạo cuộc trò chuyện:", error)
     }
   }
 
+  // 👉 Cấu hình trạng thái
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case "completed":
+        return { label: "Đã hoàn thành", className: "bg-green-500 text-white" }
+      case "confirmed":
+        return { label: "Đã xác nhận", className: "bg-blue-500 text-white" }
+      case "pending":
+        return { label: "Chờ xác nhận", className: "bg-yellow-500 text-white" }
+      case "in-progress":
+        return { label: "Đang khám", className: "bg-purple-500 text-white" }
+      case "cancelled":
+        return { label: "Đã hủy", className: "bg-red-500 text-white" }
+      case "no-show":
+        return { label: "Không đến", className: "bg-gray-500 text-white" }
+      default:
+        return { label: "Không xác định", className: "bg-gray-400 text-white" }
+    }
+  }
+
+  // 👉 Format ngày & giờ
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("vi-VN", {
       weekday: "long",
-      year: "numeric",
-      month: "long",
       day: "numeric",
+      month: "numeric",
+      year: "numeric",
     })
   }
 
@@ -112,59 +84,63 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   const statusConfig = getStatusConfig(appointment.status)
 
   return (
-    <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden">
-      <div className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
-              <Badge variant="outline" className="font-medium">
-                {appointment.type}
-              </Badge>
+    <>
+      <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-200">
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
+                <Badge variant="outline">{appointment.type}</Badge>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">
+                {appointment.doctorName}
+              </h3>
             </div>
 
-            <h3 className="text-xl font-semibold text-foreground mb-2 text-balance">{appointment.doctorName}</h3>
+            {/* Nút xem chi tiết */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-transparent"
+            >
+              <Eye className="h-4 w-4 mr-2 text-primary" />
+              Chi tiết
+            </Button>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4 text-primary" />
-                <span>{formatDate(appointment.createdAt)}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>{formatTime(appointment.startAt)}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <User className="h-4 w-4 text-primary" />
-                <span>{appointment.doctorName}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Building2 className="h-4 w-4 text-primary" />
-                <span>ID: {appointment.slotId.slice(0, 8)}...</span>
-              </div>
+          {/* Thông tin ngày giờ */}
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span>{formatDate(appointment.startAt)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <span>{formatTime(appointment.startAt)}</span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          {/* Nút chat và chi tiết */}
+          <div className="flex flex-col gap-2 mt-4">
             {(appointment.status === "completed" || appointment.status === "confirmed") && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleStartChat} // Use the new handler function
-                            className="self-start lg:self-center"
-                          >
-                            Bắt đầu trò chuyện
-                          </Button>
-                        )}
-            {appointment.notes && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartChat}
+                className="self-start"
+              >
+                Bắt đầu trò chuyện
+              </Button>
+            )}
+
+            {/* {appointment.notes && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="self-start lg:self-center"
+                className="self-start"
               >
                 {isExpanded ? (
                   <>
@@ -178,22 +154,21 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                   </>
                 )}
               </Button>
-            )}
+            )} */}
           </div>
-        </div>
 
-        {isExpanded && appointment.notes && (
-          <div className="border-t pt-4 space-y-4">
-            <div className="flex gap-3">
-              <StickyNote className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold text-foreground mb-1">Ghi chú</h4>
-                <p className="text-sm text-muted-foreground text-pretty">{appointment.notes}</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </Card>
+          {/* Ghi chú (mở rộng) */}
+          {isExpanded && appointment.notes && (
+            <p className="text-sm text-gray-600 mt-2">{appointment.notes}</p>
+          )}
+        </div>
+      </Card>
+
+      <AppointmentDetailDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        appointment={appointment}
+      />
+    </>
   )
 }

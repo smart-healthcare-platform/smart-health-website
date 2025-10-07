@@ -1,21 +1,31 @@
-// components/Loading.tsx
-"use client";
+// components/ui/Loading.tsx
+"use client"
 
 interface LoadingProps {
-  fullScreen?: boolean; // true nếu muốn che full màn hình
+  fullScreen?: boolean
+  size?: "sm" | "md" | "lg"
 }
 
-export default function Loading({ fullScreen = true }: LoadingProps) {
-  return (
-    <div
-      className={`flex items-center justify-center ${
-        fullScreen ? "fixed inset-0 bg-white/80 z-50" : "relative"
-      }`}
-    >
-      <div className="flex flex-col items-center space-y-4">
-        {/* Spinner */}
-        <div className="w-16 h-16 border-4 border-t-emerald-600 border-b-emerald-400 border-l-emerald-300 border-r-emerald-500 rounded-full animate-spin"></div>
+export default function Loading({ fullScreen = false, size = "md" }: LoadingProps) {
+  const sizeMap = {
+    sm: "w-6 h-6 border-2",
+    md: "w-12 h-12 border-4",
+    lg: "w-16 h-16 border-4",
+  }
+
+  const spinnerClass = `${sizeMap[size]} border-t-emerald-600 border-b-emerald-400 border-l-emerald-300 border-r-emerald-500 rounded-full animate-spin`
+
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 bg-white/80 z-50 flex items-center justify-center">
+        <div className={spinnerClass}></div>
       </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-center py-8">
+      <div className={spinnerClass}></div>
     </div>
-  );
+  )
 }

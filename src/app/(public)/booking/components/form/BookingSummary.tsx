@@ -4,7 +4,7 @@ import { Doctor, DoctorDetail, PatientFormData } from '@/types';
 
 interface BookingSummaryProps {
   selectedDoctor: Doctor|DoctorDetail | null;
-  selectedDate: string | null;   // 🔹 đổi từ Date sang string
+  selectedDate: string | null;   
   selectedTime: string | null;
   formData: PatientFormData;
 }
@@ -29,7 +29,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900">{selectedDoctor.display_name}</h4>
               <p className="text-emerald-600 text-sm">{selectedDoctor.specialty}</p>
-              <p className="text-gray-500 text-sm">{selectedDoctor.experience_years}</p>
+              <p className="text-gray-500 text-sm">Số năm kinh nghiệm: {selectedDoctor.experience_years}</p>
             </div>
           </div>
         )}
@@ -62,11 +62,11 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div><span className="text-gray-500">Họ tên:</span> <span className="font-medium">{formData.fullName || "---"}</span></div>
             <div><span className="text-gray-500">Điện thoại:</span> <span className="font-medium">{formData.phone || "---"}</span></div>
-            <div><span className="text-gray-500">Email:</span> <span className="font-medium">{formData.email || "---"}</span></div>
+            <div><span className="text-gray-500">Dịch vụ:</span> <span className="font-medium">{formData.type || "---"}</span></div>
             <div><span className="text-gray-500">Ngày sinh:</span> <span className="font-medium">{formData.birthDate || "---"}</span></div>
             {formData.notes && (
               <div className="md:col-span-2">
-                <span className="text-gray-500">Triệu chứng:</span> 
+                <span className="text-gray-500">Ghi chú / Triệu chứng:</span> 
                 <span className="font-medium ml-2">{formData.notes}</span>
               </div>
             )}

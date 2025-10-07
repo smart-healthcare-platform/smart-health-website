@@ -1,8 +1,8 @@
-import { api } from '@/lib/axios';
+import { apiAuth} from '@/lib/axios';
 
 export const patientService = {
     getByUserId: async (userId: string, token?: string) => {
-        return api.get(`/patients/user/${userId}`, {
+        return apiAuth.get(`/patients/user/${userId}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined
         }).then(res => res.data);
     }

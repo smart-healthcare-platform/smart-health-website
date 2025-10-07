@@ -1,22 +1,22 @@
-import { api } from "@/lib/axios"
+import { apiNoAuth } from "@/lib/axios"
 import { TimeSlot, TimeSlotStatus } from "@/types/timeSlot"
 import { Doctor, DoctorDetail, PaginatedResponse } from "@/types"
 
 export const doctorService = {
   async getPublicDoctors(page = 1, limit = 6, search = "") {
-    const res = await api.get<{ data: PaginatedResponse<Doctor> }>("/public/doctors", { params: { page, limit, search } })
+    const res = await apiNoAuth.get<{ data: PaginatedResponse<Doctor> }>("/public/doctors", { params: { page, limit, search } })
     console.log(res.data)
     return res.data.data
   },
 
   async getDoctorById(id: string): Promise<DoctorDetail> {
-    const res = await api.get<{ data: DoctorDetail }>(`/public/doctors/${id}`)
+    const res = await apiNoAuth.get<{ data: DoctorDetail }>(`/public/doctors/${id}`)
     return res.data.data
   },
 
   async getDoctorSlots(doctorId: string): Promise<TimeSlot[]> {
     try {
-      const res = await api.get<{ success: boolean; data: any[] }>(
+      const res = await apiNoAuth.get<{ success: boolean; data: any[] }>(
         `/public/doctors/appointment-slots/${doctorId}`
       )
       if (!res.data.success) return []
@@ -25,7 +25,7 @@ export const doctorService = {
         const start = new Date(s.start_time);
         return {
           id: s.id,
-          startTime: s.start_time, // giữ nguyên từ API
+          startTime: s.start_time,
           date: start.toISOString().split("T")[0],
           time: start.toLocaleTimeString("vi-VN", { hour12: false, hour: "2-digit", minute: "2-digit" }),
           status: mapStatus(s.status),

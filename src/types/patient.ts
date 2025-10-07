@@ -96,6 +96,6 @@ export interface PatientFormData {
   birthDate: string;
   gender: string;
   address: string;
-  symptoms: string;
   notes:string
+  type:string
 }

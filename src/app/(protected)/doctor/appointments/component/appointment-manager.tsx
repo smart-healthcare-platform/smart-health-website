@@ -1,18 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Table, Plus } from "lucide-react";
-import { AppointmentTable } from "./appointment-table";
-import { AppointmentCalendar } from "./appointment-cenlendar";
-import type { ViewMode } from "@/types/appointment";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar, Table, Plus } from "lucide-react"
+import { AppointmentCalendar } from "./appointment-cenlendar"
+import type { ViewMode } from "@/types/appointment"
+import { useSelector } from "react-redux"
+import { RootState } from "@/redux"
 
 export function AppointmentManager() {
-  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
-  const doctor = useSelector((state: RootState) => state.auth.user);
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar")
+  const doctorId = useSelector((state: RootState) => state.auth.user?.referenceId);
   const handleCreateAppointment = () => {
     // mở modal hoặc điều hướng sang trang tạo lịch hẹn
     console.log("Create new appointment");
@@ -23,10 +22,7 @@ export function AppointmentManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Quản lý lịch hẹn</h1>
-          <p className="text-muted-foreground mt-1">
-            Quản lý và theo dõi lịch hẹn của bệnh nhân
-          </p>
+          <h1 className="text-3xl font-bold">Lịch khám bệnh</h1>
         </div>
         <Button onClick={handleCreateAppointment} className="gap-2">
           <Plus className="w-4 h-4" />
@@ -53,13 +49,17 @@ export function AppointmentManager() {
         {/* View: Bảng */}
         <TabsContent value="table" className="mt-6">
           {/* <AppointmentTable /> */}
+          <div className="text-center py-12 text-muted-foreground">
+            <Table className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>Chế độ xem bảng đang được phát triển</p>
+          </div>
         </TabsContent>
 
         {/* View: Lịch */}
         <TabsContent value="calendar" className="mt-6">
           <TabsContent value="calendar" className="mt-6">
-            {doctor?.referenceId ? (
-              <AppointmentCalendar doctorId={doctor.referenceId} />
+            {doctorId ? (
+              <AppointmentCalendar doctorId={doctorId} />
             ) : (
               <p className="text-muted-foreground">Không tìm thấy Doctor ID</p>
             )}

@@ -1,45 +1,45 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSelector } from "react-redux";
-import AppointmentFilters from "./components/appointment-filters";
-import AppointmentList from "./components/appointment-list";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useSelector } from "react-redux"
+import AppointmentFilters from "./components/appointment-filters"
+import AppointmentList from "./components/appointment-list"
+import { Card } from "@/components/ui/card"
 import {
   Calendar,
   Clock,
   CheckCircle,
   XCircle,
-  Filter as FilterIcon,
-} from "lucide-react";
-import type { Appointment, AppointmentResponse } from "@/types/appointment";
-import { appointmentService } from "@/services/appointment.service";
-import { RootState } from "@/redux/index";
-import useDebounce from "@/hooks/use-debounce";
-import Loading from "@/components/ui/loading";
+} from "lucide-react"
+import type { AppointmentResponse } from "@/types/appointment"
+import { appointmentService } from "@/services/appointment.service"
+import { RootState } from "@/redux"
+import useDebounce from "@/hooks/use-debounce"
+import Loading from "@/components/ui/loading"
 
 export default function AppointmentHistoryPage() {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user)
 
-  const [apiData, setApiData] = useState<AppointmentResponse | null>(null);
-  const [loadingList, setLoadingList] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [apiData, setApiData] = useState<AppointmentResponse | null>(null)
+  const [loadingList, setLoadingList] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
   const [filters, setFilters] = useState({
     status: "all",
     dateRange: "all",
     search: "",
-  });
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  })
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const limit = 3;
-  const debouncedSearch = useDebounce(filters.search, 500);
-  const debouncedSearchRef = useRef(filters.search);
+  const limit = 3
+  const debouncedSearch = useDebounce(filters.search, 500)
+  const debouncedSearchRef = useRef(filters.search)
 
-  // Fetch appointments
+  // 🔹 Fetch danh sách cuộc hẹn
   const fetchAppointments = useCallback(async () => {
-    if (!user?.referenceId) return;
-    setLoadingList(true);
+    if (!user?.referenceId) return
+
+    setLoadingList(true)
     try {
       const data = await appointmentService.getByPatientId(
         user.referenceId,
@@ -48,14 +48,14 @@ export default function AppointmentHistoryPage() {
         debouncedSearch,
         filters.status as any,
         filters.dateRange as any
-      );
-      setApiData(data);
+      )
+      setApiData(data)
     } catch (err) {
-      console.error("Failed to fetch appointments", err);
-      setApiData(null);
+      console.error("Failed to fetch appointments:", err)
+      setApiData(null)
     } finally {
-      setLoadingList(false);
-      setIsSearching(false);
+      setLoadingList(false)
+      setIsSearching(false)
     }
   }, [
     user?.referenceId,
@@ -63,51 +63,57 @@ export default function AppointmentHistoryPage() {
     debouncedSearch,
     filters.status,
     filters.dateRange,
-  ]);
+  ])
 
   useEffect(() => {
-    // Only fetch if search changed
     if (debouncedSearchRef.current !== debouncedSearch) {
-      debouncedSearchRef.current = debouncedSearch;
-      setCurrentPage(1); // Reset page when search changes
+      debouncedSearchRef.current = debouncedSearch
+      setCurrentPage(1)
     }
-    fetchAppointments();
-  }, [fetchAppointments, debouncedSearch]);
+    fetchAppointments()
+  }, [fetchAppointments, debouncedSearch])
 
+  // 🔹 Xử lý filter, page, search
   const handleFilterChange = useCallback((newFilters: typeof filters) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
-    setIsSearching(true);
-  }, []);
+    setFilters(newFilters)
+    setCurrentPage(1)
+    setIsSearching(true)
+  }, [])
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    setIsSearching(true);
-  }, []);
+    setCurrentPage(page)
+    setIsSearching(true)
+  }, [])
 
   const handleSearchChange = useCallback((search: string) => {
-    setFilters((prev) => ({ ...prev, search }));
-    setIsSearching(true);
-  }, []);
+    setFilters((prev) => ({ ...prev, search }))
+    setIsSearching(true)
+  }, [])
 
+  // 🔹 Tính tổng trang
   const totalPages = useMemo(
     () => (apiData ? Math.ceil(apiData.total / limit) : 0),
     [apiData, limit]
-  );
+  )
 
+  // 🔹 Thống kê trạng thái
   const stats = useMemo(() => {
-    if (!apiData) return { total: 0, completed: 0, confirmed: 0, cancelled: 0 };
+    if (!apiData)
+      return { total: 0, completed: 0, confirmed: 0, cancelled: 0 }
+
     return {
       total: apiData.total,
-      completed: apiData.appointments.filter((a) => a.status === "completed")
-        .length,
-      confirmed: apiData.appointments.filter((a) => a.status === "confirmed")
-        .length,
-      cancelled: apiData.appointments.filter((a) => a.status === "cancelled")
-        .length,
-    };
-  }, [apiData]);
-  if (loadingList && apiData?.appointments?.length === 0) return <Loading />;
+      completed: apiData.appointments.filter((a) => a.status === "completed").length,
+      confirmed: apiData.appointments.filter((a) => a.status === "confirmed").length,
+      cancelled: apiData.appointments.filter((a) => a.status === "cancelled").length,
+    }
+  }, [apiData])
+
+  // 🔹 Loading toàn màn hình khi chưa có dữ liệu
+  if (loadingList && !apiData) {
+    return <Loading fullScreen />
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -134,6 +140,7 @@ export default function AppointmentHistoryPage() {
               <Calendar className="h-8 w-8 text-primary/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-green-500/5 to-green-500/10">
             <div className="flex items-center justify-between">
               <div>
@@ -147,6 +154,7 @@ export default function AppointmentHistoryPage() {
               <CheckCircle className="h-8 w-8 text-green-500/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-blue-500/5 to-blue-500/10">
             <div className="flex items-center justify-between">
               <div>
@@ -160,6 +168,7 @@ export default function AppointmentHistoryPage() {
               <Clock className="h-8 w-8 text-blue-500/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-red-500/5 to-red-500/10">
             <div className="flex items-center justify-between">
               <div>
@@ -175,7 +184,7 @@ export default function AppointmentHistoryPage() {
           </Card>
         </div>
 
-        {/* Filters */}
+        {/* Bộ lọc */}
         <AppointmentFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -185,15 +194,16 @@ export default function AppointmentHistoryPage() {
           onSearchChange={handleSearchChange}
         />
 
+        {/* Danh sách lịch hẹn */}
         <AppointmentList
           appointments={apiData?.appointments || []}
           total={apiData?.total || 0}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
-          // className="animate-fade-in"
+          loading={loadingList}
         />
       </div>
     </div>
-  );
+  )
 }

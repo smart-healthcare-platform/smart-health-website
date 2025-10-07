@@ -13,6 +13,7 @@ export function useAppointments(doctorId?: string) {
     setLoading(true)
     try {
       const res = await appointmentService.getByDoctorId(doctorId)
+      console.log(doctorId)
       console.log("📌 appointments:", res)
       setAppointments(res)
     } catch (err) {

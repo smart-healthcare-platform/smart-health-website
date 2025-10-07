@@ -6,6 +6,7 @@ import { clearAuth } from "@/redux/slices/authSlice";
 import { authService } from "@/services/auth.service";
 import type { RootState } from "@/redux";
 import { useRouter } from "next/navigation";
+import { resetBooking } from "@/redux/slices/bookingSlice";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function Header() {
       console.error("Logout failed:", err)
     } finally {
       dispatch(clearAuth())
+      dispatch(resetBooking())
       setIsUserMenuOpen(false)
       router.push("/")
     }
@@ -59,7 +61,7 @@ export default function Header() {
   // --- Static data ---
   const menuItems = [
     { name: "Trang chủ", path: "/" },
-    { name: "Đặt lịch", path: "/user/booking/step-1" },
+    { name: "Đặt lịch", path: "/booking/step-1" },
     { name: "Bác sĩ", path: "/doctors" },
     { name: "Dịch vụ", path: "/services" },
     { name: "Hỗ trợ", path: "/support" },

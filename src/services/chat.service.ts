@@ -1,4 +1,4 @@
-import { api } from '@/lib/axios'; // Use the configured Axios instance with auth interceptor
+import { apiAuth } from '@/lib/axios'; // Use the configured Axios instance with auth interceptor
 // import { Message } from '@/types/socket'; // Not used directly in this service, only its type definition is used implicitly
 
 // Define the base API endpoint for chat
@@ -51,7 +51,7 @@ export interface MessageResponse {
  */
 export const getConversations = async (): Promise<ConversationResponse[]> => { // Removed params: GetConversationsParams
   try {
-    const response = await api.get(`${CHAT_API_BASE}/conversations`); // Removed userId from URL
+    const response = await apiAuth.get(`${CHAT_API_BASE}/conversations`); // Removed userId from URL
     return response.data;
   } catch (error) {
     console.error('Error fetching conversations:', error);
@@ -73,7 +73,7 @@ export const getMessages = async (params: GetMessagesParams): Promise<MessageRes
     const queryString = queryParams.toString();
     const url = `${CHAT_API_BASE}/conversations/${params.conversationId}/messages${queryString ? `?${queryString}` : ''}`;
 
-    const response = await api.get(url);
+    const response = await apiAuth.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -88,7 +88,7 @@ export const getMessages = async (params: GetMessagesParams): Promise<MessageRes
  */
 export const createConversation = async (params: CreateConversationParams): Promise<ConversationResponse> => {
   try {
-    const response = await api.post(`${CHAT_API_BASE}/conversations`, params);
+    const response = await apiAuth.post(`${CHAT_API_BASE}/conversations`, params);
     return response.data;
   } catch (error) {
     console.error('Error creating conversation:', error);

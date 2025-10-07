@@ -3,31 +3,44 @@
 import { useState } from "react"
 import { useAppointments } from "@/hooks/use-appointments"
 import { CalendarBase } from "./calendar-base"
-import type { Appointment } from "@/types/appointment"
+import { AppointmentDetailDialog } from "./appointment-detail-dialog"
+import type { Appointment, AppointmentDetailForDoctor } from "@/types/appointment"
+import { appointmentService } from "@/services/appointment.service"
 
 export function AppointmentCalendar({ doctorId }: { doctorId: string }) {
   const { appointments, loading } = useAppointments(doctorId)
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedAppointments, setSelectedAppointments] = useState<Appointment[]>([])
-  console.log("Dữ liệu nhận dc", appointments)
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetailForDoctor | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  const handleAppointmentClick = async (apt: Appointment) => {
+    try {
+      setLoadingDetail(true)
+      const fullDetail = await appointmentService.getDetailsAppointmentForDoctor(apt.id)
+      console.log("Chi tiết appointment",fullDetail)
+      setSelectedAppointment(fullDetail)
+      setDialogOpen(true)
+    } catch (err) {
+      console.error("Failed to load appointment detail:", err)
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
   return (
     <>
       <CalendarBase
         appointments={appointments}
         loading={loading}
-        // onDateSelect={(date, aps) => console.log("📅 Chọn ngày:", date, aps)}
-        onAppointmentClick={(apt) => console.log("👉 Click appointment:", apt)}
+        onAppointmentClick={handleAppointmentClick}
       />
 
-      {/* TODO: Modal chi tiết lịch hẹn */}
-      {/* {selectedDate && (
-        <DayAppointmentsModal
-          open
-          date={selectedDate}
-          appointments={selectedAppointments}
-          onClose={() => setSelectedDate(null)}
-        />
-      )} */}
+      <AppointmentDetailDialog
+        appointment={selectedAppointment}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        loading={loadingDetail}
+      />
     </>
   )
 }

@@ -1,10 +1,10 @@
-import { api } from '@/lib/axios';
-import { Appointment, AppointmentResponse, CreateAppointmentPayload } from '@/types';
+import { apiAuth } from '@/lib/axios';
+import { Appointment, AppointmentDetailForDoctor, AppointmentResponse, CreateAppointmentPayload } from '@/types';
 
 export const appointmentService = {
   // Tạo appointment mới
   async create(payload: CreateAppointmentPayload): Promise<Appointment> {
-    const res = await api.post<{ success: boolean; message: string; data: Appointment }>("/appointments", payload)
+    const res = await apiAuth.post<{ success: boolean; message: string; data: Appointment }>("/appointments", payload)
     if (!res.data.success) {
       throw new Error(res.data.message || "Failed to create appointment")
     }
@@ -12,13 +12,13 @@ export const appointmentService = {
   },
 
   async getAll(): Promise<Appointment[]> {
-    const res = await api.get<{ success: boolean; data: Appointment[] }>("/appointments")
+    const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>("/appointments")
     if (!res.data.success) return []
     return res.data.data
   },
 
-  async getById(id: string): Promise<Appointment> {
-    const res = await api.get<{ success: boolean; data: Appointment }>(`/appointments/${id}`)
+  async getDetailsAppointmentForDoctor(id: string): Promise<AppointmentDetailForDoctor> {
+    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetailForDoctor }>(`/appointments/${id}`)
     if (!res.data.success) {
       throw new Error(`Appointment ${id} not found`)
     }
@@ -34,7 +34,7 @@ export const appointmentService = {
     status: 'confirmed' | 'completed' | 'cancelled' | 'all' = "all",
     dateRange: 'today' | 'week' | 'month' | 'year' | 'all' = "all",
   ): Promise<AppointmentResponse> {
-    const res = await api.get<{ success: boolean; data: AppointmentResponse }>(
+    const res = await apiAuth.get<{ success: boolean; data: AppointmentResponse }>(
       `/appointments/patient/${patientId}`,
       { params: { page, limit, search, status, dateRange } }
     );
@@ -52,7 +52,7 @@ export const appointmentService = {
     start?: string,   
     end?: string     
   ): Promise<Appointment[]> {
-    const res = await api.get<{ success: boolean; data: Appointment[] }>(
+    const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>(
       `/appointments/doctor/${doctorId}`,
       { params: { page, limit, status, start, end } }
     );
@@ -64,7 +64,7 @@ export const appointmentService = {
 
 
   async getByDateRange(start: string, end: string): Promise<Appointment[]> {
-    const res = await api.get<{ success: boolean; data: Appointment[] }>(
+    const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>(
       `/appointments`,
       { params: { start, end } }
     );
@@ -73,7 +73,7 @@ export const appointmentService = {
   },
 
   async update(id: string, payload: Partial<CreateAppointmentPayload>): Promise<Appointment> {
-    const res = await api.patch<{ success: boolean; data: Appointment }>(`/appointments/${id}`, payload)
+    const res = await apiAuth.patch<{ success: boolean; data: Appointment }>(`/appointments/${id}`, payload)
     if (!res.data.success) {
       throw new Error(`Failed to update appointment ${id}`)
     }
@@ -81,7 +81,7 @@ export const appointmentService = {
   },
 
   async remove(id: string): Promise<void> {
-    const res = await api.delete<{ success: boolean; message: string }>(`/appointments/${id}`)
+    const res = await apiAuth.delete<{ success: boolean; message: string }>(`/appointments/${id}`)
     if (!res.data.success) {
       throw new Error(res.data.message || `Failed to delete appointment ${id}`)
     }
