@@ -42,6 +42,11 @@ const management = [
     href: "/doctor/medical-records",
     icon: FileText,
   },
+  {
+    name: "Chat History",
+    href: "/doctor/chat-history",
+    icon: Activity,
+  },
 ]
 
 const tools = [

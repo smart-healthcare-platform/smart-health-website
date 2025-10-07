@@ -3,6 +3,8 @@ import authReducer from "./slices/authSlice";
 import bookingReducer from "./slices/bookingSlice";
 import storage from "redux-persist/lib/storage";
 import { persistReducer, persistStore } from "redux-persist";
+import chatReducer from './slices/chatSlice'; 
+
 
 const bookingPersistConfig = {
   key: "booking",
@@ -12,6 +14,7 @@ const bookingPersistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   booking: persistReducer(bookingPersistConfig, bookingReducer),
+  chat: chatReducer,
 });
 
 export const store = configureStore({

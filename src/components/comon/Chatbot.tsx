@@ -1,29 +1,46 @@
-"use client"
-import { useState, useRef, useEffect } from "react"
-import type React from "react"
+"use client";
+import { useState, useRef, useEffect } from "react";
+import type React from "react";
 
-import { Send, X, User, MessageCircle, Heart, Activity, Stethoscope, ArrowRight } from "lucide-react"
-import { useRouter } from "next/navigation"
+import {
+  Send,
+  X,
+  User,
+  MessageCircle,
+  Heart,
+  Activity,
+  Stethoscope,
+  ArrowRight,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
-  id: number
-  text: string
-  isBot: boolean
-  timestamp: Date
-  showOptions?: boolean
-  showDiagnosisConfirm?: boolean
+  id: number;
+  text: string;
+  isBot: boolean;
+  timestamp: Date;
+  showOptions?: boolean;
+  showDiagnosisConfirm?: boolean;
+  showAppointmentConfirm?: boolean;
+  showConsultationConfirm?: boolean;
 }
 
 interface ServiceOption {
-  id: string
-  label: string
-  icon: React.ReactNode
-  color: string
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+interface ChatResponse {
+  response: string;
 }
 
 export default function HealthChatBot() {
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter();
+  const [apiUrl, setApiUrl] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -32,12 +49,19 @@ export default function HealthChatBot() {
       timestamp: new Date(),
       showOptions: true,
     },
-  ])
-  const [inputMessage, setInputMessage] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const serviceOptions = [
+  useEffect(() => {
+    // Get API URL from environment variable
+    const url =
+      process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:8000";
+    setApiUrl(url);
+  }, []);
+
+  const serviceOptions: ServiceOption[] = [
     {
       id: "diagnosis",
       label: "🔬 Chuẩn đoán qua chỉ số sức khỏe",
@@ -62,111 +86,160 @@ export default function HealthChatBot() {
       icon: <MessageCircle size={16} />,
       color: "bg-orange-500",
     },
-  ]
+  ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: inputMessage,
-        isBot: false,
-        timestamp: new Date(),
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !apiUrl) return;
+
+    const userMessage: Message = {
+      id: messages.length + 1,
+      text: inputMessage,
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev: Message[]) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsTyping(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: inputMessage }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setMessages([...messages, newMessage])
-      setInputMessage("")
-
-      // Simulate bot typing
-      setIsTyping(true)
-      setTimeout(() => {
-        const botResponse = {
-          id: messages.length + 2,
-          text: "Cảm ơn bạn đã liên hệ! Tôi đang xử lý yêu cầu của bạn và sẽ kết nối với bác sĩ phù hợp...",
-          isBot: true,
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, botResponse])
-        setIsTyping(false)
-      }, 1500)
+      const data: ChatResponse = await response.json();
+      const botResponse: Message = {
+        id: messages.length + 2,
+        text:
+          data.response ||
+          "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.",
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages((prev: Message[]) => [...prev, botResponse]);
+    } catch (error) {
+      console.error("Error sending message to chatbot API:", error);
+      const errorMessage: Message = {
+        id: messages.length + 2,
+        text: "Có lỗi xảy ra khi kết nối với máy chủ. Vui lòng thử lại sau.",
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
     }
-  }
+  };
 
   const handleDiagnosisConfirm = () => {
-    router.push("/diagnosis")
-  }
+    router.push("/diagnosis");
+  };
+
+  const handleAppointmentConfirm = () => {
+    router.push("/booking");
+  };
+
+  const handleConsultationConfirm = () => {
+    router.push("/doctors");
+  };
 
   const handleServiceOption = (optionId: string) => {
-    const option = serviceOptions.find((opt) => opt.id === optionId)
-    if (!option) return
+    const option = serviceOptions.find((opt) => opt.id === optionId);
+    if (!option) return;
 
+    // Hide options and add user message
     const userMessage: Message = {
       id: messages.length + 1,
       text: option.label,
       isBot: false,
       timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, userMessage])
+    };
 
-    setMessages((prev) => prev.map((msg) => (msg.showOptions ? { ...msg, showOptions: false } : msg)))
+    const updatedMessages = messages.map((msg) =>
+      msg.showOptions ? { ...msg, showOptions: false } : msg,
+    );
 
-    setIsTyping(true)
+    setMessages([...updatedMessages, userMessage]);
+    setIsTyping(true);
+
+    // Bot responds with a confirmation/prompt
     setTimeout(() => {
-      let responseText = ""
-      let showDiagnosisConfirm = false
+      let botResponse: Message | null = null;
+      const botMessageId = messages.length + 2;
 
       switch (optionId) {
         case "diagnosis":
-          responseText =
-            "Tuyệt vời! Tôi sẽ đưa bạn đến trang chuẩn đoán thông minh để phân tích các chỉ số sức khỏe của bạn. 🔬"
-          showDiagnosisConfirm = true
-          break
+          botResponse = {
+            id: botMessageId,
+            text: "Để chẩn đoán bệnh, chúng tôi cần bạn cung cấp một số chỉ số sức khỏe. Bạn có muốn chuyển đến trang chẩn đoán không?",
+            isBot: true,
+            timestamp: new Date(),
+            showDiagnosisConfirm: true,
+          };
+          break;
         case "appointment":
-          responseText =
-            "Bạn muốn đặt lịch khám với bác sĩ nào? Tôi có thể giúp bạn tìm bác sĩ chuyên khoa phù hợp. 👨‍⚕️"
-          break
+          botResponse = {
+            id: botMessageId,
+            text: "Để đặt lịch khám, bạn sẽ được chuyển đến trang đặt lịch. Bạn có đồng ý không?",
+            isBot: true,
+            timestamp: new Date(),
+            showAppointmentConfirm: true,
+          };
+          break;
         case "consultation":
-          responseText =
-            "Tôi sẵn sàng tư vấn sức khỏe cho bạn. Bạn có triệu chứng hoặc lo ngại gì về sức khỏe không? 💙"
-          break
+          botResponse = {
+            id: botMessageId,
+            text: "Để được tư vấn sức khỏe, bạn có thể tìm và chọn một bác sĩ phù hợp. Bạn có muốn xem danh sách bác sĩ không?",
+            isBot: true,
+            timestamp: new Date(),
+            showConsultationConfirm: true,
+          };
+          break;
         case "general":
-          responseText = "Bạn có câu hỏi gì về dịch vụ y tế của chúng tôi? Tôi sẵn sàng hỗ trợ bạn! 😊"
-          break
-        default:
-          responseText = "Tôi sẽ hỗ trợ bạn ngay bây giờ!"
+          botResponse = {
+            id: botMessageId,
+            text: "Vui lòng nhập câu hỏi chung của bạn vào ô bên dưới. Tôi sẽ cố gắng trả lời.",
+            isBot: true,
+            timestamp: new Date(),
+          };
+          break;
       }
 
-      const botResponse: Message = {
-        id: messages.length + 2,
-        text: responseText,
-        isBot: true,
-        timestamp: new Date(),
-        showDiagnosisConfirm,
+      if (botResponse) {
+        setMessages((prev) => [...prev, botResponse!]);
       }
-      setMessages((prev) => [...prev, botResponse])
-      setIsTyping(false)
-    }, 1000)
-  }
+      setIsTyping(false);
+    }, 1000); // Simulate bot thinking time
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   const formatTime = (timestamp: Date) =>
     timestamp.toLocaleTimeString("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
-    })
+    });
 
   return (
     <div className="fixed bottom-6 right-6 z-50 font-sans">
@@ -197,7 +270,9 @@ export default function HealthChatBot() {
                 <h3 className="font-semibold text-lg">Trợ lý sức khỏe</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-emerald-100">Sẵn sàng hỗ trợ</span>
+                  <span className="text-xs text-emerald-100">
+                    Sẵn sàng hỗ trợ
+                  </span>
                 </div>
               </div>
             </div>
@@ -214,9 +289,17 @@ export default function HealthChatBot() {
             <div className="p-4 space-y-4">
               {messages.map((message) => (
                 <div key={message.id}>
-                  <div className={`flex ${message.isBot ? "justify-start" : "justify-end"} mb-2`}>
+                  <div
+                    className={`flex ${
+                      message.isBot ? "justify-start" : "justify-end"
+                    } mb-2`}
+                  >
                     <div
-                      className={`flex items-end space-x-2 max-w-xs ${message.isBot ? "flex-row" : "flex-row-reverse space-x-reverse"}`}
+                      className={`flex items-end space-x-2 max-w-xs ${
+                        message.isBot
+                          ? "flex-row"
+                          : "flex-row-reverse space-x-reverse"
+                      }`}
                     >
                       {/* Avatar */}
                       <div
@@ -241,8 +324,14 @@ export default function HealthChatBot() {
                             : "bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-tr-md"
                         }`}
                       >
-                        <p className="text-sm leading-relaxed">{message.text}</p>
-                        <div className={`text-xs mt-1 ${message.isBot ? "text-gray-400" : "text-green-100"}`}>
+                        <ReactMarkdown className="text-sm leading-relaxed prose prose-sm max-w-none">
+                          {message.text}
+                        </ReactMarkdown>
+                        <div
+                          className={`text-xs mt-1 ${
+                            message.isBot ? "text-gray-400" : "text-green-100"
+                          }`}
+                        >
                           {formatTime(message.timestamp)}
                         </div>
                       </div>
@@ -252,7 +341,9 @@ export default function HealthChatBot() {
                   {/* Service Options */}
                   {message.showOptions && (
                     <div className="ml-10 mt-3 space-y-2">
-                      <p className="text-xs text-gray-500 font-medium">Chọn dịch vụ bạn cần hỗ trợ:</p>
+                      <p className="text-xs text-gray-500 font-medium">
+                        Chọn dịch vụ bạn cần hỗ trợ:
+                      </p>
                       <div className="grid grid-cols-1 gap-2">
                         {serviceOptions.map((option) => (
                           <button
@@ -260,7 +351,9 @@ export default function HealthChatBot() {
                             onClick={() => handleServiceOption(option.id)}
                             className="text-left p-3 bg-white border border-gray-200 rounded-xl hover:border-emerald-300 hover:shadow-md hover:bg-emerald-50 transition-all duration-200 group flex items-center space-x-2"
                           >
-                            <span className="text-emerald-600">{option.icon}</span>
+                            <span className="text-emerald-600">
+                              {option.icon}
+                            </span>
                             <span className="text-sm text-gray-700 group-hover:text-emerald-600 transition-colors">
                               {option.label}
                             </span>
@@ -277,6 +370,30 @@ export default function HealthChatBot() {
                         className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-md"
                       >
                         <span>Đồng ý, đi đến trang chuẩn đoán</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {message.showAppointmentConfirm && (
+                    <div className="ml-10 mt-3">
+                      <button
+                        onClick={handleAppointmentConfirm}
+                        className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-md"
+                      >
+                        <span>Đồng ý, đến trang đặt lịch</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {message.showConsultationConfirm && (
+                    <div className="ml-10 mt-3">
+                      <button
+                        onClick={handleConsultationConfirm}
+                        className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-md"
+                      >
+                        <span>Xem danh sách bác sĩ</span>
                         <ArrowRight size={16} />
                       </button>
                     </div>
@@ -333,10 +450,12 @@ export default function HealthChatBot() {
                 <Send size={18} />
               </button>
             </div>
-            <div className="text-xs text-gray-400 mt-2 text-center">Nhấn Enter để gửi tin nhắn</div>
+            <div className="text-xs text-gray-400 mt-2 text-center">
+              Nhấn Enter để gửi tin nhắn
+            </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

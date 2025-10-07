@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,8 @@ export function AppointmentManager() {
   const doctorId = useSelector((state: RootState) => state.auth.user?.referenceId);
   const handleCreateAppointment = () => {
     // mở modal hoặc điều hướng sang trang tạo lịch hẹn
-    console.log("Create new appointment")
-  }
+    console.log("Create new appointment");
+  };
 
   return (
     <div className="space-y-6">
@@ -31,7 +31,10 @@ export function AppointmentManager() {
       </div>
 
       {/* Toggle view */}
-      <Tabs value={viewMode} onValueChange={(val) => setViewMode(val as ViewMode)}>
+      <Tabs
+        value={viewMode}
+        onValueChange={(val) => setViewMode(val as ViewMode)}
+      >
         <TabsList className="grid w-fit grid-cols-2">
           <TabsTrigger value="table" className="gap-2">
             <Table className="w-4 h-4" />
@@ -54,13 +57,15 @@ export function AppointmentManager() {
 
         {/* View: Lịch */}
         <TabsContent value="calendar" className="mt-6">
-          {doctorId ? (
-            <AppointmentCalendar doctorId={doctorId} />
-          ) : (
-            <p className="text-muted-foreground">Không tìm thấy Doctor ID</p>
-          )}
+          <TabsContent value="calendar" className="mt-6">
+            {doctorId ? (
+              <AppointmentCalendar doctorId={doctorId} />
+            ) : (
+              <p className="text-muted-foreground">Không tìm thấy Doctor ID</p>
+            )}
+          </TabsContent>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

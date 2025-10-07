@@ -70,6 +70,7 @@ export default function Header() {
   const userMenuItems = [
     { name: "Thông tin cá nhân", path: "/profile" },
     { name: "Lịch sử đặt khám", path: "/user/appointment-history" },
+    { name: "Lịch sử trò chuyện", path: "/user/chat-history" }, // Add chat history link
     { name: "Cài đặt", path: "/settings" },
   ];
 

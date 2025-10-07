@@ -5,10 +5,15 @@ import { useSelector } from "react-redux"
 import AppointmentFilters from "./components/appointment-filters"
 import AppointmentList from "./components/appointment-list"
 import { Card } from "@/components/ui/card"
-import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react"
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react"
 import type { AppointmentResponse } from "@/types/appointment"
 import { appointmentService } from "@/services/appointment.service"
-import { RootState } from "@/redux/index"
+import { RootState } from "@/redux"
 import useDebounce from "@/hooks/use-debounce"
 import Loading from "@/components/ui/loading"
 
@@ -30,9 +35,10 @@ export default function AppointmentHistoryPage() {
   const debouncedSearch = useDebounce(filters.search, 500)
   const debouncedSearchRef = useRef(filters.search)
 
-  // Fetch appointments
+  // 🔹 Fetch danh sách cuộc hẹn
   const fetchAppointments = useCallback(async () => {
     if (!user?.referenceId) return
+
     setLoadingList(true)
     try {
       const data = await appointmentService.getByPatientId(
@@ -45,22 +51,29 @@ export default function AppointmentHistoryPage() {
       )
       setApiData(data)
     } catch (err) {
-      console.error("Failed to fetch appointments", err)
+      console.error("Failed to fetch appointments:", err)
       setApiData(null)
     } finally {
       setLoadingList(false)
       setIsSearching(false)
     }
-  }, [user?.referenceId, currentPage, debouncedSearch, filters.status, filters.dateRange])
+  }, [
+    user?.referenceId,
+    currentPage,
+    debouncedSearch,
+    filters.status,
+    filters.dateRange,
+  ])
 
   useEffect(() => {
     if (debouncedSearchRef.current !== debouncedSearch) {
       debouncedSearchRef.current = debouncedSearch
-      setCurrentPage(1) // Reset page when search changes
+      setCurrentPage(1)
     }
     fetchAppointments()
   }, [fetchAppointments, debouncedSearch])
 
+  // 🔹 Xử lý filter, page, search
   const handleFilterChange = useCallback((newFilters: typeof filters) => {
     setFilters(newFilters)
     setCurrentPage(1)
@@ -77,13 +90,17 @@ export default function AppointmentHistoryPage() {
     setIsSearching(true)
   }, [])
 
+  // 🔹 Tính tổng trang
   const totalPages = useMemo(
     () => (apiData ? Math.ceil(apiData.total / limit) : 0),
     [apiData, limit]
   )
 
+  // 🔹 Thống kê trạng thái
   const stats = useMemo(() => {
-    if (!apiData) return { total: 0, completed: 0, confirmed: 0, cancelled: 0 }
+    if (!apiData)
+      return { total: 0, completed: 0, confirmed: 0, cancelled: 0 }
+
     return {
       total: apiData.total,
       completed: apiData.appointments.filter((a) => a.status === "completed").length,
@@ -92,6 +109,7 @@ export default function AppointmentHistoryPage() {
     }
   }, [apiData])
 
+  // 🔹 Loading toàn màn hình khi chưa có dữ liệu
   if (loadingList && !apiData) {
     return <Loading fullScreen />
   }
@@ -101,7 +119,9 @@ export default function AppointmentHistoryPage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Lịch sử khám bệnh</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Lịch sử khám bệnh
+          </h1>
           <p className="text-muted-foreground">
             Theo dõi và quản lý lịch sử các cuộc hẹn khám bệnh của bạn
           </p>
@@ -112,42 +132,59 @@ export default function AppointmentHistoryPage() {
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-primary/5 to-primary/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Tổng số lượt khám</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Tổng số lượt khám
+                </p>
                 <p className="text-2xl font-bold text-primary">{stats.total}</p>
               </div>
               <Calendar className="h-8 w-8 text-primary/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-green-500/5 to-green-500/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Đã hoàn thành</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Đã hoàn thành
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.completed}
+                </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-blue-500/5 to-blue-500/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Đã xác nhận</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Đã xác nhận
+                </p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {stats.confirmed}
+                </p>
               </div>
               <Clock className="h-8 w-8 text-blue-500/60" />
             </div>
           </Card>
+
           <Card className="p-6 border-0 shadow-md bg-gradient-to-br from-red-500/5 to-red-500/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Đã hủy</p>
-                <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Đã hủy
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {stats.cancelled}
+                </p>
               </div>
               <XCircle className="h-8 w-8 text-red-500/60" />
             </div>
           </Card>
         </div>
 
-        {/* Filters */}
+        {/* Bộ lọc */}
         <AppointmentFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -157,7 +194,7 @@ export default function AppointmentHistoryPage() {
           onSearchChange={handleSearchChange}
         />
 
-        {/* List */}
+        {/* Danh sách lịch hẹn */}
         <AppointmentList
           appointments={apiData?.appointments || []}
           total={apiData?.total || 0}

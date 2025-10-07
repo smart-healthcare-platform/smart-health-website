@@ -1,61 +1,68 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useSelector } from "react-redux"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Eye } from "lucide-react"
+import { Calendar, Clock, Eye, ChevronDown, ChevronUp } from "lucide-react"
 import AppointmentDetailDialog from "./appointment-detail-dialog"
-import { Appointment } from "@/types"
+import type { Appointment } from "@/types/appointment"
+import { createConversation } from "@/services/chat.service"
+import { RootState } from "@/redux"
 
 interface AppointmentCardProps {
   appointment: Appointment
-   
 }
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const router = useRouter()
+  const user = useSelector((state: RootState) => state.auth.user)
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "completed":
-        return {
-          label: "Đã hoàn thành",
-          className: "bg-green-500 text-white",
-        }
-      case "confirmed":
-        return {
-          label: "Đã xác nhận",
-          className: "bg-blue-500 text-white",
-        }
-      case "pending":
-        return {
-          label: "Chờ xác nhận",
-          className: "bg-yellow-500 text-white",
-        }
-      case "in-progress":
-        return {
-          label: "Đang khám",
-          className: "bg-purple-500 text-white",
-        }
-      case "cancelled":
-        return {
-          label: "Đã hủy",
-          className: "bg-red-500 text-white",
-        }
-      case "no-show":
-        return {
-          label: "Không đến",
-          className: "bg-gray-500 text-white",
-        }
-      default:
-        return {
-          label: "Không xác định",
-          className: "bg-gray-400 text-white",
-        }
+  // 👉 Tạo cuộc trò chuyện
+  const handleStartChat = async () => {
+    if (!user?.id || !appointment.doctorId) {
+      console.error("Thiếu user ID hoặc doctor ID")
+      return
+    }
+
+    try {
+      const newConversation = await createConversation({
+        recipientId: appointment.doctorId,
+        recipientRole: "doctor",
+      })
+
+      console.log("Conversation created:", newConversation)
+      router.push(`/user/chat-history?conversationId=${newConversation.id}`)
+    } catch (error) {
+      console.error("Lỗi khi tạo cuộc trò chuyện:", error)
     }
   }
 
+  // 👉 Cấu hình trạng thái
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case "completed":
+        return { label: "Đã hoàn thành", className: "bg-green-500 text-white" }
+      case "confirmed":
+        return { label: "Đã xác nhận", className: "bg-blue-500 text-white" }
+      case "pending":
+        return { label: "Chờ xác nhận", className: "bg-yellow-500 text-white" }
+      case "in-progress":
+        return { label: "Đang khám", className: "bg-purple-500 text-white" }
+      case "cancelled":
+        return { label: "Đã hủy", className: "bg-red-500 text-white" }
+      case "no-show":
+        return { label: "Không đến", className: "bg-gray-500 text-white" }
+      default:
+        return { label: "Không xác định", className: "bg-gray-400 text-white" }
+    }
+  }
+
+  // 👉 Format ngày & giờ
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("vi-VN", {
@@ -86,14 +93,24 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
                 <Badge variant="outline">{appointment.type}</Badge>
               </div>
-              <h3 className="text-lg font-semibold text-foreground text-balance">{appointment.doctorName}</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                {appointment.doctorName}
+              </h3>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)} className="bg-transparent">
+
+            {/* Nút xem chi tiết */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-transparent"
+            >
               <Eye className="h-4 w-4 mr-2 text-primary" />
               Chi tiết
             </Button>
           </div>
 
+          {/* Thông tin ngày giờ */}
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
@@ -104,10 +121,54 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
               <span>{formatTime(appointment.startAt)}</span>
             </div>
           </div>
+
+          {/* Nút chat và chi tiết */}
+          <div className="flex flex-col gap-2 mt-4">
+            {(appointment.status === "completed" || appointment.status === "confirmed") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartChat}
+                className="self-start"
+              >
+                Bắt đầu trò chuyện
+              </Button>
+            )}
+
+            {/* {appointment.notes && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="self-start"
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-2" />
+                    Thu gọn
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Chi tiết
+                  </>
+                )}
+              </Button>
+            )} */}
+          </div>
+
+          {/* Ghi chú (mở rộng) */}
+          {isExpanded && appointment.notes && (
+            <p className="text-sm text-gray-600 mt-2">{appointment.notes}</p>
+          )}
         </div>
       </Card>
 
-      <AppointmentDetailDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} appointment={appointment} />
+      <AppointmentDetailDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        appointment={appointment}
+      />
     </>
   )
 }
