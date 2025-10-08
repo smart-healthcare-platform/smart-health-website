@@ -1,26 +1,33 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Message } from '@/types/socket';
-import { getConversations, getMessages, GetMessagesParams } from '@/services/chat.service';
+import { getConversations, getMessages } from '@/services/chat.service';
  
+interface ConversationMessages {
+  data: Message[];
+  page: number;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+}
+
 interface ChatState {
   conversations: {
     id: string;
-    participants: { id: string; fullName: string; role: string }[]; // Updated participant structure to use fullName
+    participants: { id: string; fullName: string; role: string }[];
     lastMessage?: {
       content: string;
       createdAt: string;
       senderId: string;
     };
-    unreadCount: number; // Add unreadCount to Conversation type
+    unreadCount: number;
   }[];
   selectedConversationId: string | null;
-  messages: Record<string, Message[]>; // Keyed by conversationId
+  messages: Record<string, ConversationMessages>; // Keyed by conversationId
   connectionStatus: 'disconnected' | 'connecting' | 'connected';
-  unreadCounts: Record<string, number>; // Keyed by conversationId
-  loading: boolean; // Add loading state
-  error: string | null; // Add error state
+  unreadCounts: Record<string, number>;
+  loading: boolean;
+  error: string | null;
 }
- 
+
 const initialState: ChatState = {
   conversations: [],
   selectedConversationId: null,
@@ -49,13 +56,41 @@ export const fetchConversations = createAsyncThunk(
   }
 );
  
-// Async Thunk for fetching messages
+const MESSAGE_LIMIT = 8;
+
+// Async Thunk for fetching initial messages
 export const fetchMessages = createAsyncThunk(
   'chat/fetchMessages',
-  async (params: GetMessagesParams, { rejectWithValue }) => {
+  async (params: { conversationId: string }, { rejectWithValue }) => {
     try {
-      const response = await getMessages(params);
-      return { conversationId: params.conversationId, messages: response };
+      const response = await getMessages({ ...params, limit: MESSAGE_LIMIT, page: 1 });
+      return {
+        conversationId: params.conversationId,
+        messages: response,
+        page: 1,
+        hasMore: response.length === MESSAGE_LIMIT,
+      };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
+    }
+  }
+);
+
+// Async Thunk for fetching more messages (pagination)
+export const fetchMoreMessages = createAsyncThunk(
+  'chat/fetchMoreMessages',
+  async (params: { conversationId: string; page: number }, { rejectWithValue }) => {
+    try {
+      const response = await getMessages({ ...params, limit: MESSAGE_LIMIT });
+      return {
+        conversationId: params.conversationId,
+        messages: response,
+        page: params.page,
+        hasMore: response.length === MESSAGE_LIMIT,
+      };
     } catch (error: unknown) {
       if (error instanceof Error) {
         return rejectWithValue(error.message);
@@ -80,44 +115,40 @@ const chatSlice = createSlice({
     },
     setMessages: (state, action: PayloadAction<{ conversationId: string; messages: Message[] }>) => {
       const { conversationId, messages } = action.payload;
-      state.messages[conversationId] = messages;
+      if (!state.messages[conversationId]) {
+        state.messages[conversationId] = { data: [], page: 1, hasMore: true, isLoadingMore: false };
+      }
+      state.messages[conversationId].data = messages;
     },
     addMessage: (state, action: PayloadAction<{ conversationId: string; message: Message }>) => {
       const { conversationId, message } = action.payload;
       if (!state.messages[conversationId]) {
-        state.messages[conversationId] = [];
+        state.messages[conversationId] = { data: [], page: 1, hasMore: true, isLoadingMore: false };
       }
 
-      // Check if the message is an optimistic update (has a temp ID) by looking for a temp message with the same ID
-      const existingMessageIndex = state.messages[conversationId].findIndex(
+      const conversationMessages = state.messages[conversationId].data;
+      const existingMessageIndex = conversationMessages.findIndex(
         (msg) => msg.id === message.id
       );
 
       if (existingMessageIndex !== -1) {
-        // If a message with the exact same ID exists, update it (e.g., server confirms with same ID or updates it)
-        state.messages[conversationId][existingMessageIndex] = message;
+        conversationMessages[existingMessageIndex] = message;
       } else {
-        // Check if this new message (not a temp message itself) might be a server confirmation/update for a *previously sent* temp message
-        // We look for a temp message in the same conversation with the same senderId and content (and roughly the same time)
-        if (!message.id.startsWith('temp-')) { // Only try to match non-temp incoming messages against temp outgoing ones
-          const matchingTempMessageIndex = state.messages[conversationId].findIndex(msg =>
+        if (!message.id.startsWith('temp-')) {
+          const matchingTempMessageIndex = conversationMessages.findIndex(msg =>
             msg.id.startsWith('temp-') &&
             msg.senderId === message.senderId &&
             msg.content === message.content &&
-            // Optionally check timestamp proximity, e.g., within 10 seconds
             Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000
           );
 
           if (matchingTempMessageIndex !== -1) {
-            // Replace the optimistic temp message with the confirmed server message
-            state.messages[conversationId][matchingTempMessageIndex] = message;
+            conversationMessages[matchingTempMessageIndex] = message;
           } else {
-            // Add the new message (it's not a duplicate of a temp message)
-            state.messages[conversationId].push(message);
+            conversationMessages.push(message);
           }
         } else {
-          // Add the new temp message (e.g., from optimistic update in this client)
-          state.messages[conversationId].push(message);
+          conversationMessages.push(message);
         }
       }
 
@@ -159,11 +190,40 @@ const chatSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
+        const { conversationId, messages, page, hasMore } = action.payload;
+        state.messages[conversationId] = {
+          data: messages,
+          page,
+          hasMore,
+          isLoadingMore: false,
+        };
         state.loading = false;
-        state.messages[action.payload.conversationId] = action.payload.messages;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchMoreMessages.pending, (state, action) => {
+        const { conversationId } = action.meta.arg;
+        if (state.messages[conversationId]) {
+          state.messages[conversationId].isLoadingMore = true;
+        }
+      })
+      .addCase(fetchMoreMessages.fulfilled, (state, action) => {
+        const { conversationId, messages, page, hasMore } = action.payload;
+        if (state.messages[conversationId]) {
+          // Prepend older messages to the start of the array
+          state.messages[conversationId].data = [...messages, ...state.messages[conversationId].data];
+          state.messages[conversationId].page = page;
+          state.messages[conversationId].hasMore = hasMore;
+          state.messages[conversationId].isLoadingMore = false;
+        }
+      })
+      .addCase(fetchMoreMessages.rejected, (state, action) => {
+        const { conversationId } = action.meta.arg;
+        if (state.messages[conversationId]) {
+          state.messages[conversationId].isLoadingMore = false;
+        }
         state.error = action.payload as string;
       });
   },
