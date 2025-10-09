@@ -103,15 +103,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
   useEffect(() => {
     const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollViewport) {
-        scrollToBottom('auto');
-        return;
-    };
-    const isNearBottom = scrollViewport.scrollHeight - scrollViewport.scrollTop <= scrollViewport.clientHeight + 50;
+      // Fallback for initial render or if viewport not found
+      setTimeout(() => scrollToBottom('auto'), 0);
+      return;
+    }
+
+    // Check if user is near the bottom. Increased buffer to 100 for reliability.
+    const isNearBottom = scrollViewport.scrollHeight - scrollViewport.scrollTop <= scrollViewport.clientHeight + 100;
 
     if (isNearBottom) {
-      scrollToBottom();
+      // Use a timeout to ensure the DOM has updated with the new message before scrolling
+      setTimeout(() => scrollToBottom('smooth'), 0);
     }
-  }, [messages]);
+  }, [messages, selectedConversationId]);
 
   // Handle sending a message
   const handleSendMessage = () => {
@@ -130,6 +134,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
     // Optimistically update UI
     dispatch(addMessage({ conversationId: selectedConversationId, message: newMessage }));
     setMessageInput('');
+    // Scroll to bottom after sending a message to ensure it's visible
+    setTimeout(() => scrollToBottom('smooth'), 0);
 
     // Find the other participant in the conversation to determine recipient
     const currentConversation = conversations.find((c: Conversation) => c.id === selectedConversationId);
@@ -166,9 +172,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
   const otherParticipant = conversations.find((c: Conversation) => c.id === selectedConversationId)?.participants?.find((p: Participant) => p.userId && p.userId !== user?.id);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
+    <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
       {/* Conversations List - Left Column */}
-      <div className="w-1/3 border-r border-border flex flex-col">
+      <div className="w-1/3 border-r border-border flex flex-col overflow-hidden">
         <div className="p-4 border-b border-border">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
@@ -245,7 +251,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
       </div>
 
       {/* Chat Window - Right Column */}
-      <div className="w-2/3 flex flex-col">
+      <div className="w-2/3 flex flex-col overflow-hidden">
         {selectedConversationId ? (
           <>
             <div className="p-4 border-b border-border flex items-center justify-between">
@@ -273,7 +279,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
               </div>
             </div>
             
-            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-muted/10" onScroll={(e) => {
+            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-muted/10 min-h-0" onScroll={(e) => {
                 const target = e.target as HTMLDivElement;
                 if (target.scrollTop === 0 && selectedConversationId && messages[selectedConversationId]?.hasMore && !messages[selectedConversationId]?.isLoadingMore) {
                     dispatch(fetchMoreMessages({ conversationId: selectedConversationId, page: messages[selectedConversationId].page + 1 }));
@@ -298,7 +304,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
                     </div>
                   </div>
                 ) : (
-                    messages[selectedConversationId]?.data.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg: Message) => {
+                    messages[selectedConversationId]?.data.map((msg: Message) => {
                     const isCurrentUser = msg.senderId === user?.id;
                     const senderName = isCurrentUser ? (user?.profile?.fullName || 'Bạn') : (otherParticipant?.fullName || 'Unknown');
 
