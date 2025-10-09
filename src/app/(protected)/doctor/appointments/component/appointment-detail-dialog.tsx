@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -69,11 +70,13 @@ const statusConfig = {
 
 export function AppointmentDetailDialog({ appointment, open, onOpenChange, loading }: AppointmentDetailDialogProps) {
   const [activeTab, setActiveTab] = useState("info")
+  const router = useRouter()
 
-  if (!appointment) return null
+  const status = statusConfig[appointment?.status && appointment.status in statusConfig
+    ? (appointment.status as keyof typeof statusConfig)
+    : "pending"]
 
-  const status = statusConfig[appointment.status]
-  const StatusIcon = status.icon
+  const StatusIcon = status?.icon
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
@@ -111,6 +114,13 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, loadi
     return age
   }
 
+  const handleStartExamination = () => {
+    if (appointment?.id) {
+      router.push(`/examination/${appointment.id}`)
+      onOpenChange(false) // Close dialog after navigation
+    }
+  }
+
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,10 +144,12 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, loadi
                 Thông tin chi tiết về cuộc hẹn với bệnh nhân
               </DialogDescription>
             </div>
-            <Badge variant={status.variant} className="gap-1.5 px-3 py-1.5 w-fit">
-              <StatusIcon className="w-4 h-4" />
-              {status.label}
-            </Badge>
+            {appointment && (
+              <Badge variant={status.variant} className="gap-1.5 px-3 py-1.5 w-fit">
+                <StatusIcon className="w-4 h-4" />
+                {status.label}
+              </Badge>
+            )}
           </div>
         </DialogHeader>
 
@@ -286,7 +298,7 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, loadi
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          {appointment.status === "confirmed" && <Button>Bắt đầu khám</Button>}
+          {appointment.status === "confirmed" && <Button onClick={handleStartExamination}>Bắt đầu khám</Button>}
           {appointment.status === "completed" && <Button>Hoàn thành khám</Button>}
         </div>
       </DialogContent>

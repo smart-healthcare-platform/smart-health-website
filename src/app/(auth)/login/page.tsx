@@ -83,6 +83,15 @@ export default function ModernHealthLogin() {
           }
         }))
       }
+
+      if (user.role === "ADMIN") {
+        dispatch(setCredentials({
+          token,
+          user: {
+            ...user,
+          }
+        }))
+      }
       // Redirect
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get("redirect")
