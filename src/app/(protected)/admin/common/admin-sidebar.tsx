@@ -19,6 +19,7 @@ import {
   Database,
   ChevronLeft,
   ChevronRight,
+  Package, // Import Package icon
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux"
@@ -50,6 +51,12 @@ const navigation = [
     icon: Calendar,
     current: false,
     badge: "18",
+  },
+  {
+    name: "Medicines",
+    href: "/admin/medicines",
+    icon: Package,
+    current: false,
   },
 ]
 
