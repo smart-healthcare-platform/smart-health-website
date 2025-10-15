@@ -116,7 +116,7 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, loadi
 
   const handleStartExamination = () => {
     if (appointment?.id) {
-      router.push(`/examination/${appointment.id}`)
+      router.push(`/doctor/examination/${appointment.id}`)
       onOpenChange(false) // Close dialog after navigation
     }
   }

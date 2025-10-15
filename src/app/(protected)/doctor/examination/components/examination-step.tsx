@@ -1,34 +1,100 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { FileText, Stethoscope, ClipboardCheck, Pill, TestTube } from "lucide-react"
+import {
+  FileText,
+  Stethoscope,
+  ClipboardCheck,
+  Pill,
+  TestTube,
+  ChevronsUpDown,
+} from "lucide-react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command"
 import type { ExaminationStepProps } from "@/types/examination"
+import type { LabTest } from "@/types"
+import { appointmentService } from "@/services/appointment.service"
 
-export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: ExaminationStepProps) {
+export function ExaminationStep({
+  data,
+  onUpdate,
+  onNext,
+  onPrevious,
+}: ExaminationStepProps) {
   const [formData, setFormData] = useState(data)
+  const [labTests, setLabTests] = useState<LabTest[]>([])
+  const [open, setOpen] = useState(false)
 
-  const handleChange = (field: string, value: string) => {
+  // Lấy danh sách xét nghiệm từ server
+  useEffect(() => {
+    async function fetchLabTests() {
+      const res = await appointmentService.getAllLabTests()
+      setLabTests(res)
+    }
+    fetchLabTests()
+  }, [])
+
+  // Cập nhật formData
+  const handleChange = (field: string, value: any) => {
     const newData = { ...formData, [field]: value }
     setFormData(newData)
     onUpdate(newData)
   }
 
-  const handleSubmit = () => {
-    onNext()
+  // Chọn / bỏ chọn xét nghiệm
+  const handleToggleLabTest = (testId: string) => {
+    const selected = formData.labTests || []
+    const exists = selected.some((t: any) => t.id === testId)
+
+    let newSelected
+    if (exists) {
+      newSelected = selected.filter((t: any) => t.id !== testId)
+    } else {
+      const test = labTests.find((t) => t.id === testId)
+      if (!test) return
+      newSelected = [
+        ...selected,
+        { id: test.id, name: test.name, price: test.price },
+      ]
+    }
+
+    handleChange("labTests", newSelected)
   }
+
+  const handleSubmit = () => onNext()
+
+  const selectedNames =
+    formData.labTests && formData.labTests.length > 0
+      ? formData.labTests.map((t: any) => t.name).filter(Boolean).join(", ") || "Chọn xét nghiệm..."
+      : "Chọn xét nghiệm..."
+
+
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold mb-2 text-balance">Khám bệnh và chẩn đoán</h2>
-        <p className="text-sm text-muted-foreground text-pretty">Ghi chú quá trình khám, chẩn đoán và kê đơn thuốc</p>
+        <h2 className="text-xl font-semibold mb-2">Khám bệnh và chẩn đoán</h2>
+        <p className="text-sm text-muted-foreground">
+          Ghi chú quá trình khám, chẩn đoán và kê đơn thuốc
+        </p>
       </div>
 
-      {/* Chief Complaint */}
+      {/* Lý do khám */}
       <div className="space-y-2">
         <Label htmlFor="chiefComplaint" className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" />
@@ -43,7 +109,7 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
         />
       </div>
 
-      {/* Symptoms */}
+      {/* Triệu chứng */}
       <div className="space-y-2">
         <Label htmlFor="symptoms" className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" />
@@ -60,7 +126,7 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
 
       <Separator />
 
-      {/* Physical Examination */}
+      {/* Kết quả khám lâm sàng */}
       <div className="space-y-2">
         <Label htmlFor="examination" className="flex items-center gap-2">
           <Stethoscope className="w-4 h-4 text-primary" />
@@ -77,7 +143,7 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
 
       <Separator />
 
-      {/* Diagnosis */}
+      {/* Chẩn đoán */}
       <div className="space-y-2">
         <Label htmlFor="diagnosis" className="flex items-center gap-2">
           <ClipboardCheck className="w-4 h-4 text-primary" />
@@ -92,24 +158,63 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
         />
       </div>
 
-      {/* Lab Tests */}
+      {/* Xét nghiệm */}
       <div className="space-y-2">
-        <Label htmlFor="labTests" className="flex items-center gap-2">
+        <Label className="flex items-center gap-2">
           <TestTube className="w-4 h-4 text-primary" />
           Xét nghiệm cần làm (nếu có)
         </Label>
-        <Textarea
-          id="labTests"
-          placeholder="Danh sách các xét nghiệm cần thực hiện..."
-          rows={2}
-          value={formData.labTests || ""}
-          onChange={(e) => handleChange("labTests", e.target.value)}
-        />
+
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+            >
+              <span className="truncate">{selectedNames}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[300px] overflow-y-auto p-2">
+            <Command>
+              <CommandInput placeholder="Tìm xét nghiệm..." />
+              <CommandEmpty>Không có kết quả</CommandEmpty>
+
+              <CommandGroup className="mt-2 space-y-1">
+                {labTests.map((test) => {
+                  const checked = formData.labTests?.some(
+                    (t: any) => t.id === test.id
+                  )
+                  return (
+                    <CommandItem
+                      key={test.id}
+                      onSelect={() => handleToggleLabTest(test.id)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-accent"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        readOnly
+                        className="w-4 h-4 accent-primary rounded"
+                      />
+                      <span className="flex-1">
+                        {test.name}
+                      </span>
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Separator />
 
-      {/* Prescription */}
+      {/* Đơn thuốc */}
       <div className="space-y-2">
         <Label htmlFor="prescription" className="flex items-center gap-2">
           <Pill className="w-4 h-4 text-primary" />
@@ -124,7 +229,7 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
         />
       </div>
 
-      {/* Actions */}
+      {/* Nút hành động */}
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onPrevious}>
           Quay lại
