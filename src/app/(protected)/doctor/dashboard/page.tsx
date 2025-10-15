@@ -2,20 +2,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, Clock, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { appointmentService } from "@/services/appointment.service"
+import { Appointment } from "@/types"
+import TodaySchedule from "./components/TodaySchedule"
 
 export function DashboardOverview() {
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  useEffect(() => {
+    const fetchTodayAppointments = async () => {
+      try {
+        const today = new Date()
+        const start = today.toISOString().split("T")[0] + "T00:00:00Z"
+        const end = today.toISOString().split("T")[0] + "T23:59:59Z"
+        const data = await appointmentService.getByDoctorId(start, end)
+        setAppointments(data)
+      } catch (err) {
+        console.error("Lỗi khi lấy lịch hẹn hôm nay:", err)
+      }
+    }
+
+    fetchTodayAppointments()
+  }, [])
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lịch hẹn hôm nay</CardTitle>
+            <CardTitle className="text-sm font-medium">Tổng số cuộc hẹn trong ngày</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">12</div>
-            <p className="text-xs text-muted-foreground">+2 so với hôm qua</p>
+            <div className="text-2xl font-bold text-primary">{appointments.length}</div>
           </CardContent>
         </Card>
 
@@ -63,38 +82,8 @@ export function DashboardOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { time: "08:00", patient: "Nguyễn Thị B", type: "Khám định kỳ", status: "completed" },
-              { time: "08:30", patient: "Trần Văn C", type: "Tái khám", status: "completed" },
-              { time: "09:00", patient: "Lê Thị D", type: "Khám mới", status: "current" },
-              { time: "09:30", patient: "Phạm Văn E", type: "Khám định kỳ", status: "upcoming" },
-              { time: "10:00", patient: "Hoàng Thị F", type: "Tư vấn", status: "upcoming" },
-            ].map((appointment, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-medium text-muted-foreground min-w-[50px]">{appointment.time}</div>
-                  <div>
-                    <p className="font-medium">{appointment.patient}</p>
-                    <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {appointment.status === "completed" && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Hoàn thành
-                    </Badge>
-                  )}
-                  {appointment.status === "current" && (
-                    <Badge className="bg-primary text-primary-foreground">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Đang khám
-                    </Badge>
-                  )}
-                  {appointment.status === "upcoming" && <Badge variant="outline">Sắp tới</Badge>}
-                </div>
-              </div>
-            ))}
+            <TodaySchedule appointments={appointments} />
+
           </CardContent>
         </Card>
 

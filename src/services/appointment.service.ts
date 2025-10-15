@@ -1,5 +1,6 @@
 import { apiAuth } from '@/lib/axios';
-import { Appointment, AppointmentDetailForDoctor, AppointmentResponse, CreateAppointmentPayload } from '@/types';
+import { Appointment, AppointmentDetailForDoctor, AppointmentResponse, CreateAppointmentPayload, LabTest, MedicalRecord } from '@/types';
+import { CreateMedicalRecordPayload, CreateVitalSignPayload, VitalSigns } from '@/types/examination';
 
 export const appointmentService = {
   // Tạo appointment mới
@@ -18,7 +19,7 @@ export const appointmentService = {
   },
 
   async getDetailsAppointmentForDoctor(id: string): Promise<AppointmentDetailForDoctor> {
-    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetailForDoctor }>(`/appointments/${id}`)
+    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetailForDoctor }>(`/appointments/get-by-id/${id}`)
     if (!res.data.success) {
       throw new Error(`Appointment ${id} not found`)
     }
@@ -46,15 +47,12 @@ export const appointmentService = {
 
   async getByDoctorId(
     doctorId: string,
-    page = 1,
-    limit = 10,
-    status: 'confirmed' | 'completed' | 'cancelled' | 'all' = "all",
-    start?: string,   
-    end?: string     
+    start?: string,
+    end?: string
   ): Promise<Appointment[]> {
     const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>(
       `/appointments/doctor/${doctorId}`,
-      { params: { page, limit, status, start, end } }
+      { params: { start, end } }
     );
     if (!res.data.success) {
       throw new Error(`Appointments for doctor ${doctorId} not found`);
@@ -62,14 +60,8 @@ export const appointmentService = {
     return res.data.data;
   },
 
-
-  async getByDateRange(start: string, end: string): Promise<Appointment[]> {
-    const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>(
-      `/appointments`,
-      { params: { start, end } }
-    );
-    if (!res.data.success) return []
-    return res.data.data
+  async getForDoctorByDateRange(doctorId: string, start: string, end: string): Promise<Appointment[]> {
+    return this.getByDoctorId(doctorId, start, end);
   },
 
   async update(id: string, payload: Partial<CreateAppointmentPayload>): Promise<Appointment> {
@@ -85,5 +77,50 @@ export const appointmentService = {
     if (!res.data.success) {
       throw new Error(res.data.message || `Failed to delete appointment ${id}`)
     }
+  },
+
+  async getTodayAppointments(): Promise<Appointment[]> {
+    const today = new Date()
+    const start = today.toISOString().split("T")[0] + "T00:00:00Z"
+    const end = today.toISOString().split("T")[0] + "T23:59:59Z"
+
+    const res = await apiAuth.get<{ success: boolean; data: Appointment[] }>("/appointments", {
+      params: { start, end },
+    })
+    if (!res.data.success) return []
+    return res.data.data
+  },
+
+
+  async getAllLabTests(): Promise<LabTest[]> {
+    const res = await apiAuth.get<{ success: boolean; data: LabTest[] }>("/appointments/lab-tests")
+    if (!res.data.success) return []
+    return res.data.data
+  },
+
+  async createMedicalRecord(payload: CreateMedicalRecordPayload): Promise<MedicalRecord> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: MedicalRecord }>(
+      "/appointments/medical-records",
+      payload
+    )
+
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo hồ sơ khám bệnh")
+    }
+
+    return res.data.data
+  },
+
+  async createVitalSign(payload: CreateVitalSignPayload): Promise<VitalSigns> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: VitalSigns }>(
+      "/appointments/vital-signs",
+      payload
+    )
+
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo hồ sơ khám bệnh")
+    }
+
+    return res.data.data
   },
 }
