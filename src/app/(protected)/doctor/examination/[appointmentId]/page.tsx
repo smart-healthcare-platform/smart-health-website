@@ -1,66 +1,117 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ExaminationLayout } from "../components/examination-layout"
 import { PatientVerification } from "../components/patient-verification"
 import { VitalSignsStep } from "../components/vital-signs-step"
 import { ExaminationStep } from "../components/examination-step"
 import { SummaryStep } from "../components/summary-step"
-import type { ExaminationData } from "@/types/examination"
+import { appointmentService } from "@/services/appointment.service"
+import SuccessDialog from "@/components/ui/success-dialog"
+import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examition"
 
-// Mock data - thay bằng API call thực tế
-const mockAppointment = {
-  id: "1",
-  patientName: "Nguyễn Văn A",
-  patientId: "p1",
-  dateOfBirth: "1985-05-15",
-  gender: "Nam",
-  phone: "0901234567",
-  address: "123 Đường ABC, Quận 1, TP.HCM",
-  bloodType: "O+",
-  allergies: "Penicillin",
-  chronicDiseases: "Cao huyết áp",
-  appointmentTime: new Date().toISOString(),
-  reason: "Đau đầu, chóng mặt kéo dài 3 ngày",
-}
+import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData } from "@/types/examination"
+import type { AppointmentDetailForDoctor } from "@/types/appointment"
+import Loading from "@/components/ui/loading"
 
 export default function ExaminationPage() {
-  const params = useParams()
+  const { appointmentId } = useParams()
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [appointment, setAppointment] = useState<AppointmentDetailForDoctor | null>(null)
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1)
-  const [examinationData, setExaminationData] = useState<ExaminationData>({
-    patientVerified: false,
-  })
+  const [examinationData, setExaminationData] = useState<ExaminationData>({ patientVerified: false })
 
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4)
-    }
-  }
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
 
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4)
+  useEffect(() => {
+    const fetchAppointment = async () => {
+      try {
+        setLoading(true)
+        const data = await appointmentService.getDetailsAppointmentForDoctor(appointmentId as string)
+        setAppointment(data)
+      } catch (err) {
+        console.error("Lỗi khi lấy thông tin appointment:", err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    if (appointmentId) fetchAppointment()
+  }, [appointmentId])
+
+  const handleNext = () => currentStep < 4 && setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4)
+  const handlePrevious = () => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4)
 
   const handleUpdateData = (data: Partial<ExaminationData>) => {
     setExaminationData((prev) => ({ ...prev, ...data }))
   }
 
-  const handleComplete = async () => {
-    console.log("[v0] Hoàn thành khám bệnh:", examinationData)
-    // TODO: Gọi API lưu dữ liệu khám
-    router.push("/appointments")
+  const createMedicalRecord = async (): Promise<string> => {
+    if (!examinationData.diagnosis) {
+      throw new Error("Vui lòng nhập chẩn đoán trước khi hoàn tất khám bệnh")
+    }
+
+    const now = new Date()
+    const localDateTime = now.toISOString().slice(0, 19).replace("T", " ")
+    const payload: CreateMedicalRecordPayload = {
+      appointmentId: appointmentId as string,
+      diagnosis: examinationData.diagnosis,
+      symptoms: examinationData.symptoms || "",
+      doctorNotes: examinationData.additionalNotes || "",
+      prescription: examinationData.prescription || "",
+      followUpDate: localDateTime,
+    }
+
+    const record = await appointmentService.createMedicalRecord(payload)
+    return record.id
   }
+
+  const createVitalSign = async (medicalRecordId: string) => {
+    if (!examinationData.vitalSigns) return
+    const v = examinationData.vitalSigns
+
+    const payload: CreateVitalSignPayload = {
+      medicalRecordId,
+      temperature: v.temperature,
+      heartRate: v.heartRate,
+      systolicPressure: v.systolicPressure,
+      diastolicPressure: v.diastolicPressure,
+      oxygenSaturation: v.oxygenSaturation,
+      height: v.height,
+      weight: v.weight,
+      bmi: v.bmi,
+      notes: v.notes,
+    }
+
+    const vital = await appointmentService.createVitalSign(payload)
+  }
+
+  const handleComplete = async () => {
+    try {
+      const recordId = await createMedicalRecord()
+      if (examinationData.vitalSigns) {
+        await createVitalSign(recordId)
+      }
+
+      setConfirmOpen(false)
+      setSuccessOpen(true)
+    } catch (error: any) {
+      console.error("Lỗi hoàn tất khám:", error)
+    }
+  }
+
+  if (loading) return <Loading size="lg" />
+  if (!appointment) return <p>Không tìm thấy thông tin cuộc hẹn</p>
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
           <PatientVerification
-            appointment={mockAppointment}
+            appointment={appointment}
             onNext={() => {
               handleUpdateData({ patientVerified: true })
               handleNext()
@@ -95,9 +146,9 @@ export default function ExaminationPage() {
       case 4:
         return (
           <SummaryStep
-            appointment={mockAppointment}
+            appointment={appointment}
             examinationData={examinationData}
-            onComplete={handleComplete}
+            onComplete={() => setConfirmOpen(true)} 
             onPrevious={handlePrevious}
           />
         )
@@ -105,8 +156,33 @@ export default function ExaminationPage() {
   }
 
   return (
-    <ExaminationLayout currentStep={currentStep} onStepClick={setCurrentStep}>
-      {renderStep()}
-    </ExaminationLayout>
+    <>
+      <ExaminationLayout currentStep={currentStep} onStepClick={setCurrentStep}>
+        {renderStep()}
+      </ExaminationLayout>
+
+      {/* 🔹 Dialog xác nhận */}
+      <ConfirmEndExaminationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleComplete}
+      />
+
+      {/* 🔹 Modal thông báo thành công */}
+      <SuccessDialog
+        open={successOpen}
+        onClose={() => {
+          setSuccessOpen(false)
+          router.push("/doctor")
+        }}
+        title="Kết thúc khám thành công!"
+        message="Thông tin bệnh án và sinh hiệu của bệnh nhân đã được lưu lại thành công."
+        confirmText="Quay lại danh sách"
+        onConfirm={() => {
+          setSuccessOpen(false)
+          router.push("/doctor")
+        }}
+      />
+    </>
   )
 }

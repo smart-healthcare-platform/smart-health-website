@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Calendar, Phone, MapPin, Droplet, AlertCircle } from "lucide-react"
-import type { PatientVerificationData } from "@/types/examination"
+import { AppointmentDetailForDoctor } from "@/types"
 
 interface PatientVerificationProps {
-  appointment: PatientVerificationData
+  appointment: AppointmentDetailForDoctor
   onNext: () => void
 }
 
@@ -58,24 +58,20 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
               Ngày sinh
             </p>
             <p className="font-medium">
-              {formatDate(appointment.dateOfBirth)} ({calculateAge(appointment.dateOfBirth)} tuổi)
+              {formatDate(appointment.patient.dateOfBirth)} ({calculateAge(appointment.patient.dateOfBirth)} tuổi)
             </p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Giới tính</p>
-            <p className="font-medium">{appointment.gender}</p>
+            <p className="font-medium">
+              {appointment.patient.gender === "male"
+                ? "Nam"
+                : appointment.patient.gender === "female"
+                  ? "Nữ"
+                  : "Khác"}
+            </p>
           </div>
-          {appointment.bloodType && (
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Droplet className="w-3 h-3" />
-                Nhóm máu
-              </p>
-              <Badge variant="outline" className="font-medium">
-                {appointment.bloodType}
-              </Badge>
-            </div>
-          )}
+
         </div>
       </div>
 
@@ -85,19 +81,19 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
       <div className="space-y-4">
         <h3 className="font-semibold">Thông tin liên hệ</h3>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Phone className="w-3 h-3" />
               Số điện thoại
             </p>
-            <p className="font-medium">{appointment.phone}</p>
-          </div>
+            <p className="font-medium">{appointment.patient.}</p>
+          </div> */}
           <div className="space-y-1 col-span-2">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               Địa chỉ
             </p>
-            <p className="font-medium text-pretty">{appointment.address}</p>
+            <p className="font-medium text-pretty">{appointment.patient.address}</p>
           </div>
         </div>
       </div>
@@ -105,7 +101,7 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
       <Separator />
 
       {/* Medical Alerts */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-destructive" />
           Cảnh báo y tế
@@ -129,14 +125,14 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
             <p className="text-sm text-muted-foreground italic">Không có cảnh báo y tế</p>
           )}
         </div>
-      </div>
+      </div> */}
 
-      {appointment.reason && (
+      {appointment.notes && (
         <>
           <Separator />
           <div className="space-y-2">
             <h3 className="font-semibold">Lý do khám</h3>
-            <p className="text-sm text-pretty bg-muted p-4 rounded-lg">{appointment.reason}</p>
+            <p className="text-sm text-pretty bg-muted p-4 rounded-lg">{appointment.notes}</p>
           </div>
         </>
       )}
