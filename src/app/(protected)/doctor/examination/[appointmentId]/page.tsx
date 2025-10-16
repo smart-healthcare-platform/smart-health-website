@@ -11,7 +11,7 @@ import { appointmentService } from "@/services/appointment.service"
 import SuccessDialog from "@/components/ui/success-dialog"
 import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examition"
 
-import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData } from "@/types/examination"
+import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { AppointmentDetailForDoctor } from "@/types/appointment"
 import Loading from "@/components/ui/loading"
 
@@ -49,6 +49,31 @@ export default function ExaminationPage() {
     setExaminationData((prev) => ({ ...prev, ...data }))
   }
 
+  /**
+   * Format prescription items thành text để lưu vào medical record
+   * Backward compatible với hệ thống hiện tại
+   */
+  const formatPrescriptionToText = (items?: PrescriptionItem[]): string => {
+    if (!items || items.length === 0) return ""
+    
+    return items.map((item, index) => {
+      const lines = [
+        `${index + 1}. ${item.drugName}`,
+        `   - Hoạt chất: ${item.activeIngredient} (${item.strength})`,
+        `   - Liều lượng: ${item.dosage}`,
+        `   - Số lượng: ${item.quantity}`,
+        `   - Thời gian: ${item.duration} ngày`,
+        `   - Hướng dẫn: ${item.instructions}`,
+      ]
+      
+      if (item.notes) {
+        lines.push(`   - Lưu ý: ${item.notes}`)
+      }
+      
+      return lines.join('\n')
+    }).join('\n\n')
+  }
+
   const createMedicalRecord = async (): Promise<string> => {
     if (!examinationData.diagnosis) {
       throw new Error("Vui lòng nhập chẩn đoán trước khi hoàn tất khám bệnh")
@@ -56,12 +81,18 @@ export default function ExaminationPage() {
 
     const now = new Date()
     const localDateTime = now.toISOString().slice(0, 19).replace("T", " ")
+    
+    // Format prescription: prioritize prescriptionItems, fallback to legacy text
+    const prescriptionText = examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0
+      ? formatPrescriptionToText(examinationData.prescriptionItems)
+      : examinationData.prescription || ""
+    
     const payload: CreateMedicalRecordPayload = {
       appointmentId: appointmentId as string,
       diagnosis: examinationData.diagnosis,
       symptoms: examinationData.symptoms || "",
       doctorNotes: examinationData.additionalNotes || "",
-      prescription: examinationData.prescription || "",
+      prescription: prescriptionText,
       followUpDate: localDateTime,
     }
 
