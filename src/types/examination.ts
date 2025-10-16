@@ -1,16 +1,27 @@
 import { AppointmentDetailForDoctor } from "./appointment"
 
 export interface VitalSigns {
-  systolicPressure?: number        // Huyết áp tâm thu (mmHg)
-  diastolicPressure?: number       // Huyết áp tâm trương (mmHg)
-  heartRate?: number               // Nhịp tim (bpm)
-  temperature?: number             // Nhiệt độ (°C)
-  weight?: number                  // Cân nặng (kg)
-  height?: number                  // Chiều cao (cm)
-  bmi?: number                     // Chỉ số BMI (kg/m²)
-  respiratoryRate?: number         // Nhịp thở (lần/phút)
-  oxygenSaturation?: number        // SpO₂ (%)
-  notes?: string                   // Ghi chú
+  id?: string
+  medicalRecordId?: string
+  systolicPressure?: number | null       // Huyết áp tâm thu (mmHg)
+  diastolicPressure?: number | null      // Huyết áp tâm trương (mmHg)
+  heartRate?: number | null              // Nhịp tim (bpm)
+  temperature?: number | null            // Nhiệt độ (°C)
+  weight?: number | null                 // Cân nặng (kg)
+  height?: number | null                 // Chiều cao (cm)
+  bmi?: number | null                    // Chỉ số BMI (kg/m²)
+  respiratoryRate?: number | null        // Nhịp thở (lần/phút)
+  oxygenSaturation?: number | null       // SpO₂ (%)
+  bloodSugar?: number | null             // Đường huyết (mg/dL)
+  cholesterolTotal?: number | null       // Cholesterol tổng (mg/dL)
+  hdl?: number | null                    // HDL (mg/dL)
+  ldl?: number | null                    // LDL (mg/dL)
+  triglycerides?: number | null          // Triglyceride (mg/dL)
+  creatinine?: number | null             // Creatinine (mg/dL)
+  status?: string | null                 // Trạng thái (VD: waiting_for_test_result)
+  notes?: string | null                  // Ghi chú
+  createdAt?: string
+  updatedAt?: string
 }
 
 export enum VitalSignStatus {
@@ -73,7 +84,7 @@ export interface ExaminationData {
   symptoms?: string
   examination?: string
   diagnosis?: string
-  
+
   // Legacy prescription (text) - giữ lại để backward compatible
   prescription?: string
 
@@ -133,10 +144,10 @@ export interface ExaminationStepData {
   symptoms?: string
   examination?: string
   diagnosis?: string
-  
+
   // Legacy prescription field
   prescription?: string
-  
+
   // NEW: Structured prescription items
   prescriptionItems?: PrescriptionItem[]
 
@@ -184,4 +195,6 @@ export interface MedicalRecord {
   followUpDate?: string
   createdAt: string
   updatedAt: string
+
+  vitalSigns?: VitalSigns
 }

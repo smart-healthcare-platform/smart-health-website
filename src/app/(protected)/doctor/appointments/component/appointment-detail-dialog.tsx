@@ -18,6 +18,7 @@ import {
   Clock3,
   UserX,
   Loader2,
+  Activity,
 } from "lucide-react"
 import type { AppointmentDetailForDoctor } from "@/types/appointment"
 import Loading from "@/components/ui/loading"
@@ -28,7 +29,22 @@ interface AppointmentDetailDialogProps {
   onOpenChange: (open: boolean) => void
   loading?: boolean
 }
+interface VitalItemProps {
+  label: string
+  value?: number | string | null
+  unit?: string
+}
 
+function VitalItem({ label, value, unit }: VitalItemProps) {
+  return (
+    <div className="flex justify-between items-center border-b py-2">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="font-medium">
+        {value ?? "--"} {value ? unit || "" : ""}
+      </span>
+    </div>
+  )
+}
 const statusConfig = {
   confirmed: {
     label: "Đã xác nhận",
@@ -248,12 +264,93 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, loadi
             </div>
           </TabsContent>
 
-          {/* Tab: Thông tin y tế */}
           <TabsContent value="medical" className="space-y-6 mt-6">
-            <div className="text-center py-12 text-muted-foreground">
-              <Stethoscope className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Chưa có thông tin y tế</p>
-            </div>
+            {!appointment.medicalRecord ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Stethoscope className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>Chưa có thông tin y tế</p>
+              </div>
+            ) : (
+              <>
+                {/* --- Thông tin khám bệnh --- */}
+                <div className="p-4 bg-muted/40 rounded-lg space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Stethoscope className="w-5 h-5 text-primary" />
+                    Thông tin khám bệnh
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <p><span className="font-medium text-muted-foreground">Triệu chứng:</span> {appointment.medicalRecord.symptoms || "—"}</p>
+                    <p><span className="font-medium text-muted-foreground">Chẩn đoán:</span> {appointment.medicalRecord.diagnosis || "—"}</p>
+                    <p><span className="font-medium text-muted-foreground">Ghi chú bác sĩ:</span> {appointment.medicalRecord.doctorNotes || "—"}</p>
+                    <p><span className="font-medium text-muted-foreground">Đơn thuốc:</span> {appointment.medicalRecord.prescription || "—"}</p>
+                    <p className="col-span-2">
+                      <span className="font-medium text-muted-foreground">Ngày tái khám:</span>{" "}
+                      {appointment.medicalRecord.followUpDate
+                        ? new Date(appointment.medicalRecord.followUpDate).toLocaleDateString("vi-VN")
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* --- Chỉ số sinh hiệu --- */}
+                <div className="p-4 bg-muted/40 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" />
+                    Chỉ số sinh hiệu
+                  </h3>
+
+                  {appointment.medicalRecord.vitalSigns ? (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                        <VitalItem label="Nhiệt độ" value={appointment.medicalRecord.vitalSigns.temperature} unit="°C" />
+                        <VitalItem
+                          label="Huyết áp"
+                          value={
+                            appointment.medicalRecord.vitalSigns.systolicPressure &&
+                              appointment.medicalRecord.vitalSigns.diastolicPressure
+                              ? `${appointment.medicalRecord.vitalSigns.systolicPressure}/${appointment.medicalRecord.vitalSigns.diastolicPressure}`
+                              : null
+                          }
+                          unit="mmHg"
+                        />
+                        <VitalItem label="SpO₂" value={appointment.medicalRecord.vitalSigns.oxygenSaturation} unit="%" />
+                        <VitalItem label="Chiều cao" value={appointment.medicalRecord.vitalSigns.height} unit="cm" />
+                        <VitalItem label="Cân nặng" value={appointment.medicalRecord.vitalSigns.weight} unit="kg" />
+                        <VitalItem label="BMI" value={appointment.medicalRecord.vitalSigns.bmi} />
+
+                        {/* nhóm xét nghiệm */}
+                        <VitalItem label="Đường huyết" value={appointment.medicalRecord.vitalSigns.bloodSugar} unit="mg/dL" />
+                        <VitalItem label="Cholesterol" value={appointment.medicalRecord.vitalSigns.cholesterolTotal} unit="mg/dL" />
+                        <VitalItem label="HDL" value={appointment.medicalRecord.vitalSigns.hdl} unit="mg/dL" />
+                        <VitalItem label="LDL" value={appointment.medicalRecord.vitalSigns.ldl} unit="mg/dL" />
+                        <VitalItem label="Triglycerides" value={appointment.medicalRecord.vitalSigns.triglycerides} unit="mg/dL" />
+                        <VitalItem label="Creatinine" value={appointment.medicalRecord.vitalSigns.creatinine} unit="mg/dL" />
+                      </div>
+
+                      <Separator className="my-3" />
+
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-medium">Trạng thái: </span>
+                        {appointment.medicalRecord.vitalSigns.status === "waiting_for_test_result"
+                          ? "Đang chờ kết quả"
+                          : "Hoàn tất"}
+                      </p>
+                      {appointment.medicalRecord.vitalSigns.notes && (
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Ghi chú:</span> {appointment.medicalRecord.vitalSigns.notes}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-6">
+                      <FileText className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                      <p>Chưa có chỉ số sinh hiệu</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </TabsContent>
 
           {/* Tab: Ghi chú */}
