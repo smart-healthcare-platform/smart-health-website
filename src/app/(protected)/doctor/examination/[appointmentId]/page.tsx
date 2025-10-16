@@ -2,22 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useSelector } from "react-redux"
 import { ExaminationLayout } from "../components/examination-layout"
 import { PatientVerification } from "../components/patient-verification"
 import { VitalSignsStep } from "../components/vital-signs-step"
 import { ExaminationStep } from "../components/examination-step"
 import { SummaryStep } from "../components/summary-step"
 import { appointmentService } from "@/services/appointment.service"
+import { medicineService } from "@/services/medicine.service"
 import SuccessDialog from "@/components/ui/success-dialog"
 import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examition"
+import { toast } from "react-toastify"
 
 import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData, PrescriptionItem } from "@/types/examination"
+import type { CreatePrescriptionRequest, PrescriptionItemInput } from "@/types/medicine"
 import type { AppointmentDetailForDoctor } from "@/types/appointment"
 import Loading from "@/components/ui/loading"
 
 export default function ExaminationPage() {
   const { appointmentId } = useParams()
   const router = useRouter()
+  const user = useSelector((state: any) => state.auth.user) // Get user at component level
+  
   const [loading, setLoading] = useState(true)
   const [appointment, setAppointment] = useState<AppointmentDetailForDoctor | null>(null)
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1)
@@ -117,20 +123,82 @@ export default function ExaminationPage() {
       notes: v.notes,
     }
 
-    const vital = await appointmentService.createVitalSign(payload)
+    await appointmentService.createVitalSign(payload)
+  }
+
+  /**
+   * Tạo prescription trong Medicine Service
+   * @returns prescription ID nếu thành công, null nếu không có prescription items
+   */
+  const createPrescription = async (): Promise<string | null> => {
+    // Nếu không có prescription items, skip
+    if (!examinationData.prescriptionItems || examinationData.prescriptionItems.length === 0) {
+      console.log("No prescription items to create")
+      return null
+    }
+
+    // Validate user
+    if (!user?.id) {
+      throw new Error("Không tìm thấy thông tin bác sĩ")
+    }
+
+    if (!appointment) {
+      throw new Error("Không tìm thấy thông tin cuộc hẹn")
+    }
+
+    // Map prescriptionItems sang PrescriptionItemInput
+    const items: PrescriptionItemInput[] = examinationData.prescriptionItems.map(item => ({
+      drugId: Number(item.drugId),      // Convert string → number
+      dosage: item.dosage,
+      frequency: item.instructions,     // Map instructions → frequency
+      route: "oral",                    // Default: oral (TODO: add to UI)
+      timing: "after_meal",             // Default: after_meal (TODO: add to UI)
+      durationDays: item.duration,
+    }))
+
+    const request: CreatePrescriptionRequest = {
+      patientId: appointment.patient.id,
+      doctorId: user.id,
+      appointmentId: appointmentId as string,
+      diagnosis: examinationData.diagnosis || "",
+      notes: examinationData.additionalNotes,
+      items: items,
+    }
+
+    console.log("Creating prescription:", request)
+
+    try {
+      const response = await medicineService.createPrescription(request)
+      console.log("Prescription created successfully:", response.id)
+      toast.success("Đơn thuốc đã được lưu thành công")
+      return response.id
+    } catch (error) {
+      console.error("Error creating prescription:", error)
+      toast.error("Lỗi khi lưu đơn thuốc. Vui lòng thử lại.")
+      throw error
+    }
   }
 
   const handleComplete = async () => {
     try {
+      // 1. Tạo Medical Record
       const recordId = await createMedicalRecord()
+      
+      // 2. Tạo Vital Signs
       if (examinationData.vitalSigns) {
         await createVitalSign(recordId)
       }
 
+      // 3. Tạo Prescription (NEW!)
+      if (examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0) {
+        await createPrescription()
+      }
+
       setConfirmOpen(false)
       setSuccessOpen(true)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Lỗi hoàn tất khám:", error)
+      toast.error("Có lỗi xảy ra khi hoàn tất khám bệnh")
     }
   }
 

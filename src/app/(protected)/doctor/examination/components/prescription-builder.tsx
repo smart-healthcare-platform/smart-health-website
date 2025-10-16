@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,7 +44,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react"
-import { medicineService } from "@/services/medicine.service"
+import { useDrugs } from "@/hooks/use-drugs"
 import { Drug, StockStatus } from "@/types/medicine"
 import type { PrescriptionItem } from "@/types/examination"
 
@@ -54,10 +54,11 @@ interface PrescriptionBuilderProps {
 }
 
 export function PrescriptionBuilder({ selectedItems, onUpdate }: PrescriptionBuilderProps) {
-  const [drugs, setDrugs] = useState<Drug[]>([])
-  const [loadingDrugs, setLoadingDrugs] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [popoverOpen, setPopoverOpen] = useState(false)
+  
+  // Sử dụng hook useDrugs với search filter
+  const { drugs, loading: loadingDrugs, updateFilters } = useDrugs({ search: searchTerm })
   
   // Dialog state cho Add/Edit
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -73,27 +74,11 @@ export function PrescriptionBuilder({ selectedItems, onUpdate }: PrescriptionBui
     notes: "",
   })
 
-  // Search drugs với debounce
-  useEffect(() => {
-    if (!searchTerm) {
-      setDrugs([])
-      return
-    }
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        setLoadingDrugs(true)
-        const result = await medicineService.searchDrugs(searchTerm)
-        setDrugs(result)
-      } catch (error) {
-        console.error("Error searching drugs:", error)
-      } finally {
-        setLoadingDrugs(false)
-      }
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [searchTerm])
+  // Update search filter when search term changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value)
+    updateFilters({ search: value })
+  }
 
   // Get stock status badge
   const getStatusBadge = (status: StockStatus) => {
@@ -258,7 +243,7 @@ export function PrescriptionBuilder({ selectedItems, onUpdate }: PrescriptionBui
               <CommandInput
                 placeholder="Nhập tên thuốc hoặc hoạt chất..."
                 value={searchTerm}
-                onValueChange={setSearchTerm}
+                onValueChange={handleSearchChange}
               />
               
               <CommandEmpty>
