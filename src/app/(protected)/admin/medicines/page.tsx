@@ -1,5 +1,5 @@
-import { MedicineManagement } from "./components/medicine-management";
+import { DrugCatalogViewer } from "./components/drug-catalog-viewer";
 
 export default function MedicinesPage() {
-  return <MedicineManagement />;
+  return <DrugCatalogViewer />;
 }
