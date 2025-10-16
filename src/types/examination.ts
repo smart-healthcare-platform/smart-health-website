@@ -46,6 +46,21 @@ export interface CreateVitalSignPayload {
 
 
 
+/**
+ * Prescription Item - Thông tin thuốc trong đơn
+ */
+export interface PrescriptionItem {
+  drugId: string              // ID từ Medicine Service
+  drugName: string            // Tên thuốc
+  activeIngredient: string    // Hoạt chất
+  strength: string            // Hàm lượng (VD: "500mg")
+  quantity: number            // Số lượng (viên/vỉ/hộp)
+  dosage: string              // Liều lượng (VD: "1 viên x 2 lần/ngày")
+  duration: number            // Số ngày dùng
+  instructions: string        // Hướng dẫn sử dụng (VD: "Uống sau ăn 30 phút")
+  notes?: string              // Ghi chú thêm
+}
+
 export interface ExaminationData {
   // Step 1: Patient verification
   patientVerified: boolean
@@ -58,7 +73,12 @@ export interface ExaminationData {
   symptoms?: string
   examination?: string
   diagnosis?: string
+  
+  // Legacy prescription (text) - giữ lại để backward compatible
   prescription?: string
+
+  // NEW: Structured prescription items
+  prescriptionItems?: PrescriptionItem[]
 
   /**
    * Danh sách xét nghiệm được chọn
@@ -113,7 +133,12 @@ export interface ExaminationStepData {
   symptoms?: string
   examination?: string
   diagnosis?: string
+  
+  // Legacy prescription field
   prescription?: string
+  
+  // NEW: Structured prescription items
+  prescriptionItems?: PrescriptionItem[]
 
   /**
    * Danh sách ID các xét nghiệm (nhiều lựa chọn)

@@ -2,9 +2,18 @@
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, User, Activity, FileText } from "lucide-react"
+import { CheckCircle2, User, Activity, FileText, Pill } from "lucide-react"
 import type { SummaryStepProps } from "@/types/examination"
 import { formatCurrencyVND } from "@/lib/format"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 export function SummaryStep({ appointment, examinationData, onComplete, onPrevious }: SummaryStepProps) {
   const formatDate = (dateString: string) => {
@@ -209,14 +218,81 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
 
 
 
-          {/* Đơn thuốc */}
-          {examinationData.prescription && (
+          {/* Đơn thuốc - NEW: Hiển thị structured prescription items */}
+          {examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0 ? (
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Đơn thuốc:</p>
-              <p className="text-sm bg-muted/50 p-3 rounded text-pretty whitespace-pre-line">
-                {examinationData.prescription}
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <Pill className="w-4 h-4 text-primary" />
+                <p className="text-sm text-muted-foreground font-medium">Đơn thuốc:</p>
+              </div>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-[40px]">STT</TableHead>
+                      <TableHead>Tên thuốc</TableHead>
+                      <TableHead>Liều lượng</TableHead>
+                      <TableHead className="w-[100px]">Số lượng</TableHead>
+                      <TableHead className="w-[100px]">Thời gian</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {examinationData.prescriptionItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="text-center text-muted-foreground">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm">{item.drugName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.activeIngredient} - {item.strength}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm">{item.dosage}</p>
+                            <p className="text-xs text-muted-foreground">{item.instructions}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary">{item.quantity}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">{item.duration} ngày</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Hiển thị notes nếu có */}
+              {examinationData.prescriptionItems.some(item => item.notes) && (
+                <div className="mt-3 space-y-2">
+                  {examinationData.prescriptionItems.map((item, index) => 
+                    item.notes ? (
+                      <div key={index} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <p className="text-xs font-medium text-amber-900 mb-1">
+                          Lưu ý - {item.drugName}:
+                        </p>
+                        <p className="text-xs text-amber-800">{item.notes}</p>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              )}
             </div>
+          ) : (
+            examinationData.prescription && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Đơn thuốc:</p>
+                <p className="text-sm bg-muted/50 p-3 rounded text-pretty whitespace-pre-line">
+                  {examinationData.prescription}
+                </p>
+              </div>
+            )
           )}
         </div>
       </div>

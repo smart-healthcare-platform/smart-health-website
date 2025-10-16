@@ -28,6 +28,7 @@ import {
 import type { ExaminationStepProps } from "@/types/examination"
 import type { LabTest } from "@/types"
 import { appointmentService } from "@/services/appointment.service"
+import { PrescriptionBuilder } from "./prescription-builder"
 
 export function ExaminationStep({
   data,
@@ -214,18 +215,15 @@ export function ExaminationStep({
 
       <Separator />
 
-      {/* Đơn thuốc */}
+      {/* Đơn thuốc - NEW: Sử dụng PrescriptionBuilder */}
       <div className="space-y-2">
-        <Label htmlFor="prescription" className="flex items-center gap-2">
+        <Label className="flex items-center gap-2">
           <Pill className="w-4 h-4 text-primary" />
           Đơn thuốc
         </Label>
-        <Textarea
-          id="prescription"
-          placeholder="Kê đơn thuốc: tên thuốc, liều lượng, cách dùng..."
-          rows={5}
-          value={formData.prescription || ""}
-          onChange={(e) => handleChange("prescription", e.target.value)}
+        <PrescriptionBuilder
+          selectedItems={formData.prescriptionItems || []}
+          onUpdate={(items) => handleChange("prescriptionItems", items)}
         />
       </div>
 
