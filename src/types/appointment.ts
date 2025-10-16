@@ -1,3 +1,5 @@
+import { MedicalRecord } from "./examination"
+
 export interface Appointment {
   id: string
   doctorId: string
@@ -66,6 +68,7 @@ export interface AppointmentDetailForDoctor {
     dateOfBirth: string
     address: string
   }
+  medicalRecord?: MedicalRecord
 }
 
 export interface LabTest {

@@ -1,19 +1,73 @@
 "use client"
 
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog"
+import type React from "react"
+
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, User, FileText, Phone, Mail, MapPin, Stethoscope, Activity, X } from "lucide-react"
-import { DialogTitle } from "@radix-ui/react-dialog"
-import { Appointment } from "@/types"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import {
+  User,
+  Stethoscope,
+  FileText,
+  Activity,
+  Thermometer,
+  Heart,
+  Droplet,
+  Ruler,
+  Weight,
+  Calculator,
+  Beaker,
+} from "lucide-react"
+import type { AppointmentDetailForDoctor } from "@/types"
 
 interface AppointmentDetailDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  appointment: Appointment
+  appointment: AppointmentDetailForDoctor
+}
+
+interface VitalCardProps {
+  icon: React.ReactNode
+  label: string
+  value?: number | string | null
+  unit?: string
+  colorClass?: string
+}
+
+function VitalCard({ icon, label, value, unit, colorClass = "bg-blue-50 border-blue-200" }: VitalCardProps) {
+  return (
+    <div className={`${colorClass} border-2 rounded-xl p-4 transition-all hover:shadow-md`}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="text-primary">{icon}</div>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
+      </div>
+      <div className="text-2xl font-bold text-foreground">
+        {value ?? "—"}
+        {value && unit && <span className="text-sm font-normal text-muted-foreground ml-1">{unit}</span>}
+      </div>
+    </div>
+  )
 }
 
 export default function AppointmentDetailDialog({ open, onOpenChange, appointment }: AppointmentDetailDialogProps) {
+  const [activeTab, setActiveTab] = useState("info")
   if (!appointment) return null
+
+  const isCompleted = appointment.status === "completed"
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("vi-VN", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+
+  const formatTime = (date: string) =>
+    new Date(date).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -32,164 +86,293 @@ export default function AppointmentDetailDialog({ open, onOpenChange, appointmen
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("vi-VN", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
   const statusConfig = getStatusConfig(appointment.status)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 gap-0 border-0 shadow-2xl">
-        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b px-6 py-6">
-          <DialogTitle className="sr-only">Chi tiết lịch hẹn</DialogTitle>
-          <DialogDescription className="sr-only">
-            Thông tin chi tiết về cuộc hẹn khám bệnh
-          </DialogDescription>
-
-          <div className="flex items-start justify-between pr-10">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">Chi tiết lịch hẹn</h2>
-              <p className="text-sm text-muted-foreground">Thông tin chi tiết về cuộc hẹn khám bệnh</p>
-            </div>
-            <Badge className={`${statusConfig.className} shadow-sm`}>{statusConfig.label}</Badge>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <div className="space-y-3 pr-8">
+            <DialogTitle className="text-2xl font-bold">Chi tiết lịch hẹn</DialogTitle>
+            <DialogDescription>Thông tin chi tiết về lịch khám</DialogDescription>
+            <Badge className={`${statusConfig.className}`}>{statusConfig.label}</Badge>
           </div>
+        </DialogHeader>
+
+        <Separator className="my-4 flex-shrink-0" />
+
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+            <TabsList className={`grid w-full ${isCompleted ? "grid-cols-3" : "grid-cols-1"} flex-shrink-0`}>
+              <TabsTrigger value="info">
+                <User className="w-4 h-4 mr-2" /> Thông tin
+              </TabsTrigger>
+              {isCompleted && (
+                <>
+                  <TabsTrigger value="medical">
+                    <Stethoscope className="w-4 h-4 mr-2" /> Y tế
+                  </TabsTrigger>
+                  <TabsTrigger value="notes">
+                    <FileText className="w-4 h-4 mr-2" /> Ghi chú
+                  </TabsTrigger>
+                </>
+              )}
+            </TabsList>
+
+            {/* Tab 1: Thông tin */}
+            <TabsContent value="info" className="mt-6 space-y-6 overflow-y-auto flex-1">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <User className="w-5 h-5 text-primary" /> Thông tin bệnh nhân
+                </h3>
+                <div className="grid grid-cols-2 gap-4 bg-muted/50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Họ và tên</p>
+                    <p className="font-medium">{appointment.patientName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ngày khám</p>
+                    <p className="font-medium">{formatDate(appointment.startAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Giờ khám</p>
+                    <p className="font-medium">{formatTime(appointment.startAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Bác sĩ</p>
+                    <p className="font-medium">{appointment.doctorName}</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab 2: Y tế */}
+            {isCompleted && (
+              <TabsContent value="medical" className="mt-6 space-y-6 overflow-y-auto flex-1">
+                {!appointment.medicalRecord ? (
+                  <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
+                    <Stethoscope className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg font-medium">Chưa có thông tin y tế</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                      <h3 className="font-bold text-xl flex items-center gap-2 mb-4 text-blue-900 dark:text-blue-100">
+                        <Stethoscope className="w-6 h-6" />
+                        Thông tin khám bệnh
+                      </h3>
+
+                      <div className="grid gap-4">
+                        <div className="bg-white/80 dark:bg-gray-900/50 p-4 rounded-lg">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Triệu chứng</p>
+                          <p className="text-base">{appointment.medicalRecord.symptoms || "—"}</p>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/50 p-4 rounded-lg">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Chẩn đoán</p>
+                          <p className="text-base font-medium text-blue-700 dark:text-blue-300">
+                            {appointment.medicalRecord.diagnosis || "—"}
+                          </p>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/50 p-4 rounded-lg">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Ghi chú bác sĩ</p>
+                          <p className="text-base">{appointment.medicalRecord.doctorNotes || "—"}</p>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/50 p-4 rounded-lg">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Đơn thuốc</p>
+                          <p className="text-base">{appointment.medicalRecord.prescription || "—"}</p>
+                        </div>
+                        {appointment.medicalRecord.followUpDate && (
+                          <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase mb-1">
+                              Ngày tái khám
+                            </p>
+                            <p className="text-base font-semibold text-amber-900 dark:text-amber-100">
+                              {new Date(appointment.medicalRecord.followUpDate).toLocaleDateString("vi-VN")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="font-bold text-xl flex items-center gap-2 text-foreground">
+                        <Activity className="w-6 h-6 text-primary" />
+                        Chỉ số sinh hiệu
+                      </h3>
+
+                      {appointment.medicalRecord.vitalSigns ? (
+                        <>
+                          {/* Basic Vitals */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                              Chỉ số cơ bản
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <VitalCard
+                                icon={<Thermometer className="w-5 h-5" />}
+                                label="Nhiệt độ"
+                                value={appointment.medicalRecord.vitalSigns.temperature}
+                                unit="°C"
+                                colorClass="bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
+                              />
+                              <VitalCard
+                                icon={<Heart className="w-5 h-5" />}
+                                label="Huyết áp"
+                                value={
+                                  appointment.medicalRecord.vitalSigns.systolicPressure &&
+                                  appointment.medicalRecord.vitalSigns.diastolicPressure
+                                    ? `${appointment.medicalRecord.vitalSigns.systolicPressure}/${appointment.medicalRecord.vitalSigns.diastolicPressure}`
+                                    : null
+                                }
+                                unit=""
+                                colorClass="bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-800"
+                              />
+                              <VitalCard
+                                icon={<Activity className="w-5 h-5" />}
+                                label="SpO₂"
+                                value={appointment.medicalRecord.vitalSigns.oxygenSaturation}
+                                unit="%"
+                                colorClass="bg-cyan-50 border-cyan-200 dark:bg-cyan-950/20 dark:border-cyan-800"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Body Measurements */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                              Chỉ số cơ thể
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <VitalCard
+                                icon={<Ruler className="w-5 h-5" />}
+                                label="Chiều cao"
+                                value={appointment.medicalRecord.vitalSigns.height}
+                                unit="cm"
+                                colorClass="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
+                              />
+                              <VitalCard
+                                icon={<Weight className="w-5 h-5" />}
+                                label="Cân nặng"
+                                value={appointment.medicalRecord.vitalSigns.weight}
+                                unit="kg"
+                                colorClass="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800"
+                              />
+                              <VitalCard
+                                icon={<Calculator className="w-5 h-5" />}
+                                label="BMI"
+                                value={appointment.medicalRecord.vitalSigns.bmi}
+                                unit=""
+                                colorClass="bg-teal-50 border-teal-200 dark:bg-teal-950/20 dark:border-teal-800"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Lab Results */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                              Kết quả xét nghiệm
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <VitalCard
+                                icon={<Droplet className="w-5 h-5" />}
+                                label="Đường huyết"
+                                value={appointment.medicalRecord.vitalSigns.bloodSugar}
+                                unit="mg/dL"
+                                colorClass="bg-purple-50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800"
+                              />
+                              <VitalCard
+                                icon={<Beaker className="w-5 h-5" />}
+                                label="Cholesterol"
+                                value={appointment.medicalRecord.vitalSigns.cholesterolTotal}
+                                unit="mg/dL"
+                                colorClass="bg-violet-50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-800"
+                              />
+                              <VitalCard
+                                icon={<Beaker className="w-5 h-5" />}
+                                label="HDL"
+                                value={appointment.medicalRecord.vitalSigns.hdl}
+                                unit="mg/dL"
+                                colorClass="bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-800"
+                              />
+                              <VitalCard
+                                icon={<Beaker className="w-5 h-5" />}
+                                label="LDL"
+                                value={appointment.medicalRecord.vitalSigns.ldl}
+                                unit="mg/dL"
+                                colorClass="bg-fuchsia-50 border-fuchsia-200 dark:bg-fuchsia-950/20 dark:border-fuchsia-800"
+                              />
+                              <VitalCard
+                                icon={<Beaker className="w-5 h-5" />}
+                                label="Triglycerides"
+                                value={appointment.medicalRecord.vitalSigns.triglycerides}
+                                unit="mg/dL"
+                                colorClass="bg-pink-50 border-pink-200 dark:bg-pink-950/20 dark:border-pink-800"
+                              />
+                              <VitalCard
+                                icon={<Beaker className="w-5 h-5" />}
+                                label="Creatinine"
+                                value={appointment.medicalRecord.vitalSigns.creatinine}
+                                unit="mg/dL"
+                                colorClass="bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Status and Notes */}
+                          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  appointment.medicalRecord.vitalSigns.status === "waiting_for_test_result"
+                                    ? "secondary"
+                                    : "default"
+                                }
+                              >
+                                {appointment.medicalRecord.vitalSigns.status === "waiting_for_test_result"
+                                  ? "Đang chờ kết quả"
+                                  : "Hoàn tất"}
+                              </Badge>
+                            </div>
+                            {appointment.medicalRecord.vitalSigns.notes && (
+                              <div className="pt-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Ghi chú</p>
+                                <p className="text-sm">{appointment.medicalRecord.vitalSigns.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center text-muted-foreground py-12 bg-muted/30 rounded-xl">
+                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p className="text-lg font-medium">Chưa có chỉ số sinh hiệu</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </TabsContent>
+            )}
+
+            {/* Tab 3: Ghi chú */}
+            {isCompleted && (
+              <TabsContent value="notes" className="mt-6 space-y-6 overflow-y-auto flex-1">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" /> Ghi chú
+                  </h3>
+                  <p className="text-sm mt-2 text-muted-foreground">{appointment.notes || "Không có ghi chú"}</p>
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)] px-6 py-6">
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-primary/5 to-transparent rounded-xl p-6 border shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shadow-md">
-                  <Stethoscope className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Thông tin bác sĩ</h3>
-                  <p className="text-sm text-muted-foreground">Chuyên gia phụ trách</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Bác sĩ</p>
-                  <p className="text-base font-semibold">{appointment.doctorName}</p>
-                </div>
-                {/* <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Chuyên khoa</p>
-                  <p className="text-base font-semibold">{appointment.specialty}</p>
-                </div> */}
-              </div>
-            </div>
+        <Separator className="my-4 flex-shrink-0" />
 
-            <div className="rounded-xl p-6 border bg-card shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
-                  <Calendar className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Thời gian & Địa điểm</h3>
-                  <p className="text-sm text-muted-foreground">Lịch hẹn khám bệnh</p>
-                </div>
-              </div>
-              <div className="space-y-4 pt-2">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <Calendar className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ngày khám</p>
-                    <p className="text-base font-medium">{formatDate(appointment.startAt)}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <Clock className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Giờ khám</p>
-                    <p className="text-base font-medium">
-                      {formatTime(appointment.startAt)}
-                    </p>
-                  </div>
-                </div>
-                {/* <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <MapPin className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Địa điểm</p>
-                    <p className="text-base font-medium">{mockAppointment.location}</p>
-                  </div>
-                </div> */}
-              </div>
-            </div>
-
-            <div className="rounded-xl p-6 border bg-card shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                  <User className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Thông tin bệnh nhân</h3>
-                  <p className="text-sm text-muted-foreground">Người đặt lịch hẹn</p>
-                </div>
-              </div>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Họ và tên</p>
-                  <p className="text-base font-semibold">{appointment.patientName}</p>
-                </div>
-                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                    <Phone className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm font-medium">{mockAppointment.patientPhone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                    <Mail className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm font-medium truncate">{mockAppointment.patientEmail}</span>
-                  </div>
-                </div> */}
-              </div>
-            </div>
-
-            <div className="rounded-xl p-6 border bg-card shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-purple-500 flex items-center justify-center shadow-md">
-                  <Activity className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Thông tin y tế</h3>
-                  <p className="text-sm text-muted-foreground">Chi tiết về tình trạng sức khỏe</p>
-                </div>
-              </div>
-              <div className="space-y-4 pt-2">
-                <div>
-                  <Badge
-                    variant="outline"
-                    className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800"
-                  >
-                    {appointment.type}
-                  </Badge>
-                </div>
-                {appointment.notes && (
-                  <div className="space-y-2 p-4 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/30">
-                    <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 text-amber-600 dark:text-amber-500 mt-0.5" />
-                      <span className="text-sm font-medium">Ghi chú / Triệu chứng</span>
-                    </div>
-                    <p className="text-sm leading-relaxed text-pretty">{appointment.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="flex justify-end flex-shrink-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Đóng
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
