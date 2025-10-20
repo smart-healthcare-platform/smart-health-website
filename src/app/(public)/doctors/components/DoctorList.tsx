@@ -15,7 +15,7 @@ import { doctorService } from "@/services/doctor.service";
 import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
 import useDebounce from "@/hooks/use-debounce";
-import AppPagination from "@/components/ui/gloab-pagination";
+import AppPagination from "@/components/ui/global-pagination";
 import { useDispatch } from "react-redux";
 import { setDoctor } from "@/redux/slices/bookingSlice";
 
@@ -168,7 +168,7 @@ export default function DoctorList() {
   const handleBook = useCallback(
     (doctor: Doctor) => {
       dispatch(setDoctor(doctor));
-      router.push("/user/booking/step-2");
+      router.push("/booking/step-2");
     },
     [router]
   );

@@ -35,7 +35,7 @@ export default function AppointmentHistoryPage() {
   const debouncedSearch = useDebounce(filters.search, 500)
   const debouncedSearchRef = useRef(filters.search)
 
-  // 🔹 Fetch danh sách cuộc hẹn
+
   const fetchAppointments = useCallback(async () => {
     if (!user?.referenceId) return
 

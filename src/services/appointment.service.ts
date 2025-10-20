@@ -1,6 +1,6 @@
 import { apiAuth } from '@/lib/axios';
-import { Appointment, AppointmentDetailForDoctor, AppointmentResponse, CreateAppointmentPayload, LabTest, MedicalRecord } from '@/types';
-import { CreateMedicalRecordPayload, CreateVitalSignPayload, VitalSigns } from '@/types/examination';
+import { Appointment, AppointmentDetail, AppointmentResponse, CreateAppointmentPayload, LabTest, MedicalRecord } from '@/types';
+import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, VitalSigns } from '@/types/examination';
 
 export const appointmentService = {
   // Tạo appointment mới
@@ -18,8 +18,8 @@ export const appointmentService = {
     return res.data.data
   },
 
-  async getDetailsAppointmentForDoctor(id: string): Promise<AppointmentDetailForDoctor> {
-    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetailForDoctor }>(`/appointments/get-by-id/${id}`)
+  async getDetailsAppointmentForDoctor(id: string): Promise<AppointmentDetail> {
+    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetail }>(`/appointments/get-by-id/${id}`)
     if (!res.data.success) {
       throw new Error(`Appointment ${id} not found`)
     }
@@ -123,4 +123,18 @@ export const appointmentService = {
 
     return res.data.data
   },
+
+  async createFollowUpSuggestion(payload: CreateFollowUpSuggestionPayload): Promise<FollowUpSuggestion> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: FollowUpSuggestion }>(
+      "/appointments/follow-up-suggestions",
+      payload
+    )
+
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo đề xuất tái khám")
+    }
+
+    return res.data.data
+  },
+
 }

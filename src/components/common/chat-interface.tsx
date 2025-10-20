@@ -382,3 +382,5 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
 };
 
 export default ChatInterface;
+
+

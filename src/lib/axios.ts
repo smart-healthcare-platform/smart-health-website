@@ -9,7 +9,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 // API Instances
 // ===============
 /**
- * API cho các request yêu cầu token (Authenticated)
+ * Axios instance for authenticated requests (requires access token)
  */
 export const apiAuth = axios.create({
   baseURL: BASE_URL,
@@ -17,7 +17,7 @@ export const apiAuth = axios.create({
 });
 
 /**
- * API cho các request public (Login, Register, data public, v.v.)
+ * Axios instance for public requests (login, register, public data)
  */
 export const apiNoAuth = axios.create({
   baseURL: BASE_URL,
@@ -25,7 +25,7 @@ export const apiNoAuth = axios.create({
 });
 
 /**
- * API riêng biệt chỉ dùng để refresh token
+ * Dedicated axios instance for refreshing tokens
  */
 export const apiRefresh = axios.create({
   baseURL: BASE_URL,
@@ -36,11 +36,11 @@ export const apiRefresh = axios.create({
 // Interceptors
 // ===============
 
-// Gắn token vào header cho apiAuth
+// Attach access token to Authorization header for apiAuth
 apiAuth.interceptors.request.use(async (config) => {
   let token = store.getState().auth.token;
 
-  // Nếu chưa có token, đợi redux cập nhật (vd: sau khi login)
+  // If token is not available yet, wait briefly for Redux to update (e.g., after login)
   if (!token) {
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -66,43 +66,43 @@ apiAuth.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Xử lý 401: refresh token và retry request
-// apiAuth.interceptors.response.use(
-//   (res) => res,
-//   async (error) => {
-//     const originalRequest = error.config;
+// Handle 401: attempt refresh token and retry the original request
+apiAuth.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const originalRequest = error.config;
 
-//     // Nếu là login/register/refresh thì không retry
-//     if (
-//       originalRequest.url?.includes("/auth/login") ||
-//       originalRequest.url?.includes("/auth/register") ||
-//       originalRequest.url?.includes("/auth/refresh-token")
-//     ) {
-//       return Promise.reject(error);
-//     }
+    // Do not retry for auth endpoints
+    if (
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register") ||
+      originalRequest.url?.includes("/auth/refresh-token")
+    ) {
+      return Promise.reject(error);
+    }
 
-//     // Nếu bị 401 và chưa retry
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-//       try {
-//         const res = await apiRefresh.post("/auth/refresh-token");
-//         const { token, user } = res.data.data;
+    // If 401 and not retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const res = await apiRefresh.post("/auth/refresh-token");
+        const { token, user } = res.data.data;
 
-//         // Lưu token mới vào redux
-//         store.dispatch(setCredentials({ token, user }));
+        // Persist new token to Redux
+        store.dispatch(setCredentials({ token, user }));
 
-//         // Retry request với token mới
-//         originalRequest.headers.Authorization = `Bearer ${token}`;
-//         return apiAuth(originalRequest);
-//       } catch (err) {
-//         // Refresh thất bại → clear auth + redirect login
-//         store.dispatch(clearAuth());
-//         if (typeof window !== "undefined") {
-//           window.location.href = "/login";
-//         }
-//       }
-//     }
+        // Retry the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return apiAuth(originalRequest);
+      } catch (err) {
+        // Refresh failed → clear auth and redirect to login
+        store.dispatch(clearAuth());
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+      }
+    }
 
-//     return Promise.reject(error);
-//   }
-// );
+    return Promise.reject(error);
+  }
+);

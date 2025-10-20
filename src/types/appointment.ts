@@ -17,7 +17,7 @@ export interface Appointment {
 
 export interface AppointmentResponse {
 
-  appointments: Appointment[]
+  appointments: AppointmentDetail[]
   total: number
   page: number
   limit: number
@@ -48,7 +48,7 @@ export interface CreateAppointmentPayload {
   startAt:string
 }
 
-export interface AppointmentDetailForDoctor {
+export interface AppointmentDetail {
   id: string
   doctorId: string
   doctorName: string

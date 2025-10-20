@@ -5,8 +5,8 @@ import { Card } from "@/components/ui/card"
 import { CheckCircle2, Circle } from "lucide-react"
 
 interface ExaminationLayoutProps {
-  currentStep: 1 | 2 | 3 | 4
-  onStepClick: (step: 1 | 2 | 3 | 4) => void
+  currentStep: 1 | 2 | 3 | 4 | 5
+  onStepClick: (step: 1 | 2 | 3 | 4 | 5) => void
   children: React.ReactNode
 }
 
@@ -14,7 +14,8 @@ const steps = [
   { id: 1, label: "Xác nhận bệnh nhân", description: "Kiểm tra thông tin" },
   { id: 2, label: "Đo lường & Sinh hiệu", description: "Nhập các chỉ số" },
   { id: 3, label: "Khám & Chẩn đoán", description: "Ghi chú, đơn thuốc" },
-  { id: 4, label: "Hoàn thành", description: "Tổng kết khám bệnh" },
+  { id: 4, label: "Đề xuất tái khám", description: "Lịch hẹn tiếp theo" },
+  { id: 5, label: "Hoàn thành", description: "Tổng kết khám bệnh" },
 ]
 
 export function ExaminationLayout({ currentStep, onStepClick, children }: ExaminationLayoutProps) {
@@ -31,7 +32,7 @@ export function ExaminationLayout({ currentStep, onStepClick, children }: Examin
             <div className="absolute top-5 left-0 right-0 h-0.5 bg-border">
               <div
                 className="h-full bg-primary transition-all duration-500"
-                style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+                style={{ width: `${((currentStep - 1) / 4) * 100}%` }}
               />
             </div>
 
@@ -45,7 +46,7 @@ export function ExaminationLayout({ currentStep, onStepClick, children }: Examin
                 return (
                   <button
                     key={step.id}
-                    onClick={() => isAccessible && onStepClick(step.id as 1 | 2 | 3 | 4)}
+                    onClick={() => isAccessible && onStepClick(step.id as 1 | 2 | 3 | 4 | 5)}
                     disabled={!isAccessible}
                     className={`
                       flex flex-col items-center gap-2 flex-1 group

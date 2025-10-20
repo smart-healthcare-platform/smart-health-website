@@ -13,16 +13,14 @@ import type { VitalSigns, VitalSignsStepProps } from "@/types/examination"
 export function VitalSignsStep({ data, onUpdate, onNext, onPrevious }: VitalSignsStepProps) {
   const [formData, setFormData] = useState<VitalSigns>(data || {})
 
-  // --- Tự động tính BMI khi cân nặng hoặc chiều cao thay đổi ---
   useEffect(() => {
-    if (formData.weight && formData.height) {
+    if (formData.weight != null && formData.height != null && formData.height > 0) {
       const heightInMeters = formData.height / 100
       const bmi = formData.weight / (heightInMeters * heightInMeters)
       handleChange("bmi", Math.round(bmi * 10) / 10)
-    } else if (formData.bmi !== undefined) {
+    } else {
       handleChange("bmi", "")
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.weight, formData.height])
 
   const handleChange = (field: keyof VitalSigns, value: string | number) => {
@@ -44,7 +42,8 @@ export function VitalSignsStep({ data, onUpdate, onNext, onPrevious }: VitalSign
     return { label: "Béo phì", variant: "destructive" as const }
   }
 
-  const bmiStatus = getBMIStatus(formData.bmi)
+  const bmiStatus = formData.bmi != null ? getBMIStatus(formData.bmi) : null
+
   const isFormValid =
     formData.systolicPressure &&
     formData.diastolicPressure &&
@@ -200,7 +199,7 @@ export function VitalSignsStep({ data, onUpdate, onNext, onPrevious }: VitalSign
         <Button variant="outline" onClick={onPrevious}>
           Quay lại
         </Button>
-        <Button onClick={handleSubmit} 
+        <Button onClick={handleSubmit}
         // disabled={!isFormValid}
         >
           Tiếp tục

@@ -1,4 +1,4 @@
-import { AppointmentDetailForDoctor } from "./appointment"
+import { AppointmentDetail } from "./appointment"
 
 export interface VitalSigns {
   id?: string
@@ -32,28 +32,26 @@ export enum VitalSignStatus {
 export interface CreateVitalSignPayload {
   medicalRecordId: string
 
-  // --- Chỉ số cơ bản ---
-  temperature?: number        // °C
-  heartRate?: number          // bpm
-  systolicPressure?: number   // mmHg
-  diastolicPressure?: number  // mmHg
-  oxygenSaturation?: number   // SpO₂ %
-  height?: number             // cm
-  weight?: number             // kg
-  bmi?: number                // kg/m²
+  temperature?: number | null
+  heartRate?: number | null
+  systolicPressure?: number | null
+  diastolicPressure?: number | null
+  oxygenSaturation?: number | null
+  height?: number | null
+  weight?: number | null
+  bmi?: number | null
 
-  // --- Chỉ số xét nghiệm ---
-  bloodSugar?: number         // mg/dL
-  cholesterolTotal?: number   // mg/dL
-  hdl?: number                // mg/dL
-  ldl?: number                // mg/dL
-  triglycerides?: number      // mg/dL
-  creatinine?: number         // mg/dL
+  bloodSugar?: number | null
+  cholesterolTotal?: number | null
+  hdl?: number | null
+  ldl?: number | null
+  triglycerides?: number | null
+  creatinine?: number | null
 
-  // --- Trạng thái & ghi chú ---
   status?: VitalSignStatus
-  notes?: string
+  notes?: string | null
 }
+
 
 
 
@@ -84,25 +82,25 @@ export interface ExaminationData {
   symptoms?: string
   examination?: string
   diagnosis?: string
-
+  followUpDate?: string | Date
   // Legacy prescription (text) - giữ lại để backward compatible
   prescription?: string
 
   // NEW: Structured prescription items
   prescriptionItems?: PrescriptionItem[]
-
-  /**
-   * Danh sách xét nghiệm được chọn
-   * Mỗi phần tử gồm id, tên và giá của xét nghiệm
-   */
   labTests?: {
     id: string
     name: string
     price: number
   }[]
 
-  // Step 4: Summary
-  followUpDate?: string
+  // Step 4: Follow-up suggestion
+  followUpSuggestion?: {
+    suggestedDate?: string
+    reason?: string
+  }
+
+  // Step 5: Summary
   additionalNotes?: string
 }
 
@@ -118,7 +116,7 @@ export interface ExaminationRecord {
   status: "in-progress" | "completed"
 }
 
-export type ExaminationStep = 1 | 2 | 3 | 4
+export type ExaminationStep = 1 | 2 | 3 | 4 | 5
 
 export interface PatientVerificationData {
   patientName: string
@@ -145,15 +143,9 @@ export interface ExaminationStepData {
   examination?: string
   diagnosis?: string
 
-  // Legacy prescription field
   prescription?: string
-
-  // NEW: Structured prescription items
+  followUpDate?: Date | string
   prescriptionItems?: PrescriptionItem[]
-
-  /**
-   * Danh sách ID các xét nghiệm (nhiều lựa chọn)
-   */
   labTests?: {
     id: string
     name: string
@@ -168,8 +160,18 @@ export interface ExaminationStepProps {
   onPrevious: () => void
 }
 
+export interface FollowUpStepProps {
+  data?: {
+    suggestedDate?: string
+    reason?: string
+  }
+  onUpdate: (data: { suggestedDate?: string; reason?: string }) => void
+  onNext: () => void
+  onPrevious: () => void
+}
+
 export interface SummaryStepProps {
-  appointment: AppointmentDetailForDoctor
+  appointment: AppointmentDetail
   examinationData: ExaminationData
   onComplete: () => void
   onPrevious: () => void
@@ -197,4 +199,23 @@ export interface MedicalRecord {
   updatedAt: string
 
   vitalSigns?: VitalSigns
+}
+
+export interface CreateFollowUpSuggestionPayload {
+  originalAppointmentId: string
+  doctorId: string
+  patientId: string
+  suggestedDate?: string
+  reason?: string
+}
+
+export interface FollowUpSuggestion {
+  id: string
+  originalAppointmentId: string
+  doctorId: string
+  patientId: string
+  suggestedDate?: string
+  reason?: string
+  createdAt: string
+  updatedAt: string
 }

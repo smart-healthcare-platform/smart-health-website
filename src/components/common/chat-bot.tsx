@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { chatbotService } from "@/services/chatbot.service";
 
-// Hook để theo dõi trạng thái mounted của component
+// Track component mounted state to avoid state updates after unmount
 const useIsMounted = () => {
   const isMounted = useRef(true);
 
@@ -50,7 +50,7 @@ interface ServiceOption {
 
 export default function HealthChatBot() {
   const router = useRouter();
- const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -63,7 +63,7 @@ export default function HealthChatBot() {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const isMounted = useIsMounted(); // Thêm ref để theo dõi trạng thái mounted
+  const isMounted = useIsMounted();
 
   const serviceOptions: ServiceOption[] = [
     {
@@ -171,9 +171,8 @@ export default function HealthChatBot() {
     setIsTyping(true);
 
     // Bot responds with a confirmation/prompt after a short delay
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate bot thinking time
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Kiểm tra nếu component vẫn mounted trước khi cập nhật state
     if (isMounted.current) {
       let botResponse: Message | null = null;
       const botMessageId = messages.length + 2;
@@ -456,3 +455,5 @@ export default function HealthChatBot() {
     </div>
   );
 }
+
+
