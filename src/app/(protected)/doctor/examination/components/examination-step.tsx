@@ -5,40 +5,21 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import {
-  FileText,
-  Stethoscope,
-  ClipboardCheck,
-  Pill,
-  TestTube,
-  ChevronsUpDown,
-} from "lucide-react"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command"
+import { FileText, Stethoscope, ClipboardCheck, Pill, TestTube, ChevronsUpDown, CalendarIcon } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Calendar } from "@/components/ui/calendar"
 import type { ExaminationStepProps } from "@/types/examination"
 import type { LabTest } from "@/types"
 import { appointmentService } from "@/services/appointment.service"
 import { PrescriptionBuilder } from "./prescription-builder"
+import { format } from "date-fns"
 
-export function ExaminationStep({
-  data,
-  onUpdate,
-  onNext,
-  onPrevious,
-}: ExaminationStepProps) {
+export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: ExaminationStepProps) {
   const [formData, setFormData] = useState(data)
   const [labTests, setLabTests] = useState<LabTest[]>([])
   const [open, setOpen] = useState(false)
+  const [openFollowUp, setOpenFollowUp] = useState(false)
 
   // Lấy danh sách xét nghiệm từ server
   useEffect(() => {
@@ -67,10 +48,7 @@ export function ExaminationStep({
     } else {
       const test = labTests.find((t) => t.id === testId)
       if (!test) return
-      newSelected = [
-        ...selected,
-        { id: test.id, name: test.name, price: test.price },
-      ]
+      newSelected = [...selected, { id: test.id, name: test.name, price: test.price }]
     }
 
     handleChange("labTests", newSelected)
@@ -80,19 +58,18 @@ export function ExaminationStep({
 
   const selectedNames =
     formData.labTests && formData.labTests.length > 0
-      ? formData.labTests.map((t: any) => t.name).filter(Boolean).join(", ") || "Chọn xét nghiệm..."
+      ? formData.labTests
+          .map((t: any) => t.name)
+          .filter(Boolean)
+          .join(", ") || "Chọn xét nghiệm..."
       : "Chọn xét nghiệm..."
-
-
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Khám bệnh và chẩn đoán</h2>
-        <p className="text-sm text-muted-foreground">
-          Ghi chú quá trình khám, chẩn đoán và kê đơn thuốc
-        </p>
+        <p className="text-sm text-muted-foreground">Ghi chú quá trình khám, chẩn đoán và kê đơn thuốc</p>
       </div>
 
       {/* Lý do khám */}
@@ -172,7 +149,7 @@ export function ExaminationStep({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between"
+              className="w-full justify-between bg-transparent"
             >
               <span className="truncate">{selectedNames}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
@@ -182,36 +159,31 @@ export function ExaminationStep({
           <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[300px] overflow-y-auto p-2">
             <Command>
               <CommandInput placeholder="Tìm xét nghiệm..." />
-              <CommandEmpty>Không có kết quả</CommandEmpty>
-
-              <CommandGroup className="mt-2 space-y-1">
-                {labTests.map((test) => {
-                  const checked = formData.labTests?.some(
-                    (t: any) => t.id === test.id
-                  )
-                  return (
-                    <CommandItem
-                      key={test.id}
-                      onSelect={() => handleToggleLabTest(test.id)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-accent"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        readOnly
-                        className="w-4 h-4 accent-primary rounded"
-                      />
-                      <span className="flex-1">
-                        {test.name}
-                      </span>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
+              <CommandList>
+                <CommandEmpty>Không có kết quả</CommandEmpty>
+                <CommandGroup className="mt-2 space-y-1">
+                  {labTests.map((test) => {
+                    const checked = formData.labTests?.some((t: any) => t.id === test.id)
+                    return (
+                      <CommandItem
+                        key={test.id}
+                        onSelect={() => handleToggleLabTest(test.id)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-accent"
+                      >
+                        <input type="checkbox" checked={checked} readOnly className="w-4 h-4 accent-primary rounded" />
+                        <span className="flex-1">{test.name}</span>
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+              </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
       </div>
+
+      <Separator />
+
 
       <Separator />
 

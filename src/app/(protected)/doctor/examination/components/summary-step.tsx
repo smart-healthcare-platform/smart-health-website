@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, User, Activity, FileText, Pill } from "lucide-react"
+import { CheckCircle2, User, Activity, FileText, Pill, Calendar } from "lucide-react"
 import type { SummaryStepProps } from "@/types/examination"
 import { formatCurrencyVND } from "@/lib/format"
 import {
@@ -68,7 +68,7 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
           <div className="space-y-3">
             <h3 className="font-semibold flex items-center gap-2">
               <Activity className="w-4 h-4 text-primary" />
-              Sinh hiệu
+              Chỉ số sinh hiệu cơ bản
             </h3>
             <div className="bg-muted/50 p-4 rounded-lg grid grid-cols-2 gap-3">
               {/* Huyết áp */}
@@ -145,7 +145,41 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
         </>
       )}
 
+      {/* Follow-up Suggestion */}
+      {examinationData.followUpSuggestion?.suggestedDate && (
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-primary" />
+            Đề xuất tái khám
+          </h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+            <div className="flex justify-between items-start">
+              <span className="text-sm text-muted-foreground">Ngày đề xuất:</span>
+              <span className="font-medium text-blue-900">
+                {formatDate(examinationData.followUpSuggestion.suggestedDate)}
+              </span>
+            </div>
+            {examinationData.followUpSuggestion.reason && (
+              <div>
+                <span className="text-sm text-muted-foreground block mb-1">Lý do:</span>
+                <p className="text-sm text-blue-900 bg-blue-100 p-2 rounded text-pretty">
+                  {examinationData.followUpSuggestion.reason}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
+
+      {examinationData.followUpDate && (
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">Ngày tái khám:</p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm font-medium text-blue-900">{formatDate(examinationData.followUpDate.toString())}</p>
+          </div>
+        </div>
+      )}
       {/* Examination Details */}
       <div className="space-y-3">
         <h3 className="font-semibold flex items-center gap-2">
@@ -267,11 +301,11 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
                   </TableBody>
                 </Table>
               </div>
-              
+
               {/* Hiển thị notes nếu có */}
               {examinationData.prescriptionItems.some(item => item.notes) && (
                 <div className="mt-3 space-y-2">
-                  {examinationData.prescriptionItems.map((item, index) => 
+                  {examinationData.prescriptionItems.map((item, index) =>
                     item.notes ? (
                       <div key={index} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                         <p className="text-xs font-medium text-amber-900 mb-1">

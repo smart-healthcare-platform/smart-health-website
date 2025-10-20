@@ -7,13 +7,13 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Eye, ChevronDown, ChevronUp } from "lucide-react"
-import AppointmentDetailDialog from "./appointment-detail-dialog"
-import type { Appointment } from "@/types/appointment"
+import AppointmentDetailDialog from "../../../../../components/common/appointment-detail-dialog"
+import type { Appointment, AppointmentDetail } from "@/types/appointment"
 import { createConversation } from "@/services/chat.service"
 import { RootState } from "@/redux"
 
 interface AppointmentCardProps {
-  appointment: Appointment
+  appointment: AppointmentDetail
 }
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {

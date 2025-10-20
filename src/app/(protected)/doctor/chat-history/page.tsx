@@ -1,6 +1,6 @@
 'use client';
 
-import ChatInterface from '@/components/comon/ChatInterface';
+import ChatInterface from '@/components/common/chat-interface';
 
 const DoctorChatHistoryPage = () => {
   return <ChatInterface currentUserRole="doctor" />;

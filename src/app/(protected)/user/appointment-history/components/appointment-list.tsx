@@ -1,15 +1,13 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import AppointmentCard from "./appointment-card"
-import type { Appointment } from "@/types/appointment"
+import type { AppointmentDetail } from "@/types/appointment"
 import { Skeleton } from "@/components/ui/skeleton"
-import AppPagination from "@/components/ui/gloab-pagination"
+import AppPagination from "@/components/ui/global-pagination"
 
 interface AppointmentListProps {
-  appointments: Appointment[]
+  appointments: AppointmentDetail[]
   total: number
   currentPage: number
   totalPages: number

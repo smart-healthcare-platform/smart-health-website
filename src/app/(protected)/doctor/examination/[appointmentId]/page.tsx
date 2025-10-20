@@ -7,26 +7,27 @@ import { ExaminationLayout } from "../components/examination-layout"
 import { PatientVerification } from "../components/patient-verification"
 import { VitalSignsStep } from "../components/vital-signs-step"
 import { ExaminationStep } from "../components/examination-step"
+import { FollowUpStep } from "../components/follow-up-step"
 import { SummaryStep } from "../components/summary-step"
 import { appointmentService } from "@/services/appointment.service"
 import { medicineService } from "@/services/medicine.service"
 import SuccessDialog from "@/components/ui/success-dialog"
-import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examition"
+import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examination"
 import { toast } from "react-toastify"
 
 import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { CreatePrescriptionRequest, PrescriptionItemInput } from "@/types/medicine"
-import type { AppointmentDetailForDoctor } from "@/types/appointment"
+import type { AppointmentDetail } from "@/types/appointment"
 import Loading from "@/components/ui/loading"
 
 export default function ExaminationPage() {
   const { appointmentId } = useParams()
   const router = useRouter()
   const user = useSelector((state: any) => state.auth.user) // Get user at component level
-  
+
   const [loading, setLoading] = useState(true)
-  const [appointment, setAppointment] = useState<AppointmentDetailForDoctor | null>(null)
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1)
+  const [appointment, setAppointment] = useState<AppointmentDetail | null>(null)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1)
   const [examinationData, setExaminationData] = useState<ExaminationData>({ patientVerified: false })
 
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -48,8 +49,8 @@ export default function ExaminationPage() {
     if (appointmentId) fetchAppointment()
   }, [appointmentId])
 
-  const handleNext = () => currentStep < 4 && setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4)
-  const handlePrevious = () => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4)
+  const handleNext = () => currentStep < 5 && setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5)
+  const handlePrevious = () => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5)
 
   const handleUpdateData = (data: Partial<ExaminationData>) => {
     setExaminationData((prev) => ({ ...prev, ...data }))
@@ -61,7 +62,7 @@ export default function ExaminationPage() {
    */
   const formatPrescriptionToText = (items?: PrescriptionItem[]): string => {
     if (!items || items.length === 0) return ""
-    
+
     return items.map((item, index) => {
       const lines = [
         `${index + 1}. ${item.drugName}`,
@@ -71,11 +72,11 @@ export default function ExaminationPage() {
         `   - Thời gian: ${item.duration} ngày`,
         `   - Hướng dẫn: ${item.instructions}`,
       ]
-      
+
       if (item.notes) {
         lines.push(`   - Lưu ý: ${item.notes}`)
       }
-      
+
       return lines.join('\n')
     }).join('\n\n')
   }
@@ -87,12 +88,12 @@ export default function ExaminationPage() {
 
     const now = new Date()
     const localDateTime = now.toISOString().slice(0, 19).replace("T", " ")
-    
+
     // Format prescription: prioritize prescriptionItems, fallback to legacy text
     const prescriptionText = examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0
       ? formatPrescriptionToText(examinationData.prescriptionItems)
       : examinationData.prescription || ""
-    
+
     const payload: CreateMedicalRecordPayload = {
       appointmentId: appointmentId as string,
       diagnosis: examinationData.diagnosis,
@@ -124,6 +125,39 @@ export default function ExaminationPage() {
     }
 
     await appointmentService.createVitalSign(payload)
+  }
+
+  /**
+   * Create follow-up suggestion
+   * @returns follow-up suggestion ID if successful, null if no suggestion data
+   */
+  const createFollowUpSuggestion = async () => {
+    // If no follow-up suggestion data, skip
+    if (!examinationData.followUpSuggestion?.suggestedDate) {
+      console.log("No follow-up suggestion to create")
+      return null
+    }
+
+    if (!user?.id) {
+      throw new Error("Không tìm thấy thông tin bác sĩ")
+    }
+
+    if (!appointment) {
+      throw new Error("Không tìm thấy thông tin cuộc hẹn")
+    }
+
+    const payload = {
+      originalAppointmentId: appointmentId as string,
+      doctorId: user.id,
+      patientId: appointment.patient.id,
+      suggestedDate: examinationData.followUpSuggestion.suggestedDate,
+      reason: examinationData.followUpSuggestion.reason || "",
+    }
+    try {
+      const response = await appointmentService.createFollowUpSuggestion(payload)
+    } catch (error) {
+      throw error
+    }
   }
 
   /**
@@ -183,15 +217,20 @@ export default function ExaminationPage() {
     try {
       // 1. Tạo Medical Record
       const recordId = await createMedicalRecord()
-      
+
       // 2. Tạo Vital Signs
       if (examinationData.vitalSigns) {
         await createVitalSign(recordId)
       }
 
-      // 3. Tạo Prescription (NEW!)
+      // 3. Tạo Prescription
       if (examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0) {
         await createPrescription()
+      }
+
+      // 4. Tạo Follow-up Suggestion
+      if (examinationData.followUpSuggestion?.suggestedDate) {
+        await createFollowUpSuggestion()
       }
 
       setConfirmOpen(false)
@@ -244,10 +283,19 @@ export default function ExaminationPage() {
         )
       case 4:
         return (
+          <FollowUpStep
+            data={examinationData.followUpSuggestion}
+            onUpdate={(followUpSuggestion) => handleUpdateData({ followUpSuggestion })}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        )
+      case 5:
+        return (
           <SummaryStep
             appointment={appointment}
             examinationData={examinationData}
-            onComplete={() => setConfirmOpen(true)} 
+            onComplete={() => setConfirmOpen(true)}
             onPrevious={handlePrevious}
           />
         )
@@ -260,14 +308,12 @@ export default function ExaminationPage() {
         {renderStep()}
       </ExaminationLayout>
 
-      {/* 🔹 Dialog xác nhận */}
       <ConfirmEndExaminationDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleComplete}
       />
 
-      {/* 🔹 Modal thông báo thành công */}
       <SuccessDialog
         open={successOpen}
         onClose={() => {

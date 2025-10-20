@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { useAppointments } from "@/hooks/use-appointments"
 import { CalendarBase } from "./calendar-base"
-import { AppointmentDetailDialog } from "./appointment-detail-dialog"
-import type { Appointment, AppointmentDetailForDoctor } from "@/types/appointment"
+import AppointmentDetailDialog from "@/components/common/appointment-detail-dialog"
+import type { Appointment, AppointmentDetail } from "@/types/appointment"
 import { appointmentService } from "@/services/appointment.service"
 
 export function AppointmentCalendar({ doctorId }: { doctorId: string }) {
   const { appointments, loading } = useAppointments(doctorId)
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetailForDoctor | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
 

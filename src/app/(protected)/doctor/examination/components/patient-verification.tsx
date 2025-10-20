@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Calendar, Phone, MapPin, Droplet, AlertCircle } from "lucide-react"
-import { AppointmentDetailForDoctor } from "@/types"
+import { AppointmentDetail } from "@/types/appointment"
 
 interface PatientVerificationProps {
-  appointment: AppointmentDetailForDoctor
+  appointment: AppointmentDetail
   onNext: () => void
 }
 
