@@ -1,18 +1,38 @@
 import { MedicalRecord } from "./examination"
 
+// Appointment Status Types
+export type AppointmentStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "CHECKED_IN"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW";
+
+// Payment Status Type
+export type PaymentStatus = "UNPAID" | "PENDING" | "PAID" | "REFUNDED";
+
 export interface Appointment {
   id: string
   doctorId: string
   doctorName: string
   patientId: string
-  patientName:string
+  patientName: string
   slotId: string
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show"
+  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show" | "checked_in"
   type: "Khám bệnh" | "Tái khám"
   notes: string
   createdAt: string
   updatedAt: string
-  startAt:string
+  startAt: string
+  // Payment & Check-in fields
+  paymentStatus?: PaymentStatus
+  paymentId?: string | null
+  paidAmount?: string | null
+  paidAt?: string | null
+  checkedInAt?: string | null
+  consultationFee?: string
 }
 
 export interface AppointmentResponse {
@@ -78,9 +98,6 @@ export interface AppointmentDetail {
   checkedInAt?: string | null
   consultationFee?: number
 }
-
-// 🆕 Payment Status Type
-export type PaymentStatus = "UNPAID" | "PENDING" | "PAID" | "REFUNDED"
 
 // 🆕 Payment API Request/Response Types
 export interface CreatePaymentRequest {
