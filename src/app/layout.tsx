@@ -72,6 +72,26 @@ function AuthInit() {
           );
         }
 
+        if (user.role === "RECEPTIONIST") {
+          // For now, use basic user info until we have receptionist service
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "RECEPTIONIST",
+                referenceId: user.id,
+                profile: {
+                  fullName: user.username || "Lễ tân",
+                  employeeId: user.id,
+                  department: "Front Desk",
+                  shift: "full-time",
+                },
+              },
+            })
+          );
+        }
+
         dispatch(setInitialized());
       } catch (error) {
         console.error("AuthInit error:", error)
