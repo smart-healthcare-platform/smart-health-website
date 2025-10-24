@@ -1,5 +1,16 @@
 import { apiAuth } from '@/lib/axios';
-import { Appointment, AppointmentDetail, AppointmentResponse, CreateAppointmentPayload, LabTest, MedicalRecord } from '@/types';
+import { 
+  Appointment, 
+  AppointmentDetail, 
+  AppointmentResponse, 
+  CreateAppointmentPayload, 
+  LabTest, 
+  MedicalRecord,
+  CreatePaymentRequest,
+  CreatePaymentResponse,
+  CheckInRequest,
+  CheckInResponse
+} from '@/types';
 import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, VitalSigns } from '@/types/examination';
 
 export const appointmentService = {
@@ -132,6 +143,50 @@ export const appointmentService = {
 
     if (!res.data.success) {
       throw new Error(res.data.message || "Không thể tạo đề xuất tái khám")
+    }
+
+    return res.data.data
+  },
+
+  /**
+   * 🆕 Tạo payment request cho appointment
+   * @param appointmentId - ID của appointment cần thanh toán
+   * @param paymentMethod - Phương thức thanh toán (MOMO | VNPAY)
+   * @returns Payment response with paymentUrl for redirect
+   */
+  async createPayment(
+    appointmentId: string,
+    paymentMethod: "MOMO" | "VNPAY"
+  ): Promise<CreatePaymentResponse> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: CreatePaymentResponse }>(
+      `/appointments/${appointmentId}/create-payment`,
+      { paymentMethod }
+    )
+
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo yêu cầu thanh toán")
+    }
+
+    return res.data.data
+  },
+
+  /**
+   * 🆕 Check-in bệnh nhân tại cơ sở y tế
+   * @param appointmentId - ID của appointment
+   * @param notes - Ghi chú khi check-in (optional)
+   * @returns Check-in response with updated appointment
+   */
+  async checkIn(
+    appointmentId: string,
+    notes?: string
+  ): Promise<CheckInResponse> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: CheckInResponse }>(
+      `/appointments/${appointmentId}/check-in`,
+      { notes }
+    )
+
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể check-in")
     }
 
     return res.data.data

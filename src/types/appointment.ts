@@ -56,7 +56,7 @@ export interface AppointmentDetail {
   patientName: string
   slotId: string
   type: string
-  status: "pending" | "confirmed" | "cancelled" | "completed" 
+  status: "pending" | "confirmed" | "cancelled" | "completed" | "in-progress"
   notes?: string
   startAt: string
   createdAt: string
@@ -69,6 +69,43 @@ export interface AppointmentDetail {
     address: string
   }
   medicalRecord?: MedicalRecord
+  
+  // 🆕 Payment fields (sync with backend)
+  paymentStatus?: "UNPAID" | "PENDING" | "PAID" | "REFUNDED"
+  paymentId?: string | null
+  paidAmount?: number | null
+  paidAt?: string | null
+  checkedInAt?: string | null
+  consultationFee?: number
+}
+
+// 🆕 Payment Status Type
+export type PaymentStatus = "UNPAID" | "PENDING" | "PAID" | "REFUNDED"
+
+// 🆕 Payment API Request/Response Types
+export interface CreatePaymentRequest {
+  paymentMethod: "MOMO" | "VNPAY"
+}
+
+export interface CreatePaymentResponse {
+  success: boolean
+  appointmentId: string
+  paymentId: string
+  paymentUrl: string
+  amount: number
+  expiredAt: string
+}
+
+export interface CheckInRequest {
+  notes?: string
+}
+
+export interface CheckInResponse {
+  success: boolean
+  message: string
+  appointmentId: string
+  checkedInAt: string
+  appointment: AppointmentDetail
 }
 
 export interface LabTest {
