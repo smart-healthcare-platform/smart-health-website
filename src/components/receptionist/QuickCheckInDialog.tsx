@@ -64,15 +64,24 @@ export function QuickCheckInDialog({
   }, [keyword]);
 
   const handleCheckIn = async (appointment: Appointment) => {
-    if (appointment.paymentStatus === "UNPAID") {
-      toast.warning("Bệnh nhân chưa thanh toán. Vui lòng thu tiền trước.");
-      return;
-    }
-
+    // ✅ BỎ VALIDATION PAYMENT - Cho phép check-in dù chưa thanh toán
+    // Payment sẽ được thực hiện SAU KHI KHÁM
+    
     try {
       setCheckingIn(appointment.id);
-      await receptionistService.checkInPatient(appointment.id);
-      toast.success(`Check-in thành công: ${appointment.patientName}`);
+      const result = await receptionistService.checkInPatient(appointment.id);
+      
+      // ✅ Hiển thị thông báo dựa trên payment status
+      if (result.paymentStatus !== "PAID") {
+        toast.warning(
+          `✅ Check-in thành công: ${appointment.patientName}\n⚠️ Lưu ý: Chưa thanh toán - Thu tiền sau khi khám`,
+          { autoClose: 5000 }
+        );
+      } else {
+        toast.success(
+          `✅ Check-in thành công: ${appointment.patientName}\n💰 Đã thanh toán`
+        );
+      }
       
       // Remove from results
       setResults((prev) => prev.filter((apt) => apt.id !== appointment.id));
@@ -215,10 +224,7 @@ export function QuickCheckInDialog({
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => handleCheckIn(apt)}
-                      disabled={
-                        apt.paymentStatus === "UNPAID" ||
-                        checkingIn === apt.id
-                      }
+                      disabled={checkingIn === apt.id}
                     >
                       {checkingIn === apt.id ? (
                         <>
@@ -234,10 +240,20 @@ export function QuickCheckInDialog({
                     </Button>
                   </div>
 
+                  {/* ✅ CHỈ HIỂN THỊ GỢI Ý, KHÔNG BLOCK */}
                   {apt.paymentStatus === "UNPAID" && (
                     <div className="mt-2 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
-                      ⚠️ Bệnh nhân chưa thanh toán. Vui lòng thu tiền trước khi
-                      check-in.
+                      💡 Gợi ý: Thu tiền sau khi khám để tính đúng tổng chi phí
+                    </div>
+                  )}
+                  
+                  {/* ✅ HIỂN THỊ THỜI GIAN CHECK-IN NẾU ĐÃ CHECK-IN */}
+                  {apt.checkedInAt && (
+                    <div className="mt-2 text-xs text-green-600 bg-green-50 border border-green-200 rounded p-2 flex items-center gap-1">
+                      <UserCheck className="h-3 w-3" />
+                      <span>
+                        Đã check-in lúc {format(new Date(apt.checkedInAt), "HH:mm dd/MM/yyyy")}
+                      </span>
                     </div>
                   )}
                 </div>

@@ -19,7 +19,7 @@ import { receptionistService } from "@/services/receptionist.service";
 import { Appointment } from "@/types/appointment";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
-import { CashPaymentDialog } from "@/components/receptionist/CashPaymentDialog";
+import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
 
 export default function CheckInPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -93,16 +93,23 @@ export default function CheckInPage() {
     applyFilter(appointments);
   }, [filter, appointments, applyFilter]);
 
-  // Handle check-in
+  // Handle check-in - ✅ BỎ VALIDATION PAYMENT
   const handleCheckIn = async (appointment: Appointment) => {
-    if (appointment.paymentStatus === "UNPAID") {
-      toast.warning("Bệnh nhân chưa thanh toán. Vui lòng thu tiền trước.");
-      return;
-    }
-
     try {
-      await receptionistService.checkInPatient(appointment.id);
-      toast.success("Check-in thành công!");
+      const result = await receptionistService.checkInPatient(appointment.id);
+      
+      // Hiển thị thông báo dựa trên payment status
+      if (result.paymentStatus !== "PAID") {
+        toast.warning(
+          `✅ Check-in thành công: ${appointment.patientName}\n⚠️ Lưu ý: Chưa thanh toán - Thu tiền sau khi khám`,
+          { autoClose: 5000 }
+        );
+      } else {
+        toast.success(
+          `✅ Check-in thành công: ${appointment.patientName}\n💰 Đã thanh toán`
+        );
+      }
+      
       fetchAppointments();
       setSelectedAppointment(null);
     } catch (err) {
@@ -262,20 +269,36 @@ export default function CheckInPage() {
                 {/* Patient Info */}
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                    📋 Thông tin cá nhân
+                    📋 Thông tin bệnh nhân
                   </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {selectedAppointment.patientName}
-                      </span>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <User className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Họ tên</p>
+                        <p className="font-medium text-base">
+                          {selectedAppointment.patientName}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        ID: {selectedAppointment.patientId}
-                      </span>
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Số điện thoại</p>
+                        <p className="text-sm text-orange-600">
+                          {/* TODO: Lấy từ Patient Service */}
+                          Chưa có thông tin
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CreditCard className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Mã bệnh nhân</p>
+                        <p className="text-sm font-mono">
+                          {selectedAppointment.patientId.slice(0, 8)}...
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -285,68 +308,105 @@ export default function CheckInPage() {
                   <h3 className="text-sm font-medium text-muted-foreground mb-3">
                     📅 Thông tin lịch hẹn
                   </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Bác sĩ: {selectedAppointment.doctorName}
-                      </span>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <User className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Bác sĩ khám</p>
+                        <p className="font-medium">{selectedAppointment.doctorName}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Giờ:{" "}
-                        {selectedAppointment.startAt
-                          ? format(new Date(selectedAppointment.startAt), "HH:mm")
-                          : "N/A"}
-                      </span>
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Thời gian</p>
+                        <p className="font-medium">
+                          {selectedAppointment.startAt
+                            ? format(new Date(selectedAppointment.startAt), "HH:mm - dd/MM/yyyy")
+                            : "N/A"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Phí khám: {selectedAppointment.consultationFee || "200,000"}{" "}
-                        VNĐ
-                      </span>
+                    <div className="flex items-start gap-3">
+                      <CreditCard className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phí khám</p>
+                        <p className="font-medium text-green-600">
+                          {Number(selectedAppointment.consultationFee || 200000).toLocaleString("vi-VN")} VNĐ
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">
-                        Trạng thái TT: {getPaymentBadge(selectedAppointment)}
-                      </span>
+                    <div className="flex items-start gap-3">
+                      <CreditCard className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Trạng thái thanh toán</p>
+                        <div className="mt-1">{getPaymentBadge(selectedAppointment)}</div>
+                      </div>
                     </div>
+                    
+                    {/* ✅ HIỂN THỊ THỜI GIAN CHECK-IN NẾU ĐÃ CHECK-IN */}
+                    {selectedAppointment.checkedInAt && (
+                      <div className="flex items-start gap-3">
+                        <UserCheck className="h-4 w-4 text-green-600 mt-1" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Thời gian check-in</p>
+                          <p className="font-medium text-green-600">
+                            {format(new Date(selectedAppointment.checkedInAt), "HH:mm - dd/MM/yyyy")}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-2 pt-4 border-t">
-                  {selectedAppointment.paymentStatus === "UNPAID" && (
-                    <Button 
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      onClick={() => setPaymentDialogOpen(true)}
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Thu tiền mặt
-                    </Button>
-                  )}
-
+                <div className="space-y-3 pt-4 border-t">
+                  {/* ✅ NÚT CHECK-IN - Không cần validate payment */}
                   {selectedAppointment.status !== "checked_in" &&
                     selectedAppointment.status !== "in-progress" && (
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
                         onClick={() => handleCheckIn(selectedAppointment)}
-                        disabled={selectedAppointment.paymentStatus === "UNPAID"}
                       >
                         <UserCheck className="mr-2 h-4 w-4" />
                         Check-in ngay
                       </Button>
                     )}
 
+                  {/* ✅ NÚT THU TIỀN - Chỉ hiện nếu chưa thanh toán */}
+                  {selectedAppointment.paymentStatus === "UNPAID" && (
+                    <Button 
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={() => setPaymentDialogOpen(true)}
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Thu tiền (Cash/MOMO/VNPAY)
+                    </Button>
+                  )}
+
+                  {/* ✅ THÔNG BÁO ĐÃ CHECK-IN */}
                   {(selectedAppointment.status === "checked_in" ||
                     selectedAppointment.status === "in-progress") && (
                     <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 text-green-700">
+                      <div className="flex items-center gap-2 text-green-700 mb-2">
                         <CheckCircle2 className="h-5 w-5" />
                         <span className="font-medium">Đã check-in thành công</span>
                       </div>
+                      {selectedAppointment.checkedInAt && (
+                        <p className="text-sm text-green-600">
+                          Thời gian: {format(new Date(selectedAppointment.checkedInAt), "HH:mm - dd/MM/yyyy")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* ✅ GỢI Ý THANH TOÁN SAU KHÁM */}
+                  {selectedAppointment.paymentStatus === "UNPAID" && 
+                   (selectedAppointment.status === "checked_in" || selectedAppointment.status === "in-progress") && (
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <p className="text-sm text-orange-700">
+                        💡 <strong>Gợi ý:</strong> Thu tiền sau khi khám để tính đúng tổng chi phí
+                      </p>
                     </div>
                   )}
                 </div>
@@ -356,16 +416,21 @@ export default function CheckInPage() {
         </Card>
       </div>
 
-      {/* Cash Payment Dialog */}
-      <CashPaymentDialog
-        open={paymentDialogOpen}
-        onOpenChange={setPaymentDialogOpen}
-        appointment={selectedAppointment}
-        onSuccess={() => {
-          fetchAppointments();
-          setSelectedAppointment(null);
-        }}
-      />
+      {/* Payment Method Dialog - Hỗ trợ CASH + MOMO + VNPAY */}
+      {selectedAppointment && (
+        <PaymentMethodDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          appointmentId={selectedAppointment.id}
+          patientName={selectedAppointment.patientName || "Bệnh nhân"}
+          amount={parseFloat(selectedAppointment.consultationFee || "200000")}
+          onSuccess={() => {
+            toast.success("Thanh toán thành công!");
+            fetchAppointments();
+            setSelectedAppointment(null);
+          }}
+        />
+      )}
     </div>
   );
 }

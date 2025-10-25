@@ -1,5 +1,5 @@
 import { apiAuth as api } from "@/lib/axios";
-import { Appointment, AppointmentStatus } from "@/types/appointment";
+import { Appointment, AppointmentStatus, CheckInResponse } from "@/types/appointment";
 
 export interface ReceptionistAppointmentFilters {
   status?: string;
@@ -104,10 +104,19 @@ export const receptionistService = {
   },
 
   /**
-   * Check-in bệnh nhân (shortcut cho updateStatus)
+   * Check-in bệnh nhân tại cơ sở y tế
+   * ✅ GỌI ĐÚNG ENDPOINT để cập nhật checkedInAt
    * @param appointmentId - ID của appointment
+   * @param notes - Ghi chú khi check-in (optional)
    */
-  checkInPatient: async (appointmentId: string): Promise<Appointment> => {
-    return receptionistService.updateAppointmentStatus(appointmentId, "CHECKED_IN");
+  checkInPatient: async (
+    appointmentId: string,
+    notes?: string
+  ): Promise<CheckInResponse> => {
+    const response = await api.post(
+      `/appointments/${appointmentId}/check-in`,
+      notes ? { notes } : {}
+    );
+    return response.data;
   },
 };
