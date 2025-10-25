@@ -40,17 +40,24 @@ export const apiRefresh = axios.create({
 apiAuth.interceptors.request.use(async (config) => {
   let token = store.getState().auth.token;
 
+  console.log('[AXIOS INTERCEPTOR] Making request to:', config.url);
+  console.log('[AXIOS INTERCEPTOR] Token from Redux:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+  console.log('[AXIOS INTERCEPTOR] Full auth state:', store.getState().auth);
+
   // If token is not available yet, wait briefly for Redux to update (e.g., after login)
   if (!token) {
+    console.log('[AXIOS INTERCEPTOR] No token found, waiting for Redux...');
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         unsubscribe();
+        console.error('[AXIOS INTERCEPTOR] Timeout: No token found after 2s');
         reject(new Error("No token found in store"));
       }, 2000);
 
       const unsubscribe = store.subscribe(() => {
         token = store.getState().auth.token;
         if (token) {
+          console.log('[AXIOS INTERCEPTOR] Token received from Redux subscription');
           clearTimeout(timeout);
           unsubscribe();
           resolve();
@@ -61,6 +68,9 @@ apiAuth.interceptors.request.use(async (config) => {
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('[AXIOS INTERCEPTOR] Authorization header set');
+  } else {
+    console.error('[AXIOS INTERCEPTOR] Failed to set Authorization header');
   }
 
   return config;

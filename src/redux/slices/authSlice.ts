@@ -30,6 +30,12 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.isInitialized = true;
+      // Clear localStorage
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("isLogin");
+      }
     },
     setInitialized: (state) => {
       state.isInitialized = true;
