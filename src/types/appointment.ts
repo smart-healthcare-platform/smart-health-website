@@ -121,7 +121,9 @@ export interface CheckInResponse {
   success: boolean
   message: string
   appointmentId: string
-  checkedInAt: string
+  checkedInAt: string // ✅ Thời gian check-in chính xác
+  paymentStatus: "UNPAID" | "PENDING" | "PAID" | "REFUNDED" // ✅ Payment status
+  requiresPayment: boolean // ✅ Flag để frontend biết cần thu tiền
   appointment: AppointmentDetail
 }
 

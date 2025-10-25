@@ -44,9 +44,7 @@ function AuthInit() {
               },
             })
           );
-        }
-
-        if (user.role === "DOCTOR") {
+        } else if (user.role === "DOCTOR") {
           const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -70,9 +68,7 @@ function AuthInit() {
               },
             })
           );
-        }
-
-        if (user.role === "RECEPTIONIST") {
+        } else if (user.role === "RECEPTIONIST") {
           // For now, use basic user info until we have receptionist service
           dispatch(
             setCredentials({
@@ -87,6 +83,17 @@ function AuthInit() {
                   department: "Front Desk",
                   shift: "full-time",
                 },
+              },
+            })
+          );
+        } else if (user.role === "ADMIN") {
+          // Admin doesn't need profile fetch
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "ADMIN",
               },
             })
           );
