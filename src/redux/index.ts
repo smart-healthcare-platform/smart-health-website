@@ -11,8 +11,13 @@ const bookingPersistConfig = {
   storage,
 };
 
+const authPersistConfig = {
+  key: "auth",
+  storage,
+};
+
 const rootReducer = combineReducers({
-  auth: authReducer,
+  auth: persistReducer(authPersistConfig, authReducer),
   booking: persistReducer(bookingPersistConfig, bookingReducer),
   chat: chatReducer,
 });
