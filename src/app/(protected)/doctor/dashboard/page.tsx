@@ -8,7 +8,7 @@ import { appointmentService } from "@/services/appointment.service"
 import { Appointment } from "@/types"
 import TodaySchedule from "./components/TodaySchedule"
 
-export function DashboardOverview() {
+export default function DashboardOverview() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   useEffect(() => {
     const fetchTodayAppointments = async () => {
