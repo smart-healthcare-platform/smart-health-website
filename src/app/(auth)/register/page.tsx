@@ -50,7 +50,7 @@ export default function ModernHealthRegister() {
     }, 2000);
   };
 
-  const getPasswordStrength = (pwd) => {
+  const getPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) return { strength: 0, text: '', color: '' };
     if (pwd.length < 6) return { strength: 25, text: 'Yếu', color: 'bg-red-500' };
     if (pwd.length < 8) return { strength: 50, text: 'Trung bình', color: 'bg-yellow-500' };
