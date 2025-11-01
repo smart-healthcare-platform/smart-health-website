@@ -26,6 +26,7 @@ import { useCallback } from "react"
 import { authService } from "@/services/auth.service"
 import { clearAuth } from "@/redux/slices/authSlice"
 import { useRouter } from "next/navigation"
+import { isDoctor } from "@/utils/typeGuards"
 
 export function DoctorHeader() {
   const { user } = useSelector((state: RootState) => state.auth)
@@ -95,7 +96,7 @@ export function DoctorHeader() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <div className="px-3 py-2">
               <p className="text-sm font-medium leading-none text-foreground">
-                {user?.profile?.fullName || "Bác sĩ"}
+                {isDoctor(user) ? user.profile.fullName : "Bác sĩ"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Tài khoản bác sĩ</p>
             </div>

@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Activity, Heart, Thermometer, Weight, Ruler, Droplets } from "lucide-react"
-import type { VitalSigns, VitalSignsStepProps } from "@/types/examination"
+import type {VitalSignsStepProps } from "@/types/examination"
+import { VitalSigns } from "@/types/examnation"
 
 export function VitalSignsStep({ data, onUpdate, onNext, onPrevious }: VitalSignsStepProps) {
   const [formData, setFormData] = useState<VitalSigns>(data || {})

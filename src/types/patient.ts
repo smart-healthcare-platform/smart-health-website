@@ -1,3 +1,5 @@
+import { AppointmentCategory, AppointmentStatus, AppointmentType } from "./appointment"
+
 export interface Patient {
   id: string
   // Personal Information
@@ -97,5 +99,7 @@ export interface PatientFormData {
   gender: string;
   address: string;
   notes:string
-  type:string
+  type: AppointmentType,
+  category: AppointmentCategory
+  followUpId?: string
 }

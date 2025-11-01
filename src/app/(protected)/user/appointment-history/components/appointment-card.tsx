@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Eye, ChevronDown, ChevronUp } from "lucide-react"
 import AppointmentDetailDialog from "../../../../../components/common/appointment-detail-dialog"
-import type { Appointment, AppointmentDetail } from "@/types/appointment"
+import { AppointmentStatus, type Appointment, type AppointmentDetail } from "@/types/appointment"
 import { createConversation } from "@/services/chat.service"
 import { RootState } from "@/redux"
 
@@ -45,9 +45,9 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   // 👉 Cấu hình trạng thái
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "completed":
+      case "COMPLETED":
         return { label: "Đã hoàn thành", className: "bg-green-500 text-white" }
-      case "confirmed":
+      case "CONFIRMED":
         return { label: "Đã xác nhận", className: "bg-blue-500 text-white" }
       case "pending":
         return { label: "Chờ xác nhận", className: "bg-yellow-500 text-white" }
@@ -124,7 +124,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
 
           {/* Nút chat và chi tiết */}
           <div className="flex flex-col gap-2 mt-4">
-            {(appointment.status === "completed" || appointment.status === "confirmed") && (
+            {(appointment.status ===  AppointmentStatus.COMPLETED || appointment.status ===  AppointmentStatus.CONFIRMED) && (
               <Button
                 variant="outline"
                 size="sm"

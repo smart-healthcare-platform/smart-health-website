@@ -12,6 +12,7 @@ import { appointmentService } from "@/services/appointment.service";
 import { CreateAppointmentPayload } from "@/types";
 import SuccessDialog from "@/components/ui/success-dialog";
 import ErrorDialog from "@/components/ui/error-dialog";
+import { getPatientProfile } from "@/utils/userHelpers";
 
 export default function BookingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -57,21 +58,24 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
 
   const handleConfirmBooking = async () => {
     if (!doctor || !slot_id || !slot_start_time || !user) return;
-
     setLoading(true);
+    const profile = getPatientProfile(user);
+
     const payload: CreateAppointmentPayload = {
       doctorId: doctor.id,
-      slotId: slot_id,
-      userId: user.id,
-      date: new Date(slot_start_time).toISOString(),
-      type: "Khám bệnh",
-      notes: formData.notes || "",
       doctorName: doctor.display_name,
-      startAt: slot_start_time
+      slotId: slot_id,
+      startAt: slot_start_time,
+      patientId: user.referenceId || "",
+      patientName: profile?.fullName || "",
+      type: formData.type,
+      notes: formData.notes || "",
+      followUpId: formData.followUpId
     };
 
     try {
       await appointmentService.create(payload);
+      console.log(payload)
       dispatch(resetBooking());
       showSuccess();
     } catch (err: any) {

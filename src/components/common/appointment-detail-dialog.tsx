@@ -28,10 +28,11 @@ import {
   UserX,
   Loader2,
 } from "lucide-react"
-import type { AppointmentDetail } from "@/types"
+import { AppointmentStatus, type AppointmentDetail } from "@/types"
 import Loading from "@/components/ui/loading"
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux"
+import { VitalSignStatus } from "@/types/examnation"
 
 interface AppointmentDetailDialogProps {
   open: boolean
@@ -81,44 +82,53 @@ function VitalItem({ label, value, unit }: VitalItemProps) {
   )
 }
 
-const statusConfig = {
-  confirmed: {
-    label: "Đã xác nhận",
-    icon: CheckCircle2,
-    color: "bg-green-500",
-    variant: "default" as const,
-  },
-  pending: {
+const statusConfig: Record<
+  AppointmentStatus,
+  {
+    label: string
+    icon: React.ElementType
+    color: string
+    variant: "default" | "secondary" | "destructive"
+  }
+> = {
+  [AppointmentStatus.PENDING]: {
     label: "Chờ xác nhận",
     icon: Clock3,
     color: "bg-yellow-500",
-    variant: "secondary" as const,
+    variant: "secondary",
   },
-  "in-progress": {
+  [AppointmentStatus.CONFIRMED]: {
+    label: "Đã xác nhận",
+    icon: CheckCircle2,
+    color: "bg-green-500",
+    variant: "default",
+  },
+  [AppointmentStatus.IN_PROGRESS]: {
     label: "Đang khám",
     icon: Loader2,
     color: "bg-purple-500",
-    variant: "default" as const,
+    variant: "default",
   },
-  completed: {
+  [AppointmentStatus.COMPLETED]: {
     label: "Hoàn thành",
     icon: CheckCircle2,
     color: "bg-blue-500",
-    variant: "default" as const,
+    variant: "default",
   },
-  cancelled: {
+  [AppointmentStatus.CANCELLED]: {
     label: "Đã hủy",
     icon: XCircle,
     color: "bg-red-500",
-    variant: "destructive" as const,
+    variant: "destructive",
   },
-  "no-show": {
+  [AppointmentStatus.NO_SHOW]: {
     label: "Không đến",
     icon: UserX,
     color: "bg-gray-400",
-    variant: "secondary" as const,
+    variant: "secondary",
   },
 }
+
 
 export default function AppointmentDetailDialog({
   open,
@@ -142,15 +152,11 @@ export default function AppointmentDetailDialog({
 
   if (!appointment) return null
 
-  const isCompleted = appointment.status === "completed"
+  const isCompleted = appointment.status === AppointmentStatus.COMPLETED
 
 
-  const status =
-    statusConfig[
-    appointment?.status && appointment.status in statusConfig
-      ? (appointment.status as keyof typeof statusConfig)
-      : "pending"
-    ]
+  const status = statusConfig[appointment.status as AppointmentStatus] ?? statusConfig[AppointmentStatus.PENDING]
+
 
   const StatusIcon = status?.icon
 
@@ -351,7 +357,7 @@ export default function AppointmentDetailDialog({
                           <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Đơn thuốc</p>
                           <p className="text-base">{appointment.medicalRecord.prescription || "—"}</p>
                         </div>
-                        {appointment.medicalRecord.followUpDate && (
+                        {/* {appointment.medicalRecord.followUpDate && (
                           <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
                             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase mb-1">
                               Ngày tái khám
@@ -360,7 +366,7 @@ export default function AppointmentDetailDialog({
                               {new Date(appointment.medicalRecord.followUpDate).toLocaleDateString("vi-VN")}
                             </p>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </div>
 
@@ -494,12 +500,12 @@ export default function AppointmentDetailDialog({
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant={
-                                  appointment.medicalRecord.vitalSigns.status === "waiting_for_test_result"
+                                  appointment.medicalRecord.vitalSigns.status === VitalSignStatus.WAITING_FOR_TEST_RESULT
                                     ? "secondary"
                                     : "default"
                                 }
                               >
-                                {appointment.medicalRecord.vitalSigns.status === "waiting_for_test_result"
+                                {appointment.medicalRecord.vitalSigns.status === VitalSignStatus.WAITING_FOR_TEST_RESULT
                                   ? "Đang chờ kết quả"
                                   : "Hoàn tất"}
                               </Badge>
@@ -570,10 +576,10 @@ export default function AppointmentDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          {isDoctor && appointment.status === "confirmed" && (
+          {isDoctor && appointment.status === AppointmentStatus.CONFIRMED && (
             <Button onClick={handleStartExamination}>Bắt đầu khám</Button>
           )}
-          {isDoctor && appointment.status === "completed" && <Button>Hoàn thành khám</Button>}
+
         </div>
       </DialogContent>
     </Dialog>

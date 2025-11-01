@@ -2,12 +2,18 @@
 
 import type React from "react"
 import { Card } from "@/components/ui/card"
-import { CheckCircle2, Circle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { CheckCircle2, Circle, History, Loader2 } from "lucide-react"
+import type { Appointment, AppointmentDetail } from "@/types"
+import { useState } from "react"
+import { appointmentService } from "@/services/appointment.service"
+import AppointmentDetailDialog from "@/components/common/appointment-detail-dialog"
 
 interface ExaminationLayoutProps {
   currentStep: 1 | 2 | 3 | 4 | 5
   onStepClick: (step: 1 | 2 | 3 | 4 | 5) => void
   children: React.ReactNode
+  appointment?: Appointment
 }
 
 const steps = [
@@ -18,13 +24,48 @@ const steps = [
   { id: 5, label: "Hoàn thành", description: "Tổng kết khám bệnh" },
 ]
 
-export function ExaminationLayout({ currentStep, onStepClick, children }: ExaminationLayoutProps) {
+export function ExaminationLayout({ currentStep, onStepClick, children, appointment }: ExaminationLayoutProps) {
+  const [previousAppointment, setPreviousAppointment] = useState<AppointmentDetail | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [openDialog, setOpenDialog] = useState(false)
+
+  const handleViewPrevious = async () => {
+    if (!appointment?.followUpId && !appointment?.id) return
+    setLoading(true)
+    try {
+      console.log(appointment.id)
+      const data = await appointmentService.getPreviousAppointment(appointment.id)
+      if (data) {
+        setPreviousAppointment(data)
+        setOpenDialog(true)
+      }
+    } catch (err) {
+      console.error("Lỗi lấy cuộc hẹn trước:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header with Timeline */}
       <div className="bg-background border-b">
         <div className="container mx-auto px-6 py-6">
-          <h1 className="text-2xl font-bold mb-6 text-balance">Quy trình khám bệnh</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-balance">Quy trình khám bệnh</h1>
+            {appointment?.followUpId && (
+              <Button
+                onClick={handleViewPrevious}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="gap-2 whitespace-nowrap bg-transparent"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
+                Xem hồ sơ lần khám trước
+              </Button>
+            )}
+          </div>
 
           {/* Timeline */}
           <div className="relative">
@@ -97,6 +138,13 @@ export function ExaminationLayout({ currentStep, onStepClick, children }: Examin
       <div className="container mx-auto px-6 py-8">
         <Card className="p-6">{children}</Card>
       </div>
+      <AppointmentDetailDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        appointment={previousAppointment}
+        loading={loading}
+        userRole="doctor"
+      />
     </div>
   )
 }
