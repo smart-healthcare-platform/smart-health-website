@@ -2,9 +2,10 @@
 
 import { Card } from "@/components/ui/card"
 import AppointmentCard from "./appointment-card"
-import type { AppointmentDetail } from "@/types/appointment"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import AppPagination from "@/components/ui/global-pagination"
+import { AppointmentDetail } from "@/types/appointment/appointment.type"
 
 interface AppointmentListProps {
   appointments: AppointmentDetail[]

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Clock, CreditCard, ExternalLink, Loader2, UserCheck, AlertCircle } from "lucide-react"
-import type { AppointmentDetail } from "@/types/appointment"
+import type { AppointmentDetail } from "@/types/appointment/appointment.type"
 import { PaymentMethodDialog } from "./payment-method-dialog"
 
 interface PaymentInfoCardProps {

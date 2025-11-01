@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CreditCard, Loader2 } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
 import { toast } from "react-toastify";
-import { Appointment } from "@/types/appointment";
+import { Appointment } from "@/types/appointment/appointment.type";
 
 interface CashPaymentDialogProps {
   open: boolean;

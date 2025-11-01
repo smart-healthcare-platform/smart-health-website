@@ -1,3 +1,7 @@
+import { AppointmentCategory } from "@/types/appointment/enums/appointment-category.enum"
+import { AppointmentType } from "@/types/appointment/enums/appointment-type.enum"
+
+
 export interface Patient {
   id: string
   // Personal Information
@@ -97,5 +101,7 @@ export interface PatientFormData {
   gender: string;
   address: string;
   notes:string
-  type:string
+  type: AppointmentType,
+  category: AppointmentCategory
+  followUpId?: string
 }

@@ -4,8 +4,9 @@ import { useState } from "react"
 import { useAppointments } from "@/hooks/use-appointments"
 import { CalendarBase } from "./calendar-base"
 import AppointmentDetailDialog from "@/components/common/appointment-detail-dialog"
-import type { Appointment, AppointmentDetail } from "@/types/appointment"
+
 import { appointmentService } from "@/services/appointment.service"
+import { Appointment, AppointmentDetail } from "@/types/appointment/appointment.type"
 
 export function AppointmentCalendar({ doctorId }: { doctorId: string }) {
   const { appointments, loading } = useAppointments(doctorId)

@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Calendar, Phone, MapPin, Droplet, AlertCircle } from "lucide-react"
-import { AppointmentDetail } from "@/types/appointment"
+import { AppointmentDetail } from "@/types/appointment/appointment.type"
+
 
 interface PatientVerificationProps {
   appointment: AppointmentDetail

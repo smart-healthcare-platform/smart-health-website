@@ -9,7 +9,7 @@ export type TimeSlotStatus = "available" | "booked" | "off" | "expired"
 interface TimeSlotGridProps {
   selectedSlotId: string | null
   onSlotSelect: (slot: TimeSlot) => void
-  selectedDate: Date | null
+  selectedDate: string | null // <-- sửa từ Date | null thành string | null
   timeSlots: TimeSlot[]
   loading?: boolean
 }
@@ -83,8 +83,7 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
                   key={slot.time}
                   onClick={() => !isDisabled && onSlotSelect(slot)}
                   disabled={isDisabled}
-                  className={`p-3 text-sm font-medium rounded-lg transition-all duration-200 border ${
-                    slot.status === "available"
+                  className={`p-3 text-sm font-medium rounded-lg transition-all duration-200 border ${slot.status === "available"
                       ? isSelected
                         ? "bg-emerald-500 text-white border-emerald-500 shadow-md scale-105"
                         : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 border-emerald-200 hover:shadow-sm"
@@ -93,7 +92,7 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
                         : slot.status === "off"
                           ? "bg-yellow-50 text-yellow-600 cursor-not-allowed border-yellow-200"
                           : "bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200"
-                  }`}
+                    }`}
                 >
                   {slot.time}
                   {slot.status === "booked" && <div className="text-xs mt-1"></div>}

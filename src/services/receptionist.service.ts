@@ -1,5 +1,7 @@
 import { apiAuth as api } from "@/lib/axios";
-import { Appointment, AppointmentStatus, CheckInResponse } from "@/types/appointment";
+import { CheckInResponse } from "@/types/appointment";
+import { AppointmentStatus } from "@/types/appointment/enums/appointment-status.enum";
+import { Appointment } from "@/types/appointment/appointment.type";
 
 export interface ReceptionistAppointmentFilters {
   status?: string;

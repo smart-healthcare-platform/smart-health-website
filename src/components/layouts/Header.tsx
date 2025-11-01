@@ -7,6 +7,7 @@ import { authService } from "@/services/auth.service";
 import type { RootState } from "@/redux";
 import { useRouter } from "next/navigation";
 import { resetBooking } from "@/redux/slices/bookingSlice";
+import ReminderIcon from "../common/reminder-icon";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,6 +66,26 @@ export default function Header() {
     { name: "Bác sĩ", path: "/doctors" },
     { name: "Dịch vụ", path: "/services" },
     { name: "Hỗ trợ", path: "/support" },
+    {
+      name: "Chuẩn đoán AI",
+      path: "/diagnosis",
+      isSpecial: true,
+      icon: (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+          />
+        </svg>
+      ),
+    },
   ];
 
   const userMenuItems = [
@@ -96,20 +117,44 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
-            {menuItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.path}
-                className="font-medium text-gray-700 hover:text-emerald-600 transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {menuItems.map((item) =>
+              item.isSpecial ? (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className="group relative flex items-center gap-2 font-medium text-emerald-700 px-4 py-2 rounded-full 
+                   bg-gradient-to-r from-emerald-100 to-teal-50 shadow-sm 
+                   hover:from-emerald-500 hover:to-teal-500 hover:text-white 
+                   transition-all duration-300 hover:shadow-lg"
+                >
+                  <span className="flex items-center gap-2">
+                    {item.icon}
+                    {item.name}
+                  </span>
+
+                  {/* Hiệu ứng sáng nhẹ khi hover */}
+                  <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-20 bg-white transition-opacity duration-300"></span>
+                </Link>
+              ) : (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className="font-medium text-gray-700 hover:text-emerald-600 transition-colors"
+                >
+                  {item.name}
+                </Link>
+              )
+            )}
           </nav>
+
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-
+            {isAuthenticated && (
+              <div className="hidden sm:block">
+                <ReminderIcon />
+              </div>
+            )}
             {/* User Menu hoặc Login Button với Loading State - Cố định kích thước */}
             <div className="hidden sm:block min-w-[120px]">
               {!isInitialized ? (

@@ -1,17 +1,10 @@
 import { apiAuth } from '@/lib/axios';
-import { 
-  Appointment, 
-  AppointmentDetail, 
-  AppointmentResponse, 
-  CreateAppointmentPayload, 
-  LabTest, 
-  MedicalRecord,
-  CreatePaymentRequest,
-  CreatePaymentResponse,
-  CheckInRequest,
-  CheckInResponse
-} from '@/types';
-import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, VitalSigns } from '@/types/examination';
+import {CheckInResponse, CreatePaymentResponse, MedicalRecord } from '@/types';
+import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, VitalSigns } from '@/types/examnation';
+import { Appointment, AppointmentDetail} from '@/types/appointment/appointment.type'
+import { CreateAppointmentPayload } from '@/types/appointment/appointment.dto';
+import { AppointmentResponse } from '@/types/appointment/appointment.response';
+
 
 export const appointmentService = {
   // Tạo appointment mới
@@ -103,11 +96,11 @@ export const appointmentService = {
   },
 
 
-  async getAllLabTests(): Promise<LabTest[]> {
-    const res = await apiAuth.get<{ success: boolean; data: LabTest[] }>("/appointments/lab-tests")
-    if (!res.data.success) return []
-    return res.data.data
-  },
+  // async getAllLabTests(): Promise<LabTest[]> {
+  //   const res = await apiAuth.get<{ success: boolean; data: LabTest[] }>("/appointments/lab-tests")
+  //   if (!res.data.success) return []
+  //   return res.data.data
+  // },
 
   async createMedicalRecord(payload: CreateMedicalRecordPayload): Promise<MedicalRecord> {
     const res = await apiAuth.post<{ success: boolean; message: string; data: MedicalRecord }>(
@@ -140,7 +133,7 @@ export const appointmentService = {
       "/appointments/follow-up-suggestions",
       payload
     )
-
+    console.log(res)
     if (!res.data.success) {
       throw new Error(res.data.message || "Không thể tạo đề xuất tái khám")
     }
@@ -187,6 +180,30 @@ export const appointmentService = {
 
     if (!res.data.success) {
       throw new Error(res.data.message || "Không thể check-in")
+    }
+
+    return res.data.data
+  },
+
+  async getPendingFollowUpByPatient(patientId: string): Promise<FollowUpSuggestion[]> {
+    const res = await apiAuth.get<{ success: boolean; data: FollowUpSuggestion[] }>(
+      `/appointments/follow-up-suggestions/patient/${patientId}/pending`
+    );
+
+    if (!res.data.success) {
+      throw new Error(`Không thể lấy danh sách tái khám pending cho bệnh nhân ${patientId}`);
+    }
+
+    return res.data.data;
+  },
+
+  async getPreviousAppointment(appointmentId: string): Promise<AppointmentDetail | null> {
+    const res = await apiAuth.get<{ success: boolean; data: AppointmentDetail | null }>(
+      `/appointments/${appointmentId}/previous`
+    )
+
+    if (!res.data.success) {
+      throw new Error(`Không thể lấy cuộc hẹn trước của appointment ${appointmentId}`)
     }
 
     return res.data.data

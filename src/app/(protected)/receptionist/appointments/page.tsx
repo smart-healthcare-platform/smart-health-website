@@ -27,10 +27,12 @@ import {
 } from "@/components/ui/select";
 import { MoreVertical, UserCheck, CreditCard, Eye, RefreshCw } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
-import { Appointment, AppointmentStatus } from "@/types/appointment";
+
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { CashPaymentDialog } from "@/components/receptionist/CashPaymentDialog";
+import { Appointment } from "@/types/appointment/appointment.type";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -247,8 +249,8 @@ export default function AppointmentsPage() {
                               <Eye className="mr-2 h-4 w-4" />
                               Xem chi tiết
                             </DropdownMenuItem>
-                            {apt.status !== "checked_in" &&
-                              apt.status !== "in-progress" && (
+                            {apt.status !== AppointmentStatus.CHECKED_IN &&
+                              apt.status !== AppointmentStatus.IN_PROGRESS && (
                                 <DropdownMenuItem
                                   onClick={() => handleCheckIn(apt.id)}
                                   disabled={apt.paymentStatus === "UNPAID"}

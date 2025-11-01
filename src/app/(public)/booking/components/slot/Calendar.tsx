@@ -1,33 +1,31 @@
 "use client"
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 
 interface CalendarProps {
-  selectedDate: Date | null
-  onDateSelect: (date: Date) => void
-  availableDates?: string[]
+  selectedDate: string | null  // yyyy-MM-dd
+  onDateSelect: (date: string) => void
+  availableDates?: string[]    // yyyy-MM-dd[]
 }
 
 const Calendar = ({ selectedDate, onDateSelect, availableDates = [] }: CalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
   const [today, setToday] = useState<Date | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const now = new Date()
     setCurrentMonth(now)
     setToday(now)
+    setMounted(true)
   }, [])
 
-  // tránh render trước khi có dữ liệu ngày
-  if (!currentMonth || !today) return null
-
-  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
-  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
+  if (!mounted || !currentMonth || !today) return null
 
   const monthNames = [
-    "Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6",
-    "Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12",
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12",
   ]
 
   const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
@@ -37,51 +35,44 @@ const Calendar = ({ selectedDate, onDateSelect, availableDates = [] }: CalendarP
   const goToNextMonth = () =>
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
 
-  const isSameDate = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
+  const formatDate = (year: number, month: number, day: number) =>
+    `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 
-  const isDateAvailable = (date: Date) => {
-    const dateStr = date.toISOString().split("T")[0]
-    return date >= today && availableDates.includes(dateStr)
+  const isDateAvailable = (dateStr: string) => {
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`
+    return dateStr >= todayStr && availableDates.includes(dateStr)
   }
 
-  const isDateSelected = (date: Date) =>
-    selectedDate && isSameDate(date, selectedDate)
+  const renderDays = (): ReactNode => {
+    const days: ReactNode[] = []
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const firstDay = new Date(year, month, 1).getDay()
+    const totalDays = new Date(year, month + 1, 0).getDate()
 
-  const renderCalendarDays = () => {
-    const days = []
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(<div key={`empty-${i}`} className="p-2"></div>)
-    }
+    // empty days before first day
+    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} />)
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-      const isAvailable = isDateAvailable(date)
-      const isSelected = isDateSelected(date)
-      const isToday = isSameDate(date, today)
+    for (let d = 1; d <= totalDays; d++) {
+      const dateStr = formatDate(year, month, d)
+      const selected = selectedDate === dateStr
+      const available = isDateAvailable(dateStr)
 
       days.push(
         <button
-          key={day}
-          onClick={() => isAvailable && onDateSelect(date)}
-          disabled={!isAvailable}
-          className={`p-2 text-sm rounded-lg transition-all duration-200 relative font-medium ${
-            isSelected
-              ? "bg-emerald-600 text-white font-bold shadow-lg ring-2 ring-emerald-300 transform scale-105"
-              : isToday && isAvailable
-              ? "bg-emerald-100 text-emerald-800 font-semibold border-2 border-emerald-400"
-              : isAvailable
-              ? "hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 border border-gray-200 hover:border-emerald-300 hover:shadow-sm"
-              : "text-gray-400 cursor-not-allowed bg-gray-50 border border-gray-100"
-          }`}
+          key={dateStr}
+          onClick={() => available && onDateSelect(dateStr)}
+          disabled={!available}
+          className={`p-2 text-sm rounded-lg transition-all duration-200 font-medium
+            ${selected ? "bg-emerald-600 text-white shadow-lg" : ""}
+            ${available && !selected ? "hover:bg-emerald-50 hover:text-emerald-700 border border-gray-200" : "text-gray-400 cursor-not-allowed"}
+          `}
         >
-          {day}
-          {isSelected && <div className="absolute rounded-full "></div>}
+          {d}
         </button>
       )
     }
+
     return days
   }
 
@@ -104,14 +95,11 @@ const Calendar = ({ selectedDate, onDateSelect, availableDates = [] }: CalendarP
 
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((day) => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-            {day}
-          </div>
+          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">{day}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">{renderCalendarDays()}</div>
-
+      <div className="grid grid-cols-7 gap-1">{renderDays()}</div>
       <div className="mt-4 text-xs text-gray-500">Chỉ có thể đặt lịch từ hôm nay trở đi</div>
     </div>
   )

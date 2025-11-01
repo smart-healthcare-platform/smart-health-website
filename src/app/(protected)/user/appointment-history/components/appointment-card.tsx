@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Eye } from "lucide-react"
 import AppointmentDetailDialog from "../../../../../components/common/appointment-detail-dialog"
-import type { AppointmentDetail } from "@/types/appointment"
+
+import { AppointmentStatus } from "@/types/appointment/enums/appointment-status.enum"
 import { createConversation } from "@/services/chat.service"
 import { RootState } from "@/redux"
 import { PaymentStatusBadge } from "@/components/common/payment-status-badge"
 import { PaymentInfoCard } from "@/components/common/payment-info-card"
+import { AppointmentDetail } from "@/types/appointment/appointment.type"
 
 interface AppointmentCardProps {
   appointment: AppointmentDetail
@@ -46,9 +48,9 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   // 👉 Cấu hình trạng thái
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "completed":
+      case "COMPLETED":
         return { label: "Đã hoàn thành", className: "bg-green-500 text-white" }
-      case "confirmed":
+      case "CONFIRMED":
         return { label: "Đã xác nhận", className: "bg-blue-500 text-white" }
       case "pending":
         return { label: "Chờ xác nhận", className: "bg-yellow-500 text-white" }
@@ -90,14 +92,13 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
         <div className="p-4">
           <div className="flex items-start justify-between gap-4 mb-3">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              {/* <div className="flex items-center gap-2 mb-2">
                 <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
                 <Badge variant="outline">{appointment.type}</Badge>
-                {/* 🆕 Payment Status Badge */}
                 {appointment.paymentStatus && (
                   <PaymentStatusBadge status={appointment.paymentStatus} />
                 )}
-              </div>
+              </div> */}
               <h3 className="text-lg font-semibold text-foreground">
                 {appointment.doctorName}
               </h3>
@@ -129,12 +130,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
 
           {/* Nút chat và chi tiết */}
           <div className="flex flex-col gap-2 mt-4">
-            {/* 🆕 Payment Info Card */}
-            {appointment.paymentStatus && (
-              <PaymentInfoCard appointment={appointment} />
-            )}
-
-            {(appointment.status === "completed" || appointment.status === "confirmed") && (
+            {(appointment.status ===  AppointmentStatus.COMPLETED || appointment.status ===  AppointmentStatus.CONFIRMED) && (
               <Button
                 variant="outline"
                 size="sm"

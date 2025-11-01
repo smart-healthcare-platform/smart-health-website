@@ -8,7 +8,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Appointment } from "@/types/appointment"
+import { Appointment } from "@/types/appointment/appointment.type"
+
 
 interface DayAppointmentsModalProps {
   open: boolean

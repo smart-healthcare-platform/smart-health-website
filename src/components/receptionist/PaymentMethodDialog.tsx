@@ -84,15 +84,15 @@ export default function PaymentMethodDialog({
           paymentMethod: selectedMethod,
         });
 
-        const response = await appointmentService.createPayment(
-          appointmentId,
-          selectedMethod
-        );
+        // const response = await appointmentService.createPayment(
+        //   appointmentId,
+        //   selectedMethod
+        // );
 
-        console.log("✅ Payment created:", response);
+        // console.log("✅ Payment created:", response);
 
         // Mở payment URL trong tab mới (giống patient)
-        window.open(response.paymentUrl, "_blank");
+        // window.open(response.paymentUrl, "_blank");
 
         alert(`Đã tạo yêu cầu thanh toán!\nVui lòng hoàn tất thanh toán trong tab mới.`);
 

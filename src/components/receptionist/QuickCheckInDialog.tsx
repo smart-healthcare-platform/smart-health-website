@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, UserCheck, User, Calendar, Loader2 } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
-import { Appointment } from "@/types/appointment";
+import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 interface QuickCheckInDialogProps {
   open: boolean;
@@ -46,8 +47,8 @@ export function QuickCheckInDialog({
       // Chỉ hiển thị appointments chưa check-in
       const unchecked = data.filter(
         (apt) =>
-          apt.status === "confirmed" ||
-          apt.status === "pending"
+          apt.status ===AppointmentStatus.COMPLETED||
+          apt.status === AppointmentStatus.PENDING
       );
       
       setResults(unchecked);

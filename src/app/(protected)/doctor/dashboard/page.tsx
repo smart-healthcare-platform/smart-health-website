@@ -1,12 +1,12 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, Clock, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { appointmentService } from "@/services/appointment.service"
-import { Appointment } from "@/types"
+
 import TodaySchedule from "./components/TodaySchedule"
+import { Appointment } from "@/types/appointment/appointment.type";
 
 export default function DashboardOverview() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
