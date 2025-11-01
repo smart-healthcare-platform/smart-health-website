@@ -44,9 +44,7 @@ function AuthInit() {
               },
             })
           );
-        }
-
-        if (user.role === "DOCTOR") {
+        } else if (user.role === "DOCTOR") {
           const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -67,6 +65,35 @@ function AuthInit() {
                   yearsOfExperience: doctor.experience_years,
                   avatar: doctor.avatar
                 },
+              },
+            })
+          );
+        } else if (user.role === "RECEPTIONIST") {
+          // For now, use basic user info until we have receptionist service
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "RECEPTIONIST",
+                referenceId: user.id,
+                profile: {
+                  fullName: user.username || "Lễ tân",
+                  employeeId: user.id,
+                  department: "Front Desk",
+                  shift: "full-time",
+                },
+              },
+            })
+          );
+        } else if (user.role === "ADMIN") {
+          // Admin doesn't need profile fetch
+          dispatch(
+            setCredentials({
+              token,
+              user: {
+                ...user,
+                role: "ADMIN",
               },
             })
           );

@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { Heart, Shield, Activity, Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useDispatch, useSelector } from "react-redux"
+import { useDispatch } from "react-redux"
 import { setCredentials } from "@/redux/slices/authSlice"
 import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
 
 import { apiNoAuth } from '@/lib/axios';
-import { RootState, store } from '@/redux';
+// Removed unused imports
 export default function ModernHealthLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,6 +38,7 @@ export default function ModernHealthLogin() {
         setCookie('refreshToken', refreshToken, 7);
         localStorage.setItem("isLogin", "true")
       }
+      
       if (user.role === "PATIENT") {
         const patientRes = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -58,9 +59,7 @@ export default function ModernHealthLogin() {
             }
           }
         }))
-      }
-
-      if (user.role === "DOCTOR") {
+      } else if (user.role === "DOCTOR") {
         const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -82,7 +81,31 @@ export default function ModernHealthLogin() {
             }
           }
         }))
+      } else if (user.role === "RECEPTIONIST") {
+        // RECEPTIONIST doesn't need additional profile fetch
+        dispatch(setCredentials({
+          token,
+          user: {
+            ...user,
+            role: "RECEPTIONIST",
+            referenceId: user.id,
+            profile: {
+              fullName: user.username || "Lễ tân",
+              employeeId: user.id,
+              department: "Front Desk",
+              shift: "full-time",
+            }
+          }
+        }))
+      } else if (user.role === "ADMIN") {
+        dispatch(setCredentials({
+          token,
+          user: {
+            ...user,
+          }
+        }))
       }
+      
       // Redirect
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get("redirect")
@@ -90,9 +113,11 @@ export default function ModernHealthLogin() {
       if (redirect) router.push(redirect)
       else if (user.role === "ADMIN") router.push("/admin")
       else if (user.role === "DOCTOR") router.push("/doctor")
+      else if (user.role === "RECEPTIONIST") router.push("/receptionist")
       else router.push("/")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại")
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } }
+      setError(error.response?.data?.message || "Đăng nhập thất bại")
     } finally {
       setLoading(false)
     }

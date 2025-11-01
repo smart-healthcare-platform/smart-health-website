@@ -12,7 +12,7 @@ export interface GetConversationsParams {
 export interface GetMessagesParams {
   conversationId: string;
   limit?: number; // Number of messages to fetch
-  offset?: number; // Offset for pagination
+  page?: number; // Page number for pagination
  // Add other potential query parameters here if needed by the backend
 }
 
@@ -68,7 +68,7 @@ export const getMessages = async (params: GetMessagesParams): Promise<MessageRes
   try {
     const queryParams = new URLSearchParams();
     if (params.limit !== undefined) queryParams.append('limit', params.limit.toString());
-    if (params.offset !== undefined) queryParams.append('offset', params.offset.toString());
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
 
     const queryString = queryParams.toString();
     const url = `${CHAT_API_BASE}/conversations/${params.conversationId}/messages${queryString ? `?${queryString}` : ''}`;

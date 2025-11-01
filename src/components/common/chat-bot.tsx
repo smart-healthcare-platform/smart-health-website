@@ -14,6 +14,20 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { chatbotService } from "@/services/chatbot.service";
+
+// Track component mounted state to avoid state updates after unmount
+const useIsMounted = () => {
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  return isMounted;
+};
 
 interface Message {
   id: number;
@@ -33,13 +47,9 @@ interface ServiceOption {
   color: string;
 }
 
-interface ChatResponse {
-  response: string;
-}
 
 export default function HealthChatBot() {
   const router = useRouter();
-  const [apiUrl, setApiUrl] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -53,13 +63,7 @@ export default function HealthChatBot() {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    // Get API URL from environment variable
-    const url =
-      process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:8000";
-    setApiUrl(url);
-  }, []);
+  const isMounted = useIsMounted();
 
   const serviceOptions: ServiceOption[] = [
     {
@@ -97,7 +101,7 @@ export default function HealthChatBot() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !apiUrl) return;
+    if (!inputMessage.trim()) return;
 
     const userMessage: Message = {
       id: messages.length + 1,
@@ -111,19 +115,7 @@ export default function HealthChatBot() {
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${apiUrl}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: inputMessage }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: ChatResponse = await response.json();
+      const data = await chatbotService.sendMessage(inputMessage);
       const botResponse: Message = {
         id: messages.length + 2,
         text:
@@ -159,7 +151,7 @@ export default function HealthChatBot() {
     router.push("/doctors");
   };
 
-  const handleServiceOption = (optionId: string) => {
+  const handleServiceOption = async (optionId: string) => {
     const option = serviceOptions.find((opt) => opt.id === optionId);
     if (!option) return;
 
@@ -178,8 +170,10 @@ export default function HealthChatBot() {
     setMessages([...updatedMessages, userMessage]);
     setIsTyping(true);
 
-    // Bot responds with a confirmation/prompt
-    setTimeout(() => {
+    // Bot responds with a confirmation/prompt after a short delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (isMounted.current) {
       let botResponse: Message | null = null;
       const botMessageId = messages.length + 2;
 
@@ -221,11 +215,13 @@ export default function HealthChatBot() {
           break;
       }
 
-      if (botResponse) {
+      if (botResponse && isMounted.current) {
         setMessages((prev) => [...prev, botResponse!]);
       }
-      setIsTyping(false);
-    }, 1000); // Simulate bot thinking time
+      if (isMounted.current) {
+        setIsTyping(false);
+      }
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -459,3 +455,5 @@ export default function HealthChatBot() {
     </div>
   );
 }
+
+

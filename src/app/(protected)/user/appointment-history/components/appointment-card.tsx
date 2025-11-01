@@ -6,19 +6,20 @@ import { useSelector } from "react-redux"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Eye, ChevronDown, ChevronUp } from "lucide-react"
-import AppointmentDetailDialog from "./appointment-detail-dialog"
-import type { Appointment } from "@/types/appointment"
+import { Calendar, Clock, Eye } from "lucide-react"
+import AppointmentDetailDialog from "../../../../../components/common/appointment-detail-dialog"
+import type { AppointmentDetail } from "@/types/appointment"
 import { createConversation } from "@/services/chat.service"
 import { RootState } from "@/redux"
+import { PaymentStatusBadge } from "@/components/common/payment-status-badge"
+import { PaymentInfoCard } from "@/components/common/payment-info-card"
 
 interface AppointmentCardProps {
-  appointment: Appointment
+  appointment: AppointmentDetail
 }
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
   const router = useRouter()
   const user = useSelector((state: RootState) => state.auth.user)
 
@@ -92,6 +93,10 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
               <div className="flex items-center gap-2 mb-2">
                 <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
                 <Badge variant="outline">{appointment.type}</Badge>
+                {/* 🆕 Payment Status Badge */}
+                {appointment.paymentStatus && (
+                  <PaymentStatusBadge status={appointment.paymentStatus} />
+                )}
               </div>
               <h3 className="text-lg font-semibold text-foreground">
                 {appointment.doctorName}
@@ -124,6 +129,11 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
 
           {/* Nút chat và chi tiết */}
           <div className="flex flex-col gap-2 mt-4">
+            {/* 🆕 Payment Info Card */}
+            {appointment.paymentStatus && (
+              <PaymentInfoCard appointment={appointment} />
+            )}
+
             {(appointment.status === "completed" || appointment.status === "confirmed") && (
               <Button
                 variant="outline"
@@ -134,33 +144,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 Bắt đầu trò chuyện
               </Button>
             )}
-
-            {/* {appointment.notes && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="self-start"
-              >
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className="h-4 w-4 mr-2" />
-                    Thu gọn
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 mr-2" />
-                    Chi tiết
-                  </>
-                )}
-              </Button>
-            )} */}
           </div>
-
-          {/* Ghi chú (mở rộng) */}
-          {isExpanded && appointment.notes && (
-            <p className="text-sm text-gray-600 mt-2">{appointment.notes}</p>
-          )}
         </div>
       </Card>
 

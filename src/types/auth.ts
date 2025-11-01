@@ -1,9 +1,9 @@
 interface BaseUser {
     id: string;
     username: string;
-    role: "PATIENT" | "DOCTOR" | "ADMIN";
-    phone:string;
-    email:string;
+    role: "PATIENT" | "DOCTOR" | "RECEPTIONIST" | "ADMIN";
+    phone: string;
+    email: string;
     createdAt: string;
     referenceId?: string;
 }
@@ -20,11 +20,20 @@ interface DoctorProfile {
     specialty: string;
     yearsOfExperience: number;
     dateOfBirth: string;
-    avatar:string;
-    gender:string
+    avatar: string;
+    gender: string
+}
+
+interface ReceptionistProfile {
+    fullName: string;
+    employeeId?: string;
+    department?: string;
+    shift?: "morning" | "afternoon" | "night" | "full-time";
+    avatar?: string;
 }
 
 export type User =
     | (BaseUser & { role: "PATIENT"; profile: PatientProfile })
     | (BaseUser & { role: "DOCTOR"; profile: DoctorProfile })
-    | (BaseUser & { role: "ADMIN"; profile?: undefined });
+    | (BaseUser & { role: "RECEPTIONIST"; profile: ReceptionistProfile })
+    | (BaseUser & { role: "ADMIN" });

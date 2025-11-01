@@ -1,6 +1,6 @@
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
-import ChatBot from '@/components/comon/Chatbot';
+import ChatBot from '@/components/common/chat-bot';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
