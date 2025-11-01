@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, Clock, Star, GraduationCap, Phone, Mail, Shield, CheckCircle, HeartPulse } from "lucide-react"
 import type { DoctorDetail } from "@/types"
-import { doctorService } from "@/services/doctorService"
+import { doctorService } from "@/services/doctor.service"
 import Loading from "@/components/ui/loading"
 import { useDispatch } from "react-redux"
 import { useRouter } from "next/navigation";
