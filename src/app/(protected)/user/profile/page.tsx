@@ -1,12 +1,12 @@
 // app/profile/page.tsx
 'use client';
-import ProfileMenu from '@/app/(user)/profile/components/ProfileMenu';
+import ProfileMenu from './components/ProfileMenu';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import PersonalInfo from '@/app/(user)/profile/components/PersonalInfo';
-import HealthTimeline from '@/app/(user)/profile/components/HealthTimeline';
-import MedicalHistory from '@/app/(user)/profile/components/MedicalHistory';
-import Prescriptions from '@/app/(user)/profile/components/Prescriptions';
+import PersonalInfo from './components/PersonalInfo';
+import HealthTimeline from './components/HealthTimeline';
+import MedicalHistory from './components/MedicalHistory';
+import Prescriptions from './components/Prescriptions';
 
 export default function Profile() {
   const [selectedSection, setSelectedSection] = useState('personalInfo');
