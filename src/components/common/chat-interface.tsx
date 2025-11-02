@@ -48,7 +48,7 @@ interface Conversation {
 }
 
 interface ChatInterfaceProps {
-    currentUserRole: 'doctor' | 'user';
+  currentUserRole: 'doctor' | 'user';
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
@@ -188,11 +188,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
             />
           </div>
         </div>
-        
+
         {error && (
           <div className="p-4 text-center text-destructive">Lỗi: {error}</div>
         )}
-        
+
         <ScrollArea className="flex-1">
           {loading && !conversations.length ? (
             <div className="p-4 space-y-4">
@@ -221,9 +221,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
               return (
                 <div
                   key={conversation.id}
-                  className={`p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors ${
-                    isActive ? 'bg-accent' : ''
-                  }`}
+                  className={`p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors ${isActive ? 'bg-accent' : ''
+                    }`}
                   onClick={() => handleSelectConversation(conversation.id)}
                 >
                   <div className="flex items-center gap-3">
@@ -278,35 +277,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
                 </Button>
               </div>
             </div>
-            
+
             <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-muted/10 min-h-0" onScroll={(e) => {
-                const target = e.target as HTMLDivElement;
-                if (target.scrollTop === 0 && selectedConversationId && messages[selectedConversationId]?.hasMore && !messages[selectedConversationId]?.isLoadingMore) {
-                    dispatch(fetchMoreMessages({ conversationId: selectedConversationId, page: messages[selectedConversationId].page + 1 }));
-                }
+              const target = e.target as HTMLDivElement;
+              if (target.scrollTop === 0 && selectedConversationId && messages[selectedConversationId]?.hasMore && !messages[selectedConversationId]?.isLoadingMore) {
+                dispatch(fetchMoreMessages({ conversationId: selectedConversationId, page: messages[selectedConversationId].page + 1 }));
+              }
             }}>
               <div className="space-y-4">
                 {selectedConversationId && messages[selectedConversationId]?.isLoadingMore && (
-                    <div className="flex justify-center items-center p-4">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
+                  <div className="flex justify-center items-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
                 )}
 
                 {loading && !messages[selectedConversationId] ? (
                   <div className="space-y-4">
-                     <div className="flex gap-3 justify-start">
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-10 w-48" />
+                    <div className="flex gap-3 justify-start">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-10 w-48" />
                     </div>
                     <div className="flex gap-3 justify-end">
-                        <Skeleton className="h-10 w-32" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-10 w-32" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
                     </div>
                   </div>
                 ) : (
-                    messages[selectedConversationId]?.data.map((msg: Message) => {
+                  messages[selectedConversationId]?.data.map((msg: Message) => {
                     const isCurrentUser = msg.senderId === user?.id;
-                    const senderName = isCurrentUser ? (user?.profile?.fullName || 'Bạn') : (otherParticipant?.fullName || 'Unknown');
+                    const senderName = isCurrentUser
+                      ? (
+                        user?.role === "ADMIN"
+                          ? user?.username // hoặc 1 fallback khác
+                          : user?.profile?.fullName || 'Bạn'
+                      )
+                      : (otherParticipant?.fullName || 'Unknown');
+
 
                     return (
                       <div
@@ -320,11 +326,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
                           </Avatar>
                         )}
                         <div className={`max-w-[70%] ${isCurrentUser ? 'order-1' : ''}`}>
-                          <div className={`p-3 rounded-2xl ${
-                            isCurrentUser
+                          <div className={`p-3 rounded-2xl ${isCurrentUser
                               ? 'bg-primary text-primary-foreground rounded-br-md'
                               : 'bg-card text-foreground rounded-bl-md'
-                          }`}>
+                            }`}>
                             <div className="text-sm">{msg.content}</div>
                           </div>
                           <div className={`text-xs mt-1 text-muted-foreground ${isCurrentUser ? 'text-right' : 'text-left'}`}>
@@ -344,7 +349,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
-            
+
             <div className="p-4 border-t border-border bg-background">
               <div className="flex gap-2">
                 <Input

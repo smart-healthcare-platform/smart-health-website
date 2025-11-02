@@ -28,7 +28,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900">{selectedDoctor.display_name}</h4>
-              <p className="text-emerald-600 text-sm">{selectedDoctor.specialty}</p>
+              <p className="text-emerald-600 text-sm">Chuyên khoa: {selectedDoctor.specialty}</p>
               <p className="text-gray-500 text-sm">Số năm kinh nghiệm: {selectedDoctor.experience_years}</p>
             </div>
           </div>

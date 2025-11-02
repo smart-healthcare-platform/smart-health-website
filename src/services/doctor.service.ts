@@ -18,25 +18,28 @@ export const doctorService = {
     try {
       const res = await apiNoAuth.get<{ success: boolean; data: any[] }>(
         `/public/doctors/appointment-slots/${doctorId}`
-      )
-      if (!res.data.success) return []
+      );
+
+      if (!res.data.success) return [];
 
       const slots: TimeSlot[] = res.data.data.map((s) => {
-        const start = new Date(s.start_time);
+        const [date, time] = s.start_time.split(" "); 
+
         return {
           id: s.id,
           startTime: s.start_time,
-          date: start.toISOString().split("T")[0],
-          time: start.toLocaleTimeString("vi-VN", { hour12: false, hour: "2-digit", minute: "2-digit" }),
+          date,                     
+          time: time.slice(0, 5),   
           status: mapStatus(s.status),
-        }
-      })
+        };
+      });
 
-      return slots
+      return slots;
     } catch (err) {
-      console.error("Error fetching doctor slots:", err)
-      return []
+      console.error("Error fetching doctor slots:", err);
+      return [];
     }
+
   }
 }
 

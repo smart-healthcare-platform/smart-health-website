@@ -21,7 +21,7 @@ export default function Step2() {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
 
-  const selectedDate = dateStr ? new Date(dateStr) : null
+  const selectedDate = dateStr ? dateStr.split("T")[0] : null
 
   useEffect(() => {
     if (!doctor) return
@@ -29,9 +29,10 @@ export default function Step2() {
       setLoadingSlots(true)
       try {
         const slots = await doctorService.getDoctorSlots(doctor.id)
-        console.log("Slot",slots)
+        console.log(slots)
         setAllSlots(slots)
         setAvailableDates(Array.from(new Set(slots.map((s) => s.date))))
+
       } finally {
         setLoadingSlots(false)
       }
@@ -54,9 +55,10 @@ export default function Step2() {
     <div className="space-y-6">
       <Calendar
         selectedDate={selectedDate}
-        onDateSelect={(d) => dispatch(setDate(d.toISOString()))}
+        onDateSelect={(d) => dispatch(setDate(d))}
         availableDates={availableDates}
       />
+
       <TimeSlotGrid
         selectedSlotId={slot_id}
         onSlotSelect={(slot) => dispatch(setSlot(slot))}

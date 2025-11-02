@@ -1,48 +1,7 @@
-import { MedicalRecord } from "./examination"
-
-// Appointment Status Types
-export type AppointmentStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "CHECKED_IN"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW";
+import { Appointment, AppointmentDetail } from "./appointment/appointment.type";
 
 // Payment Status Type
 export type PaymentStatus = "UNPAID" | "PENDING" | "PAID" | "REFUNDED";
-
-export interface Appointment {
-  id: string
-  doctorId: string
-  doctorName: string
-  patientId: string
-  patientName: string
-  slotId: string
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show" | "checked_in"
-  type: "Khám bệnh" | "Tái khám"
-  notes: string
-  createdAt: string
-  updatedAt: string
-  startAt: string
-  // Payment & Check-in fields
-  paymentStatus?: PaymentStatus
-  paymentId?: string | null
-  paidAmount?: string | null
-  paidAt?: string | null
-  checkedInAt?: string | null
-  consultationFee?: string
-}
-
-export interface AppointmentResponse {
-
-  appointments: AppointmentDetail[]
-  total: number
-  page: number
-  limit: number
-
-}
 
 export type ViewMode = "table" | "calendar"
 
@@ -57,47 +16,8 @@ export interface AppointmentFilters {
   department?: string
 }
 
-export interface CreateAppointmentPayload {
-  doctorId: string
-  slotId: string
-  userId: string
-  date: string
-  type?: Appointment["type"]
-  notes?: string,
-  doctorName: string
-  startAt:string
-}
 
-export interface AppointmentDetail {
-  id: string
-  doctorId: string
-  doctorName: string
-  patientId: string
-  patientName: string
-  slotId: string
-  type: string
-  status: "pending" | "confirmed" | "cancelled" | "completed" | "in-progress"
-  notes?: string
-  startAt: string
-  createdAt: string
-  updatedAt: string
-  patient: {
-    id: string
-    fullName: string
-    gender: "male" | "female" | "other"
-    dateOfBirth: string
-    address: string
-  }
-  medicalRecord?: MedicalRecord
-  
-  // 🆕 Payment fields (sync with backend)
-  paymentStatus?: "UNPAID" | "PENDING" | "PAID" | "REFUNDED"
-  paymentId?: string | null
-  paidAmount?: number | null
-  paidAt?: string | null
-  checkedInAt?: string | null
-  consultationFee?: number
-}
+
 
 // 🆕 Payment API Request/Response Types
 export interface CreatePaymentRequest {

@@ -1,11 +1,10 @@
-// Main Doctors Page
-'use client';
-import DoctorList from '@/app/(public)/doctors/components/DoctorList'
+import { Suspense } from "react";
+import DoctorList from "@/app/(public)/doctors/components/DoctorList";
 
 export default function Doctors() {
   return (
-    <div>
+    <Suspense fallback={<div>Đang tải danh sách bác sĩ...</div>}>
       <DoctorList />
-    </div>
+    </Suspense>
   );
 }

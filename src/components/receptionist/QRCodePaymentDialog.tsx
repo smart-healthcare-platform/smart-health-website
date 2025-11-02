@@ -31,42 +31,42 @@ export default function QRCodePaymentDialog({
   const [polling, setPolling] = useState(true);
 
   // Polling để kiểm tra trạng thái thanh toán
-  useEffect(() => {
-    if (!open || status === "COMPLETED") {
-      setPolling(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!open || status === "COMPLETED") {
+  //     setPolling(false);
+  //     return;
+  //   }
 
-    const interval = setInterval(async () => {
-      try {
-        const currentStatus = await billingService.checkPaymentStatus(payment.id);
-        setStatus(currentStatus);
+  //   const interval = setInterval(async () => {
+  //     try {
+  //       const currentStatus = await billingService.checkPaymentStatus(payment.id);
+  //       setStatus(currentStatus);
 
-        if (currentStatus === "COMPLETED") {
-          setPolling(false);
-          setTimeout(() => {
-            onSuccess?.();
-            onOpenChange(false);
-          }, 2000); // Đợi 2s để user thấy success message
-        }
-      } catch (error) {
-        console.error("Error checking payment status:", error);
-      }
-    }, 3000); // Poll mỗi 3 giây
+  //       if (currentStatus === "COMPLETED") {
+  //         setPolling(false);
+  //         setTimeout(() => {
+  //           onSuccess?.();
+  //           onOpenChange(false);
+  //         }, 2000); // Đợi 2s để user thấy success message
+  //       }
+  //     } catch (error) {
+  //       console.error("Error checking payment status:", error);
+  //     }
+  //   }, 3000); // Poll mỗi 3 giây
 
-    // Stop polling sau 5 phút (timeout)
-    const timeout = setTimeout(() => {
-      setPolling(false);
-      if (status === "PENDING") {
-        setStatus("FAILED");
-      }
-    }, 5 * 60 * 1000);
+  //   // Stop polling sau 5 phút (timeout)
+  //   const timeout = setTimeout(() => {
+  //     setPolling(false);
+  //     if (status === "PENDING") {
+  //       setStatus("FAILED");
+  //     }
+  //   }, 5 * 60 * 1000);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [open, status, payment.id, onSuccess, onOpenChange]);
+  //   return () => {
+  //     clearInterval(interval);
+  //     clearTimeout(timeout);
+  //   };
+  // }, [open, status, payment.id, onSuccess, onOpenChange]);
 
   const getMethodName = () => {
     switch (payment.paymentMethod) {
@@ -132,7 +132,7 @@ export default function QRCodePaymentDialog({
           )}
 
           {/* QR Code */}
-          {payment.qrCodeUrl && status !== "COMPLETED" && (
+          {/* {payment.qrCodeUrl && status !== "COMPLETED" && (
             <div className="flex flex-col items-center space-y-4">
               <div className="relative w-64 h-64 border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
                 <Image
@@ -147,7 +147,7 @@ export default function QRCodePaymentDialog({
                 Quét mã QR bằng ứng dụng {getMethodName()} để thanh toán
               </p>
             </div>
-          )}
+          )} */}
 
           {/* Thông tin thanh toán */}
           <div className="space-y-2 border-t pt-4">

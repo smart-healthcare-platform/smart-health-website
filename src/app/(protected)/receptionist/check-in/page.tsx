@@ -16,10 +16,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
-import { Appointment } from "@/types/appointment";
+import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function CheckInPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -61,8 +62,8 @@ export default function CheckInPage() {
     } else if (filter === "unchecked") {
       filtered = data.filter(
         (apt) =>
-          apt.status === "confirmed" ||
-          apt.status === "pending"
+          apt.status === AppointmentStatus.CONFIRMED ||
+          apt.status === AppointmentStatus.PENDING
       );
     }
 
@@ -120,7 +121,7 @@ export default function CheckInPage() {
 
   // Get status badge
   const getStatusBadge = (apt: Appointment) => {
-    if (apt.status === "checked_in" || apt.status === "in-progress") {
+    if (apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS) {
       return (
         <Badge className="bg-green-500">
           <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -128,7 +129,7 @@ export default function CheckInPage() {
         </Badge>
       );
     }
-    if (apt.status === "cancelled") {
+    if (apt.status === AppointmentStatus.CANCELLED) {
       return (
         <Badge className="bg-red-500">
           <XCircle className="mr-1 h-3 w-3" />
@@ -183,7 +184,7 @@ export default function CheckInPage() {
               {
                 appointments.filter(
                   (apt) =>
-                    apt.status === "confirmed" || apt.status === "pending"
+                    apt.status === AppointmentStatus.CONFIRMED || apt.status === AppointmentStatus.PENDING
                 ).length
               }
               )
@@ -362,8 +363,8 @@ export default function CheckInPage() {
                 {/* Actions */}
                 <div className="space-y-3 pt-4 border-t">
                   {/* ✅ NÚT CHECK-IN - Không cần validate payment */}
-                  {selectedAppointment.status !== "checked_in" &&
-                    selectedAppointment.status !== "in-progress" && (
+                  {selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
+                    selectedAppointment.status !== AppointmentStatus.IN_PROGRESS && (
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
                         onClick={() => handleCheckIn(selectedAppointment)}
@@ -385,8 +386,8 @@ export default function CheckInPage() {
                   )}
 
                   {/* ✅ THÔNG BÁO ĐÃ CHECK-IN */}
-                  {(selectedAppointment.status === "checked_in" ||
-                    selectedAppointment.status === "in-progress") && (
+                  {(selectedAppointment.status === AppointmentStatus.CHECKED_IN ||
+                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
                     <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                       <div className="flex items-center gap-2 text-green-700 mb-2">
                         <CheckCircle2 className="h-5 w-5" />
@@ -402,7 +403,7 @@ export default function CheckInPage() {
                   
                   {/* ✅ GỢI Ý THANH TOÁN SAU KHÁM */}
                   {selectedAppointment.paymentStatus === "UNPAID" && 
-                   (selectedAppointment.status === "checked_in" || selectedAppointment.status === "in-progress") && (
+                   (selectedAppointment.status === AppointmentStatus.CHECKED_IN || selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
                     <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                       <p className="text-sm text-orange-700">
                         💡 <strong>Gợi ý:</strong> Thu tiền sau khi khám để tính đúng tổng chi phí
@@ -423,7 +424,7 @@ export default function CheckInPage() {
           onOpenChange={setPaymentDialogOpen}
           appointmentId={selectedAppointment.id}
           patientName={selectedAppointment.patientName || "Bệnh nhân"}
-          amount={parseFloat(selectedAppointment.consultationFee || "200000")}
+          amount={parseFloat(selectedAppointment.consultationFee?.toString() || "200000")}
           onSuccess={() => {
             toast.success("Thanh toán thành công!");
             fetchAppointments();

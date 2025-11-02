@@ -16,7 +16,7 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
       <div className="text-center mb-6">
         <div className="relative w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-4 border-emerald-100 shadow-sm">
           <Image
-            src={doctor.avatar || "https://randomuser.me/api/portraits/men/32.jpg"}
+            src={doctor.avatar || "https://htmediagroup.vn/wp-content/uploads/2022/12/Anh-bac-si-12-min-585x878.jpg.webp"}
             alt={doctor.full_name}
             width={96}
             height={96}

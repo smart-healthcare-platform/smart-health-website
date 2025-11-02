@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, User, Calendar, Phone, CreditCard, UserCheck } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
-import { Appointment } from "@/types/appointment";
+import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { CashPaymentDialog } from "@/components/receptionist/CashPaymentDialog";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function SearchPage() {
   const [keyword, setKeyword] = useState("");
@@ -217,8 +218,8 @@ export default function SearchPage() {
                               </Button>
                             )}
 
-                            {apt.status !== "checked_in" &&
-                              apt.status !== "in-progress" && (
+                            {apt.status !== AppointmentStatus.CHECKED_IN &&
+                              apt.status !== AppointmentStatus.IN_PROGRESS && (
                                 <Button
                                   size="sm"
                                   className="bg-blue-600 hover:bg-blue-700"

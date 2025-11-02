@@ -14,17 +14,20 @@ import { medicineService } from "@/services/medicine.service"
 import SuccessDialog from "@/components/ui/success-dialog"
 import ConfirmEndExaminationDialog from "@/components/ui/confirm-end-examination"
 import { toast } from "react-toastify"
+import type { RootState } from "@/redux"
 
-import type { CreateMedicalRecordPayload, CreateVitalSignPayload, ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { CreatePrescriptionRequest, PrescriptionItemInput } from "@/types/medicine"
-import type { AppointmentDetail } from "@/types/appointment"
+
 import Loading from "@/components/ui/loading"
+import { ExaminationData, PrescriptionItem } from "@/types/examination"
+import { CreateMedicalRecordPayload, CreateVitalSignPayload } from "@/types/examnation"
+import { getDoctorProfile } from "@/utils/userHelpers"
+import { AppointmentDetail } from "@/types/appointment/appointment.type"
 
 export default function ExaminationPage() {
   const { appointmentId } = useParams()
   const router = useRouter()
-  const user = useSelector((state: any) => state.auth.user) // Get user at component level
-
+  const { user } = useSelector((state: RootState) => state.auth)
   const [loading, setLoading] = useState(true)
   const [appointment, setAppointment] = useState<AppointmentDetail | null>(null)
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1)
@@ -32,12 +35,12 @@ export default function ExaminationPage() {
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
-
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
         setLoading(true)
         const data = await appointmentService.getDetailsAppointmentForDoctor(appointmentId as string)
+        console.log(data)
         setAppointment(data)
       } catch (err) {
         console.error("Lỗi khi lấy thông tin appointment:", err)
@@ -100,7 +103,6 @@ export default function ExaminationPage() {
       symptoms: examinationData.symptoms || "",
       doctorNotes: examinationData.additionalNotes || "",
       prescription: prescriptionText,
-      followUpDate: localDateTime,
     }
 
     const record = await appointmentService.createMedicalRecord(payload)
@@ -127,19 +129,14 @@ export default function ExaminationPage() {
     await appointmentService.createVitalSign(payload)
   }
 
-  /**
-   * Create follow-up suggestion
-   * @returns follow-up suggestion ID if successful, null if no suggestion data
-   */
-  const createFollowUpSuggestion = async () => {
-    // If no follow-up suggestion data, skip
+  const createFollowUpSuggestion = async (medicalRecordId: string) => {
     if (!examinationData.followUpSuggestion?.suggestedDate) {
       console.log("No follow-up suggestion to create")
       return null
     }
 
-    if (!user?.id) {
-      throw new Error("Không tìm thấy thông tin bác sĩ")
+    if (!user?.referenceId) {
+      throw new Error("Không tìm thấy ID bác sĩ (referenceId)");
     }
 
     if (!appointment) {
@@ -147,18 +144,25 @@ export default function ExaminationPage() {
     }
 
     const payload = {
-      originalAppointmentId: appointmentId as string,
-      doctorId: user.id,
+      medicalRecordId,
+      doctorId: user.referenceId,
       patientId: appointment.patient.id,
       suggestedDate: examinationData.followUpSuggestion.suggestedDate,
       reason: examinationData.followUpSuggestion.reason || "",
     }
+    console.log("Payload follow", payload.doctorId)
     try {
       const response = await appointmentService.createFollowUpSuggestion(payload)
+
+
+      console.log("Follow-up suggestion created and linked:", response.id)
+      return response.id
     } catch (error) {
+      console.error("Error creating follow-up suggestion:", error)
       throw error
     }
   }
+
 
   /**
    * Tạo prescription trong Medicine Service
@@ -223,15 +227,18 @@ export default function ExaminationPage() {
         await createVitalSign(recordId)
       }
 
-      // 3. Tạo Prescription
-      if (examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0) {
-        await createPrescription()
-      }
+      // // 3. Tạo Prescription
+      // if (examinationData.prescriptionItems && examinationData.prescriptionItems.length > 0) {
+      //   await createPrescription()
+      // }
 
       // 4. Tạo Follow-up Suggestion
       if (examinationData.followUpSuggestion?.suggestedDate) {
-        await createFollowUpSuggestion()
+        await createFollowUpSuggestion(recordId)
+
       }
+
+
 
       setConfirmOpen(false)
       setSuccessOpen(true)
@@ -304,9 +311,14 @@ export default function ExaminationPage() {
 
   return (
     <>
-      <ExaminationLayout currentStep={currentStep} onStepClick={setCurrentStep}>
+      <ExaminationLayout
+        currentStep={currentStep}
+        onStepClick={setCurrentStep}
+        appointment={appointment}
+      >
         {renderStep()}
       </ExaminationLayout>
+
 
       <ConfirmEndExaminationDialog
         open={confirmOpen}

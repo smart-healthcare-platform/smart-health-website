@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { receptionistService } from "@/services/receptionist.service";
-import { Appointment } from "@/types/appointment";
+import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
 import { toast } from "react-toastify";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function ReceptionistDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -44,17 +45,17 @@ export default function ReceptionistDashboard() {
 
   const totalAppointments = appointments.length;
   const checkedInCount = appointments.filter(
-    (apt) => apt.status === "checked_in" || apt.status === "in-progress"
+    (apt) => apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS
   ).length;
   const unpaidCount = appointments.filter(
     (apt) => apt.paymentStatus === "UNPAID"
   ).length;
   const paidAmount = appointments
     .filter((apt) => apt.paymentStatus === "PAID")
-    .reduce((sum, apt) => sum + parseFloat(apt.paidAmount || "0"), 0);
+    .reduce((sum, apt) => sum + parseFloat(apt.paidAmount?.toString() || "0"), 0);
 
   const upcomingAppointments = appointments
-    .filter((apt) => apt.status === "confirmed" || apt.status === "pending")
+    .filter((apt) => apt.status === AppointmentStatus.CONFIRMED || apt.status === AppointmentStatus.PENDING)
     .slice(0, 5);
 
   const handleOpenPayment = (appointment: Appointment) => {
@@ -256,7 +257,7 @@ export default function ReceptionistDashboard() {
                       {/* ✅ CHO PHÉP CẢ 2 ACTIONS: Check-in + Thu tiền */}
                       <div className="flex gap-1">
                         {/* Nút Check-in - Không validate payment */}
-                        {(apt.status === "confirmed" || apt.status === "pending") && (
+                        {(apt.status === AppointmentStatus.CONFIRMED || apt.status === AppointmentStatus.PENDING) && (
                           <Button
                             size="sm"
                             variant="default"
@@ -294,7 +295,7 @@ export default function ReceptionistDashboard() {
           onOpenChange={setPaymentDialogOpen}
           appointmentId={selectedAppointment.id}
           patientName={selectedAppointment.patientName || "Bệnh nhân"}
-          amount={parseFloat(selectedAppointment.consultationFee || "200000")}
+          amount={parseFloat(selectedAppointment.consultationFee?.toString() || "200000")}
           onSuccess={handlePaymentSuccess}
         />
       )}

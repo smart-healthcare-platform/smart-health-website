@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { appointmentService } from "@/services/appointment.service"
-import type { Appointment } from "@/types/appointment"
+import { Appointment} from '@/types/appointment/appointment.type'
+
 
 export function useAppointments(doctorId?: string) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -13,8 +14,6 @@ export function useAppointments(doctorId?: string) {
     setLoading(true)
     try {
       const res = await appointmentService.getByDoctorId(doctorId)
-      console.log(doctorId)
-      console.log("📌 appointments:", res)
       setAppointments(res)
     } catch (err) {
       console.error("Lỗi load appointments:", err)

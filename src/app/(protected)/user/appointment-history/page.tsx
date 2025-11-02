@@ -11,11 +11,13 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react"
-import type { AppointmentResponse } from "@/types/appointment"
+
 import { appointmentService } from "@/services/appointment.service"
 import { RootState } from "@/redux"
 import useDebounce from "@/hooks/use-debounce"
 import Loading from "@/components/ui/loading"
+import { AppointmentResponse} from "@/types/appointment/appointment.response"
+import { AppointmentStatus } from "@/types/appointment/index"
 
 export default function AppointmentHistoryPage() {
   const user = useSelector((state: RootState) => state.auth.user)
@@ -49,6 +51,7 @@ export default function AppointmentHistoryPage() {
         filters.status as any,
         filters.dateRange as any
       )
+      console.log(data)
       setApiData(data)
     } catch (err) {
       console.error("Failed to fetch appointments:", err)
@@ -103,9 +106,9 @@ export default function AppointmentHistoryPage() {
 
     return {
       total: apiData.total,
-      completed: apiData.appointments.filter((a) => a.status === "completed").length,
-      confirmed: apiData.appointments.filter((a) => a.status === "confirmed").length,
-      cancelled: apiData.appointments.filter((a) => a.status === "cancelled").length,
+      completed: apiData.appointments.filter((a) => a.status === AppointmentStatus.COMPLETED).length,
+      confirmed: apiData.appointments.filter((a) => a.status === AppointmentStatus.CONFIRMED).length,
+      cancelled: apiData.appointments.filter((a) => a.status === AppointmentStatus.CANCELLED).length,
     }
   }, [apiData])
 

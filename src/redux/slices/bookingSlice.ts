@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { PatientFormData, Doctor, DoctorDetail } from "@/types";
+import { PatientFormData, Doctor, DoctorDetail} from "@/types";
 import { TimeSlot } from "@/types/timeSlot";
+import { AppointmentCategory, AppointmentType } from "@/types/appointment/index";
 
 interface FormData {
   fullName: string;
@@ -19,6 +20,8 @@ interface BookingState {
   date: string | null;
   time: string | null;
   formData: PatientFormData;
+  isFollowUp: boolean;
+  followUpId: string | null
 }
 
 const initialState: BookingState = {
@@ -27,6 +30,8 @@ const initialState: BookingState = {
   date: null,
   time: null,
   slot_start_time: null,
+  isFollowUp: false,
+  followUpId: null,
   formData: {
     fullName: "",
     phone: "",
@@ -35,7 +40,8 @@ const initialState: BookingState = {
     gender: "",
     address: "",
     notes: "",
-    type:""
+    type: AppointmentType.OFFLINE,
+    category: AppointmentCategory.NEW,
   },
 };
 
@@ -48,7 +54,6 @@ const bookingSlice = createSlice({
     },
     setDate(state, action: PayloadAction<string>) {
       state.date = action.payload
-      // reset slot khi đổi ngày
       state.slot_id = null
       state.time = null
     },
@@ -60,10 +65,24 @@ const bookingSlice = createSlice({
     setFormData: (state, action: PayloadAction<Partial<FormData>>) => {
       state.formData = { ...state.formData, ...action.payload };
     },
+    setFollowUpBooking: (
+      state,
+      action: PayloadAction<{ followUpId: string }>
+    ) => {
+      state.isFollowUp = true;
+      state.followUpId= action.payload.followUpId
+      state.formData.category = AppointmentCategory.FOLLOW_UP;
+    },
     resetBooking: () => initialState,
   },
 });
 
-export const { setDoctor, setDate, setSlot, setFormData, resetBooking } =
-  bookingSlice.actions;
+export const {
+  setDoctor,
+  setDate,
+  setSlot,
+  setFormData,
+  resetBooking,
+  setFollowUpBooking,
+} = bookingSlice.actions;
 export default bookingSlice.reducer;

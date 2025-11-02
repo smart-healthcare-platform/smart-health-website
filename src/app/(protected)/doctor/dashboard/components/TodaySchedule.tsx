@@ -1,6 +1,9 @@
 "use client"
 
-import { Appointment } from "@/types"
+import { Appointment } from "@/types/appointment/appointment.type"
+import { AppointmentStatus } from "@/types/appointment/index"
+
+
 
 interface TodayScheduleProps {
   appointments: Appointment[]
@@ -50,16 +53,16 @@ export default function TodaySchedule({ appointments }: TodayScheduleProps) {
 
               <span
                 className={`px-3 py-1 text-sm rounded-full ${
-                  item.status === "completed"
+                  item.status === AppointmentStatus.COMPLETED
                     ? "bg-green-100 text-green-700"
-                    : item.status === "cancelled"
+                    : item.status === AppointmentStatus.CANCELLED
                     ? "bg-red-100 text-red-600"
                     : "bg-yellow-100 text-yellow-700"
                 }`}
               >
-                {item.status === "completed"
+                {item.status === AppointmentStatus.COMPLETED
                   ? "Đã khám"
-                  : item.status === "cancelled"
+                  : item.status ===AppointmentStatus.CANCELLED
                   ? "Hủy"
                   : "Chờ khám"}
               </span>

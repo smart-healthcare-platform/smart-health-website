@@ -4,7 +4,9 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react"
-import type { Appointment } from "@/types/appointment"
+
+import { Appointment, AppointmentStatus } from "@/types/appointment/index"
+
 
 interface CalendarBaseProps {
   appointments?: Appointment[]
@@ -34,15 +36,24 @@ export function CalendarBase({ appointments = [], loading = false, onAppointment
     })
   }
 
-  const getStatusColor = (status: Appointment["status"]) =>
-    ({
-      confirmed: "bg-green-500",
-      pending: "bg-yellow-500",
-      "in-progress": "bg-purple-500",
-      completed: "bg-blue-500",
-      cancelled: "bg-red-500",
-      "no-show": "bg-gray-400",
-    })[status] ?? "bg-gray-200"
+  const getStatusColor = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.PENDING:
+        return "bg-yellow-500"
+      case AppointmentStatus.CONFIRMED:
+        return "bg-green-500"
+      case AppointmentStatus.IN_PROGRESS:
+        return "bg-purple-500"
+      case AppointmentStatus.COMPLETED:
+        return "bg-blue-500"
+      case AppointmentStatus.CANCELLED:
+        return "bg-red-500"
+      case AppointmentStatus.NO_SHOW:
+        return "bg-gray-400"
+      default:
+        return "bg-gray-200"
+    }
+  }
 
   if (loading) {
     return (
@@ -88,9 +99,8 @@ export function CalendarBase({ appointments = [], loading = false, onAppointment
             return (
               <div
                 key={`day-${idx}-${day}`}
-                className={`p-2 h-48 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors flex flex-col ${
-                  isToday ? "bg-primary/10 border-primary" : ""
-                }`}
+                className={`p-2 h-48 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors flex flex-col ${isToday ? "bg-primary/10 border-primary" : ""
+                  }`}
                 onClick={() => {
                   setSelectedDate(`${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`)
                   setSelectedAppointments(dayAppointments)
@@ -113,7 +123,7 @@ export function CalendarBase({ appointments = [], loading = false, onAppointment
                           onAppointmentClick?.(apt)
                         }}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusColor(apt.status)}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusColor(apt.status as AppointmentStatus)}`} />
                         <span className="font-medium">{startTime}</span>
                       </div>
                     )
@@ -138,7 +148,7 @@ export function CalendarBase({ appointments = [], loading = false, onAppointment
                   onClick={() => onAppointmentClick?.(apt)}
                 >
                   <div className="flex gap-2 items-center">
-                    <span className={`w-2 h-2 rounded-full ${getStatusColor(apt.status)}`} />
+                    <span className={`w-2 h-2 rounded-full ${getStatusColor(apt.status as AppointmentStatus)}`} />
                     <span>{apt.patientName}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
