@@ -47,13 +47,4 @@ export interface CheckInResponse {
   appointment: AppointmentDetail
 }
 
-export interface LabTest {
-  id: string
-  name: string
-  code?: string
-  description?: string
-  price: number
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
+

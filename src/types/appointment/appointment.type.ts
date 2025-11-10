@@ -1,6 +1,5 @@
 import { MedicalRecord } from "../examnation/medical-records.type";
 import { AppointmentType } from "./enums/appointment-type.enum";
-import { AppointmentCategory } from "./enums/appointment-category.enum";
 import { AppointmentStatus } from "./enums/appointment-status.enum";
 
 export interface Appointment {
