@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Brain,
   User,
+  TestTube,
 } from "lucide-react"
 
 const management = [
@@ -41,6 +42,11 @@ const management = [
     name: "Hồ sơ y tế",
     href: "/doctor/medical-records",
     icon: FileText,
+  },
+  {
+    name: "Xét nghiệm",
+    href: "/doctor/lab-tests",
+    icon: TestTube,
   },
   {
     name: "Chat History",

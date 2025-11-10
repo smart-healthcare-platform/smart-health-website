@@ -23,7 +23,7 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
       year: "numeric",
     })
   }
-
+  console.log("DỮ liệu: ",examinationData)
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">

@@ -11,22 +11,23 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import type { ExaminationStepProps } from "@/types/examination"
 // import type { LabTest } from "@/types"
 import { PrescriptionBuilder } from "./prescription-builder"
+import { appointmentService } from "@/services/appointment.service"
+import { LabTest } from "@/types/examnation"
 
 
 export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: ExaminationStepProps) {
   const [formData, setFormData] = useState(data)
-  // const [labTests, setLabTests] = useState<LabTest[]>([])
+  const [labTests, setLabTests] = useState<LabTest[]>([])
   const [open, setOpen] = useState(false)
   const [openFollowUp, setOpenFollowUp] = useState(false)
 
-  // Lấy danh sách xét nghiệm từ server
-  // useEffect(() => {
-  //   async function fetchLabTests() {
-  //     const res = await appointmentService.getAllLabTests()
-  //     setLabTests(res)
-  //   }
-  //   fetchLabTests()
-  // }, [])
+  useEffect(() => {
+    async function fetchLabTests() {
+      const res = await appointmentService.getAllLabTests()
+      setLabTests(res)
+    }
+    fetchLabTests()
+  }, [])
 
   // Cập nhật formData
   const handleChange = (field: string, value: any) => {
@@ -36,30 +37,30 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
   }
 
   // Chọn / bỏ chọn xét nghiệm
-  // const handleToggleLabTest = (testId: string) => {
-  //   const selected = formData.labTests || []
-  //   const exists = selected.some((t: any) => t.id === testId)
+  const handleToggleLabTest = (testId: string) => {
+    const selected = formData.labTests || []
+    const exists = selected.some((t: any) => t.id === testId)
 
-  //   let newSelected
-  //   if (exists) {
-  //     newSelected = selected.filter((t: any) => t.id !== testId)
-  //   } else {
-  //     const test = labTests.find((t) => t.id === testId)
-  //     if (!test) return
-  //     newSelected = [...selected, { id: test.id, name: test.name, price: test.price }]
-  //   }
+    let newSelected
+    if (exists) {
+      newSelected = selected.filter((t: any) => t.id !== testId)
+    } else {
+      const test = labTests.find((t) => t.id === testId)
+      if (!test) return
+      newSelected = [...selected, { id: test.id, name: test.name, price: test.price, type: test.type }]
+    }
 
-  //   handleChange("labTests", newSelected)
-  // }
+    handleChange("labTests", newSelected)
+  }
 
   const handleSubmit = () => onNext()
 
   const selectedNames =
     formData.labTests && formData.labTests.length > 0
       ? formData.labTests
-          .map((t: any) => t.name)
-          .filter(Boolean)
-          .join(", ") || "Chọn xét nghiệm..."
+        .map((t: any) => t.name)
+        .filter(Boolean)
+        .join(" + ") || "Chọn xét nghiệm..."
       : "Chọn xét nghiệm..."
 
   return (
@@ -159,7 +160,7 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
               <CommandInput placeholder="Tìm xét nghiệm..." />
               <CommandList>
                 <CommandEmpty>Không có kết quả</CommandEmpty>
-                {/* <CommandGroup className="mt-2 space-y-1">
+                <CommandGroup className="mt-2 space-y-1">
                   {labTests.map((test) => {
                     const checked = formData.labTests?.some((t: any) => t.id === test.id)
                     return (
@@ -168,12 +169,18 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
                         onSelect={() => handleToggleLabTest(test.id)}
                         className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-accent"
                       >
-                        <input type="checkbox" checked={checked} readOnly className="w-4 h-4 accent-primary rounded" />
+                        <input
+                          type="checkbox"
+                          checked={!!formData.labTests?.some((t: any) => t.id === test.id)}
+                          readOnly
+                          className="w-4 h-4 accent-primary rounded"
+                        />
+
                         <span className="flex-1">{test.name}</span>
                       </CommandItem>
                     )
                   })}
-                </CommandGroup> */}
+                </CommandGroup>
               </CommandList>
             </Command>
           </PopoverContent>

@@ -1,9 +1,11 @@
 import { apiAuth } from '@/lib/axios';
-import {CheckInResponse, CreatePaymentResponse, MedicalRecord } from '@/types';
-import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, VitalSigns } from '@/types/examnation';
-import { Appointment, AppointmentDetail} from '@/types/appointment/appointment.type'
+import { CheckInResponse, CreatePaymentResponse, MedicalRecord } from '@/types';
+import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, LabTest, LabTestOrder, LabTestResult, VitalSigns } from '@/types/examnation';
+import { Appointment, AppointmentDetail } from '@/types/appointment/appointment.type'
 import { CreateAppointmentPayload } from '@/types/appointment/appointment.dto';
 import { AppointmentResponse } from '@/types/appointment/appointment.response';
+import { CreateLabTestOrderPayload, CreateLabTestResultPayload } from '@/types/examnation/lab-test-dto';
+import { LabTestOrderResponse } from '@/types/examnation/response/lab-test.response';
 
 
 export const appointmentService = {
@@ -96,11 +98,11 @@ export const appointmentService = {
   },
 
 
-  // async getAllLabTests(): Promise<LabTest[]> {
-  //   const res = await apiAuth.get<{ success: boolean; data: LabTest[] }>("/appointments/lab-tests")
-  //   if (!res.data.success) return []
-  //   return res.data.data
-  // },
+  async getAllLabTests(): Promise<LabTest[]> {
+    const res = await apiAuth.get<{ success: boolean; data: LabTest[] }>("/appointments/lab-tests")
+    if (!res.data.success) return []
+    return res.data.data
+  },
 
   async createMedicalRecord(payload: CreateMedicalRecordPayload): Promise<MedicalRecord> {
     const res = await apiAuth.post<{ success: boolean; message: string; data: MedicalRecord }>(
@@ -136,6 +138,30 @@ export const appointmentService = {
     console.log(res)
     if (!res.data.success) {
       throw new Error(res.data.message || "Không thể tạo đề xuất tái khám")
+    }
+
+    return res.data.data
+  },
+
+  async createLabTestOrder(payload: CreateLabTestOrderPayload): Promise<LabTestOrder> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: LabTestOrder }>(
+      "/appointments/lab-test-orders",
+      payload
+    )
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo đơn xét nghiệm")
+    }
+
+    return res.data.data
+  },
+
+  async createLabTestResult(payload: CreateLabTestResultPayload): Promise<LabTestResult> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: LabTestResult }>(
+      "/appointments/lab-test-results",
+      payload
+    )
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo kết quả xét nghiệm")
     }
 
     return res.data.data
@@ -209,4 +235,17 @@ export const appointmentService = {
     return res.data.data
   },
 
+  async getLabTestOrderByDoctorId(doctorId: string): Promise<LabTestOrderResponse[]> {
+    const res = await apiAuth.get<{ success: boolean; data: LabTestOrderResponse[] }>(
+      `/appointments/lab-test-orders/doctor/${doctorId}`
+    )
+
+    if (!res.data.success) {
+      throw new Error(`Không thể lấy danh sách xét nghiệm của bác sĩ ${doctorId}`)
+    }
+
+    return res.data.data
+  },
 }
+
+
