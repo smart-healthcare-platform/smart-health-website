@@ -1,10 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Users,
   UserCheck,
@@ -20,18 +21,15 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
-  Heart,
-  Package,
-  FileText,
+  Stethoscope,
+  CreditCard,
 } from "lucide-react"
 import { 
   LineChart, 
   Line, 
   AreaChart, 
   Area, 
-  BarChart, 
-  Bar, 
-  PieChart, 
+  PieChart,
   Pie, 
   Cell, 
   XAxis, 
@@ -44,7 +42,6 @@ import {
 import {
   useDashboardStats,
   useAppointmentTrends,
-  useAppointmentDistribution,
   useRecentAppointments,
   usePatientGrowth,
   usePatientDemographics,
@@ -53,6 +50,8 @@ import {
   useRefreshDashboard,
   useRefetchDashboard,
 } from "@/hooks/useAdminDashboard"
+import { DoctorAnalytics } from "./doctor-analytics"
+import { RevenueAnalytics } from "./revenue-analytics"
 import { format } from "date-fns"
 
 const CHART_COLORS = {
@@ -67,13 +66,15 @@ const CHART_COLORS = {
 const PIE_COLORS = ["#10b981", "#a855f7", "#3b82f6", "#f59e0b", "#ef4444"]
 
 export default function AdminDashboardRealtime() {
+  const [activeTab, setActiveTab] = useState("overview")
+
   // Fetch all dashboard data
   const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats()
   const { data: appointmentTrends, isLoading: trendsLoading } = useAppointmentTrends('daily', 30)
-  const { data: appointmentDistribution, isLoading: distributionLoading } = useAppointmentDistribution()
   const { data: recentAppointments, isLoading: recentApptsLoading } = useRecentAppointments(1, 5)
   const { data: patientGrowth, isLoading: growthLoading } = usePatientGrowth('daily', 30)
   const { data: patientDemographics, isLoading: demographicsLoading } = usePatientDemographics()
+  const distributionLoading = false // Status pie chart uses local stats data
   const { data: recentPatients, isLoading: recentPatientsLoading } = useRecentPatients(1, 5)
   const { data: systemHealth, isLoading: healthLoading } = useSystemHealth()
 
@@ -140,7 +141,7 @@ export default function AdminDashboardRealtime() {
       icon: UserCheck,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      description: "Đang khả dụng",
+      description: `${stats?.onlineDoctors || 0} đang online`,
     },
     {
       title: "Lịch hẹn hôm nay",
@@ -152,13 +153,13 @@ export default function AdminDashboardRealtime() {
       description: "Đã xếp lịch",
     },
     {
-      title: "Doanh thu hôm nay",
-      value: stats?.revenueToday || 0,
-      change: stats?.revenueThisMonth || 0,
+      title: "Doanh thu tháng này",
+      value: stats?.revenueThisMonth || 0,
+      change: stats?.totalRevenue || 0,
       icon: DollarSign,
       color: "text-amber-600",
       bgColor: "bg-amber-50",
-      description: "Tháng này",
+      description: "Tổng doanh thu",
       isCurrency: true,
     },
   ]
@@ -191,6 +192,33 @@ export default function AdminDashboardRealtime() {
     },
   ]
 
+  // Prepare chart data
+  const appointmentChartData = appointmentTrends?.data?.map(d => ({
+    date: format(new Date(d.date), 'dd/MM'),
+    appointments: d.count,
+    completed: d.completed,
+    cancelled: d.cancelled,
+  })) || []
+
+  const patientChartData = patientGrowth?.data?.map(d => ({
+    date: format(new Date(d.date), 'dd/MM'),
+    total: d.cumulative,
+    new: d.count,
+  })) || []
+
+  const statusPieData = [
+    { name: 'Đã xác nhận', value: stats?.confirmedAppointments || 0, color: CHART_COLORS.primary },
+    { name: 'Chờ xác nhận', value: stats?.pendingAppointments || 0, color: CHART_COLORS.warning },
+    { name: 'Hoàn thành', value: stats?.completedAppointments || 0, color: CHART_COLORS.success },
+    { name: 'Đã hủy', value: stats?.cancelledAppointments || 0, color: CHART_COLORS.danger },
+  ].filter(item => item.value > 0)
+
+  const demographicsPieData = patientDemographics?.genders?.map((g, idx) => ({
+    name: g.gender === 'male' ? 'Nam' : g.gender === 'female' ? 'Nữ' : 'Khác',
+    value: g.count,
+    color: PIE_COLORS[idx % PIE_COLORS.length],
+  })) || []
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -219,385 +247,458 @@ export default function AdminDashboardRealtime() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((kpi, index) => {
-          const Icon = kpi.icon
-          const isPositive = kpi.trend === "up"
-          
-          return (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {kpi.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg ${kpi.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Tổng quan
+          </TabsTrigger>
+          <TabsTrigger value="doctors" className="flex items-center gap-2">
+            <Stethoscope className="h-4 w-4" />
+            Bác sĩ
+          </TabsTrigger>
+          <TabsTrigger value="revenue" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Doanh thu
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {kpiCards.map((kpi, index) => {
+              const Icon = kpi.icon
+              const isPositive = kpi.trend === "up"
+              
+              return (
+                <Card key={index} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">
+                      {kpi.title}
+                    </CardTitle>
+                    <div className={`p-2 rounded-lg ${kpi.bgColor}`}>
+                      <Icon className={`h-5 w-5 ${kpi.color}`} />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {kpi.isCurrency ? formatCurrency(kpi.value) : kpi.value.toLocaleString()}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-600">
+                        {kpi.description}
+                      </p>
+                      {kpi.change !== undefined && kpi.trend && (
+                        <div className={`flex items-center text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                          {Math.abs(kpi.change).toFixed(1)}%
+                        </div>
+                      )}
+                    </div>
+                    {kpi.total && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        Tổng: {kpi.total.toLocaleString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Quick Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Trạng thái lịch hẹn</CardTitle>
+              <CardDescription>Phân bố theo trạng thái</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {quickStats.map((stat, index) => {
+                  const Icon = stat.icon
+                  return (
+                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border">
+                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                      <div>
+                        <p className="text-xs text-gray-600">{stat.label}</p>
+                        <p className="text-xl font-bold">{stat.value.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Appointments Trend */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Xu hướng lịch hẹn (30 ngày)</CardTitle>
+                <CardDescription>Thống kê lịch hẹn theo ngày</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {kpi.isCurrency ? formatCurrency(kpi.value) : kpi.value.toLocaleString()}
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-600">
-                    {kpi.description}
-                  </p>
-                  {kpi.change !== undefined && (
-                    <div className={`flex items-center text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                      {isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                      {Math.abs(kpi.change).toFixed(1)}%
-                    </div>
-                  )}
-                  {kpi.total !== undefined && (
-                    <span className="text-xs text-gray-500">
-                      / {kpi.total}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {quickStats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <Card key={index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                {trendsLoading ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                   </div>
-                  <Icon className={`h-8 w-8 ${stat.color}`} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={appointmentChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="date" 
+                        style={{ fontSize: '12px' }}
+                        stroke="#6b7280"
+                      />
+                      <YAxis 
+                        style={{ fontSize: '12px' }}
+                        stroke="#6b7280"
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      />
+                      <Legend />
+                      <Area 
+                        type="monotone" 
+                        dataKey="appointments" 
+                        stackId="1"
+                        stroke={CHART_COLORS.primary} 
+                        fill={CHART_COLORS.primary}
+                        fillOpacity={0.6}
+                        name="Tổng lịch hẹn"
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="completed" 
+                        stackId="2"
+                        stroke={CHART_COLORS.success} 
+                        fill={CHART_COLORS.success}
+                        fillOpacity={0.4}
+                        name="Đã hoàn thành"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Patient Growth */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tăng trưởng bệnh nhân (30 ngày)</CardTitle>
+                <CardDescription>Bệnh nhân mới đăng ký</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {growthLoading ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={patientChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="date" 
+                        style={{ fontSize: '12px' }}
+                        stroke="#6b7280"
+                      />
+                      <YAxis 
+                        style={{ fontSize: '12px' }}
+                        stroke="#6b7280"
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="total" 
+                        stroke={CHART_COLORS.primary}
+                        strokeWidth={3}
+                        dot={{ fill: CHART_COLORS.primary, r: 4 }}
+                        name="Tổng bệnh nhân"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="new" 
+                        stroke={CHART_COLORS.success}
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        name="Bệnh nhân mới"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Distribution Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Appointment Status Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Phân bố trạng thái lịch hẹn</CardTitle>
+                <CardDescription>Tổng: {stats?.totalAppointments?.toLocaleString() || 0} lịch hẹn</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {distributionLoading ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={statusPieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {statusPieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => value.toLocaleString()} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <p className="text-xs text-gray-600">Tỷ lệ hoàn thành</p>
+                    <p className="text-lg font-bold text-green-600">
+                      {(stats?.completionRate || 0).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="text-center p-2 bg-red-50 rounded">
+                    <p className="text-xs text-gray-600">Tỷ lệ hủy</p>
+                    <p className="text-lg font-bold text-red-600">
+                      {(stats?.cancellationRate || 0).toFixed(1)}%
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )
-        })}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Appointment Trends Chart */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Xu hướng lịch hẹn (30 ngày)</CardTitle>
-            <CardDescription>
-              {trendsLoading ? (
-                <span className="flex items-center text-sm">
-                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                  Đang tải...
-                </span>
-              ) : (
-                `Tổng: ${appointmentTrends?.totalAppointments || 0} lịch hẹn`
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {trendsLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={appointmentTrends?.data || []}>
-                  <defs>
-                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => format(new Date(value), 'dd/MM')}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                    labelFormatter={(value) => format(new Date(value), 'dd/MM/yyyy')}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke={CHART_COLORS.primary}
-                    fillOpacity={1}
-                    fill="url(#colorCount)"
-                    name="Số lịch hẹn"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Patient Growth Chart */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Tăng trưởng bệnh nhân (30 ngày)</CardTitle>
-            <CardDescription>
-              {growthLoading ? (
-                <span className="flex items-center text-sm">
-                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                  Đang tải...
-                </span>
-              ) : (
-                `Tăng trưởng: ${patientGrowth?.totalGrowth || 0} bệnh nhân`
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {growthLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={patientGrowth?.data || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => format(new Date(value), 'dd/MM')}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                    labelFormatter={(value) => format(new Date(value), 'dd/MM/yyyy')}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="cumulative"
-                    stroke={CHART_COLORS.success}
-                    strokeWidth={2}
-                    dot={{ fill: CHART_COLORS.success, r: 3 }}
-                    name="Tổng bệnh nhân"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke={CHART_COLORS.primary}
-                    strokeWidth={2}
-                    dot={{ fill: CHART_COLORS.primary, r: 3 }}
-                    name="Bệnh nhân mới"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Appointment Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Phân bố trạng thái</CardTitle>
-            <CardDescription>
-              {distributionLoading ? "Đang tải..." : `${appointmentDistribution?.totalAppointments || 0} lịch hẹn`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {distributionLoading ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={appointmentDistribution?.statusDistribution || []}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    fill={CHART_COLORS.primary}
-                    dataKey="count"
-                    nameKey="status"
-                    label={({ status, percentage }) => `${status}: ${percentage}%`}
-                  >
-                    {(appointmentDistribution?.statusDistribution || []).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Patient Demographics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Nhân khẩu học bệnh nhân</CardTitle>
-            <CardDescription>
-              {demographicsLoading ? "Đang tải..." : `Tuổi TB: ${patientDemographics?.averageAge || 0}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {demographicsLoading ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={patientDemographics?.ageGroups || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="ageGroup" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill={CHART_COLORS.success} radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* System Health */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tình trạng hệ thống</CardTitle>
-            <CardDescription>
-              {healthLoading ? (
-                "Đang tải..."
-              ) : (
-                <span className={`font-semibold ${
-                  systemHealth?.overall === 'healthy' ? 'text-green-600' :
-                  systemHealth?.overall === 'degraded' ? 'text-amber-600' :
-                  'text-red-600'
-                }`}>
-                  {systemHealth?.overall === 'healthy' ? 'Khỏe mạnh' :
-                   systemHealth?.overall === 'degraded' ? 'Suy giảm' :
-                   'Nghiêm trọng'}
-                </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {healthLoading ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-medium">Tổng quan</span>
-                  <span className="text-gray-600">
-                    {systemHealth?.healthyCount}/{systemHealth?.totalCount} services
-                  </span>
-                </div>
-                <Progress value={systemHealth?.healthPercentage || 0} className="h-2" />
-                <div className="space-y-2 mt-4 max-h-[180px] overflow-y-auto">
-                  {systemHealth?.services.map((service, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          service.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'
-                        }`} />
-                        <span className="capitalize">{service.name}</span>
+            {/* Patient Demographics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Nhân khẩu học bệnh nhân</CardTitle>
+                <CardDescription>Phân bố theo giới tính</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {demographicsLoading ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={demographicsPieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {demographicsPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => value.toLocaleString()} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="text-center p-2 bg-blue-50 rounded">
+                        <p className="text-xs text-gray-600">Tuổi trung bình</p>
+                        <p className="text-lg font-bold text-blue-600">
+                          {patientDemographics?.averageAge?.toFixed(1) || 0} tuổi
+                        </p>
                       </div>
-                      {service.status === 'healthy' && service.responseTime && (
-                        <span className="text-gray-500 text-xs">{service.responseTime}ms</span>
-                      )}
-                      {service.status !== 'healthy' && (
-                        <Badge variant="destructive" className="text-xs">Offline</Badge>
-                      )}
+                      <div className="text-center p-2 bg-purple-50 rounded">
+                        <p className="text-xs text-gray-600">Tuổi trung vị</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          {patientDemographics?.medianAge || 0} tuổi
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activities */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Appointments */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lịch hẹn gần đây</CardTitle>
+                <CardDescription>5 lịch hẹn mới nhất</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentApptsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : recentAppointments?.appointments && recentAppointments.appointments.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentAppointments.appointments.map((apt) => (
+                      <div key={apt.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{apt.patientName}</p>
+                          <p className="text-xs text-gray-600">
+                            BS. {apt.doctorName} • {apt.category}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              apt.status === 'confirmed' ? 'default' :
+                              apt.status === 'pending' ? 'secondary' :
+                              apt.status === 'completed' ? 'outline' : 'destructive'
+                            }
+                            className="text-xs"
+                          >
+                            {apt.status}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(apt.startAt), 'dd/MM HH:mm')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Không có lịch hẹn nào</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Patients */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bệnh nhân mới</CardTitle>
+                <CardDescription>5 bệnh nhân đăng ký gần đây</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentPatientsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : recentPatients?.patients && recentPatients.patients.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentPatients.patients.map((patient) => (
+                      <div key={patient.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{patient.full_name}</p>
+                          <p className="text-xs text-gray-600">
+                            {patient.gender === 'male' ? 'Nam' : patient.gender === 'female' ? 'Nữ' : 'Khác'} • 
+                            {format(new Date(patient.date_of_birth), ' dd/MM/yyyy')}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(patient.created_at), 'dd/MM/yyyy')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Không có bệnh nhân mới</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* System Health */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tình trạng hệ thống</CardTitle>
+              <CardDescription>Trạng thái các dịch vụ</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {healthLoading ? (
+                <div className="h-32 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Tổng quan</span>
+                      <Badge variant={
+                        systemHealth?.overall === 'healthy' ? 'default' :
+                        systemHealth?.overall === 'degraded' ? 'secondary' : 'destructive'
+                      }>
+                        {systemHealth?.overall === 'healthy' ? 'Tốt' :
+                         systemHealth?.overall === 'degraded' ? 'Xuống cấp' : 'Lỗi'}
+                      </Badge>
+                    </div>
+                    <Progress 
+                      value={systemHealth?.healthPercentage || 0} 
+                      className="h-2"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      {systemHealth?.healthyCount}/{systemHealth?.totalCount} dịch vụ hoạt động tốt
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {systemHealth?.services?.map((service, idx) => (
+                      <div key={idx} className="p-3 border rounded-lg text-center">
+                        <div className="flex items-center justify-center mb-2">
+                          {service.status === 'healthy' ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : service.status === 'degraded' ? (
+                            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-600" />
+                          )}
+                        </div>
+                        <p className="text-xs font-medium truncate">{service.name}</p>
+                        {service.responseTime && (
+                          <p className="text-xs text-gray-500">{service.responseTime}ms</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Recent Appointments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lịch hẹn gần đây</CardTitle>
-          <CardDescription>
-            {recentApptsLoading ? "Đang tải..." : `${recentAppointments?.total || 0} lịch hẹn`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentApptsLoading ? (
-            <div className="h-[200px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Bệnh nhân</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Bác sĩ</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Thời gian</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Loại</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Trạng thái</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Thanh toán</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAppointments?.appointments.map((appointment) => (
-                    <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="text-sm font-medium">{appointment.patientName}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="text-sm">{appointment.doctorName}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="text-sm">{format(new Date(appointment.startAt), 'dd/MM/yyyy HH:mm')}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline">{appointment.type}</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={
-                          appointment.status === 'CONFIRMED' ? 'default' :
-                          appointment.status === 'COMPLETED' ? 'default' :
-                          appointment.status === 'PENDING' ? 'secondary' :
-                          'destructive'
-                        }>
-                          {appointment.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={appointment.paymentStatus === 'PAID' ? 'default' : 'secondary'}>
-                          {appointment.paymentStatus}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Doctors Tab */}
+        <TabsContent value="doctors">
+          <DoctorAnalytics />
+        </TabsContent>
 
-      {/* Service Status Banner */}
-      {stats?.partial && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-              <div>
-                <p className="font-semibold text-amber-900">Dữ liệu không đầy đủ</p>
-                <p className="text-sm text-amber-700">
-                  Một số dịch vụ không khả dụng. Dữ liệu hiển thị có thể không đầy đủ.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Revenue Tab */}
+        <TabsContent value="revenue">
+          <RevenueAnalytics />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
