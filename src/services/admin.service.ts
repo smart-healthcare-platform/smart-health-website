@@ -41,11 +41,11 @@ export interface DashboardStats {
   onlineDoctors: number;
 
   // Detailed stats from each service
-  patients: any;
-  appointments: any;
-  doctors: any;
-  revenue: any;
-  medicine: any;
+  patients: Record<string, unknown>;
+  appointments: Record<string, unknown>;
+  doctors: Record<string, unknown>;
+  revenue: Record<string, unknown>;
+  medicine: Record<string, unknown>;
 
   // Service status
   serviceStatus: {
@@ -208,7 +208,7 @@ export interface ServiceHealth {
   name: string;
   status: 'healthy' | 'unhealthy' | 'degraded';
   responseTime?: number;
-  details?: any;
+  details?: Record<string, unknown>;
   error?: string;
   url?: string;
 }
@@ -229,6 +229,157 @@ export interface CacheStats {
   totalKeys: number;
 }
 
+// Doctor Admin Types
+export interface DoctorStats {
+  totalDoctors: number;
+  activeDoctors: number;
+  onlineDoctors: number;
+  offlineDoctors: number;
+  newDoctorsThisMonth: number;
+  newDoctorsThisWeek: number;
+  averageRating: number;
+  totalAppointments: number;
+  totalRevenue: number;
+  fromCache?: boolean;
+}
+
+export interface SpecialtyDistribution {
+  specialty: string;
+  count: number;
+  percentage: number;
+}
+
+export interface DoctorDemographics {
+  specialties: SpecialtyDistribution[];
+  averageExperience: number;
+  mostCommonSpecialty: string;
+  totalDoctors: number;
+  fromCache?: boolean;
+}
+
+export interface DoctorPerformance {
+  id: string;
+  fullName: string;
+  specialty: string;
+  experienceYears: number;
+  avatar?: string;
+  averageRating: number;
+  totalRatings: number;
+  totalAppointments: number;
+  completedAppointments: number;
+  totalRevenue?: number;
+}
+
+export interface TopDoctors {
+  topByRating: DoctorPerformance[];
+  topByAppointments: DoctorPerformance[];
+  topByRevenue: DoctorPerformance[];
+  fromCache?: boolean;
+}
+
+export interface RecentDoctor {
+  id: string;
+  user_id: string;
+  full_name: string;
+  specialty: string;
+  license_number: string;
+  experience_years: number;
+  status: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface RecentDoctors {
+  doctors: RecentDoctor[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  fromCache?: boolean;
+}
+
+// Billing/Revenue Admin Types
+export interface RevenueStats {
+  totalRevenue: number;
+  todayRevenue: number;
+  monthRevenue: number;
+  yearRevenue: number;
+  totalPayments: number;
+  completedPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+  averagePaymentAmount: number;
+  completionRate: number;
+  revenueGrowthRate: number;
+  paymentGrowthRate: number;
+  fromCache?: boolean;
+}
+
+export interface PaymentMethodDistribution {
+  method: string;
+  count: number;
+  percentage: number;
+  amount: number;
+}
+
+export interface PaymentStatusDistribution {
+  status: string;
+  count: number;
+  percentage: number;
+  amount: number;
+}
+
+export interface RevenueDistribution {
+  byPaymentMethod: PaymentMethodDistribution[];
+  byStatus: PaymentStatusDistribution[];
+  totalRevenue: number;
+  mostUsedMethod: string;
+  mostCommonStatus: string;
+  fromCache?: boolean;
+}
+
+export interface RevenueTrendPoint {
+  label: string;
+  date: string;
+  revenue: number;
+  paymentCount: number;
+  averageAmount: number;
+}
+
+export interface RevenueTrends {
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  data: RevenueTrendPoint[];
+  totalRevenue: number;
+  totalTransactions: number;
+  averagePerPeriod: number;
+  percentageChange: number;
+  peakPeriod: string;
+  peakRevenue: number;
+  fromCache?: boolean;
+}
+
+export interface PaymentMethodStats {
+  method: string;
+  totalTransactions: number;
+  successfulTransactions: number;
+  failedTransactions: number;
+  pendingTransactions: number;
+  totalRevenue: number;
+  averageTransactionAmount: number;
+  successRate: number;
+  revenuePercentage: number;
+  usagePercentage: number;
+}
+
+export interface PaymentMethodsAnalytics {
+  methods: PaymentMethodStats[];
+  totalMethods: number;
+  mostReliableMethod: string;
+  mostUsedMethod: string;
+  highestRevenueMethod: string;
+  fromCache?: boolean;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -246,7 +397,7 @@ class AdminService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000';
+    this.baseURL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8080';
     
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -417,6 +568,109 @@ class AdminService {
   }
 
   /**
+   * Get doctor statistics
+   */
+  async getDoctorStats(): Promise<DoctorStats> {
+    const response = await this.api.get<ApiResponse<DoctorStats>>(
+      '/v1/admin/dashboard/doctors/stats'
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Get doctor demographics (specialty distribution)
+   * TODO: Not yet implemented in API Gateway
+   */
+  // async getDoctorDemographics(): Promise<DoctorDemographics> {
+  //   const response = await this.api.get<ApiResponse<DoctorDemographics>>(
+  //     '/v1/admin/dashboard/doctors/demographics'
+  //   );
+  //   return response.data.data;
+  // }
+
+  /**
+   * Get top performing doctors
+   * @param page - Page number
+   * @param limit - Items per page
+   */
+  async getTopDoctors(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<TopDoctors> {
+    const response = await this.api.get<ApiResponse<TopDoctors>>(
+      '/v1/admin/dashboard/doctors/top',
+      { params: { limit } }
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Get recent doctors
+   * @param page - Page number
+   * @param limit - Items per page
+   * TODO: Not yet implemented in API Gateway
+   */
+  // async getRecentDoctors(
+  //   page: number = 1,
+  //   limit: number = 10
+  // ): Promise<RecentDoctors> {
+  //   const response = await this.api.get<ApiResponse<RecentDoctors>>(
+  //     '/v1/admin/dashboard/doctors/recent',
+  //     { params: { page, limit } }
+  //   );
+  //   return response.data.data;
+  // }
+
+  /**
+   * Get revenue statistics
+   */
+  async getRevenueStats(): Promise<RevenueStats> {
+    const response = await this.api.get<ApiResponse<RevenueStats>>(
+      '/v1/admin/dashboard/revenue/stats'
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Get revenue distribution
+   */
+  async getRevenueDistribution(): Promise<RevenueDistribution> {
+    const response = await this.api.get<ApiResponse<RevenueDistribution>>(
+      '/v1/admin/dashboard/revenue/distribution'
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Get revenue trends
+   * @param period - 'daily', 'weekly', 'monthly', or 'yearly'
+   * @param days - Number of days to look back (for daily/weekly)
+   */
+  async getRevenueTrends(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'daily',
+    days?: number
+  ): Promise<RevenueTrends> {
+    const params: Record<string, string | number> = { period };
+    if (days) params.days = days;
+    
+    const response = await this.api.get<ApiResponse<RevenueTrends>>(
+      '/v1/admin/dashboard/revenue/trends',
+      { params }
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Get payment methods analytics
+   */
+  async getPaymentMethodsAnalytics(): Promise<PaymentMethodsAnalytics> {
+    const response = await this.api.get<ApiResponse<PaymentMethodsAnalytics>>(
+      '/v1/admin/dashboard/payment-methods/stats'
+    );
+    return response.data.data;
+  }
+
+  /**
    * Get all dashboard data at once (for initial load)
    */
   async getAllDashboardData() {
@@ -429,6 +683,14 @@ class AdminService {
         patientGrowth,
         patientDemographics,
         recentPatients,
+        doctorStats,
+        doctorDemographics,
+        topDoctors,
+        recentDoctors,
+        revenueStats,
+        revenueDistribution,
+        revenueTrends,
+        paymentMethodsAnalytics,
         systemHealth,
       ] = await Promise.allSettled([
         this.getDashboardStats(),
@@ -438,6 +700,14 @@ class AdminService {
         this.getPatientGrowth('daily', 30),
         this.getPatientDemographics(),
         this.getRecentPatients(1, 10),
+        this.getDoctorStats(),
+        this.getDoctorDemographics(),
+        this.getTopDoctors(1, 10),
+        this.getRecentDoctors(1, 10),
+        this.getRevenueStats(),
+        this.getRevenueDistribution(),
+        this.getRevenueTrends('daily', 30),
+        this.getPaymentMethodsAnalytics(),
         this.getSystemHealth(),
       ]);
 
@@ -449,6 +719,14 @@ class AdminService {
         patientGrowth: patientGrowth.status === 'fulfilled' ? patientGrowth.value : null,
         patientDemographics: patientDemographics.status === 'fulfilled' ? patientDemographics.value : null,
         recentPatients: recentPatients.status === 'fulfilled' ? recentPatients.value : null,
+        doctorStats: doctorStats.status === 'fulfilled' ? doctorStats.value : null,
+        doctorDemographics: doctorDemographics.status === 'fulfilled' ? doctorDemographics.value : null,
+        topDoctors: topDoctors.status === 'fulfilled' ? topDoctors.value : null,
+        recentDoctors: recentDoctors.status === 'fulfilled' ? recentDoctors.value : null,
+        revenueStats: revenueStats.status === 'fulfilled' ? revenueStats.value : null,
+        revenueDistribution: revenueDistribution.status === 'fulfilled' ? revenueDistribution.value : null,
+        revenueTrends: revenueTrends.status === 'fulfilled' ? revenueTrends.value : null,
+        paymentMethodsAnalytics: paymentMethodsAnalytics.status === 'fulfilled' ? paymentMethodsAnalytics.value : null,
         systemHealth: systemHealth.status === 'fulfilled' ? systemHealth.value : null,
       };
     } catch (error) {
