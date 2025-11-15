@@ -15,6 +15,14 @@ export const QUERY_KEYS = {
   PATIENT_GROWTH: ['admin', 'patients', 'growth'],
   PATIENT_DEMOGRAPHICS: ['admin', 'patients', 'demographics'],
   RECENT_PATIENTS: ['admin', 'patients', 'recent'],
+  DOCTOR_STATS: ['admin', 'doctors', 'stats'],
+  DOCTOR_DEMOGRAPHICS: ['admin', 'doctors', 'demographics'],
+  TOP_DOCTORS: ['admin', 'doctors', 'top'],
+  RECENT_DOCTORS: ['admin', 'doctors', 'recent'],
+  REVENUE_STATS: ['admin', 'revenue', 'stats'],
+  REVENUE_DISTRIBUTION: ['admin', 'revenue', 'distribution'],
+  REVENUE_TRENDS: ['admin', 'revenue', 'trends'],
+  PAYMENT_METHODS: ['admin', 'revenue', 'payment-methods'],
   SYSTEM_HEALTH: ['admin', 'system', 'health'],
   CACHE_STATS: ['admin', 'cache', 'stats'],
 };
@@ -64,7 +72,7 @@ export function useRecentAppointments(page: number = 1, limit: number = 10) {
     queryKey: [...QUERY_KEYS.RECENT_APPOINTMENTS, page, limit],
     queryFn: () => adminService.getRecentAppointments(page, limit),
     staleTime: 30 * 1000, // 30 seconds
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -101,7 +109,7 @@ export function useRecentPatients(page: number = 1, limit: number = 10) {
     queryKey: [...QUERY_KEYS.RECENT_PATIENTS, page, limit],
     queryFn: () => adminService.getRecentPatients(page, limit),
     staleTime: 60 * 1000, // 1 minute
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -125,6 +133,119 @@ export function useCacheStats() {
     queryKey: QUERY_KEYS.CACHE_STATS,
     queryFn: () => adminService.getCacheStats(),
     staleTime: 30 * 1000, // 30 seconds
+  });
+}
+
+/**
+ * Hook to get doctor statistics
+ */
+export function useDoctorStats() {
+  return useQuery({
+    queryKey: QUERY_KEYS.DOCTOR_STATS,
+    queryFn: () => adminService.getDoctorStats(),
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get doctor demographics
+ * TODO: Not yet implemented in API Gateway
+ */
+// export function useDoctorDemographics() {
+//   return useQuery({
+//     queryKey: QUERY_KEYS.DOCTOR_DEMOGRAPHICS,
+//     queryFn: () => adminService.getDoctorDemographics(),
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//     retry: false,
+//     refetchOnWindowFocus: false,
+//   });
+// }
+
+/**
+ * Hook to get top performing doctors
+ */
+export function useTopDoctors(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.TOP_DOCTORS, page, limit],
+    queryFn: () => adminService.getTopDoctors(page, limit),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    placeholderData: (previousData) => previousData,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get recent doctors
+ * TODO: Not yet implemented in API Gateway
+ */
+// export function useRecentDoctors(page: number = 1, limit: number = 10) {
+//   return useQuery({
+//     queryKey: [...QUERY_KEYS.RECENT_DOCTORS, page, limit],
+//     queryFn: () => adminService.getRecentDoctors(page, limit),
+//     staleTime: 60 * 1000, // 1 minute
+//     placeholderData: (previousData) => previousData,
+//     retry: false,
+//     refetchOnWindowFocus: false,
+//   });
+// }
+
+/**
+ * Hook to get revenue statistics
+ */
+export function useRevenueStats() {
+  return useQuery({
+    queryKey: QUERY_KEYS.REVENUE_STATS,
+    queryFn: () => adminService.getRevenueStats(),
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get revenue distribution
+ */
+export function useRevenueDistribution() {
+  return useQuery({
+    queryKey: QUERY_KEYS.REVENUE_DISTRIBUTION,
+    queryFn: () => adminService.getRevenueDistribution(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get revenue trends
+ */
+export function useRevenueTrends(
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'daily',
+  days?: number
+) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.REVENUE_TRENDS, period, days],
+    queryFn: () => adminService.getRevenueTrends(period, days),
+    staleTime: 60 * 60 * 1000, // 1 hour
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get payment methods analytics
+ */
+export function usePaymentMethodsAnalytics() {
+  return useQuery({
+    queryKey: QUERY_KEYS.PAYMENT_METHODS,
+    queryFn: () => adminService.getPaymentMethodsAnalytics(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -168,6 +289,14 @@ export function useRefetchDashboard() {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PATIENT_GROWTH });
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PATIENT_DEMOGRAPHICS });
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RECENT_PATIENTS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOCTOR_STATS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOCTOR_DEMOGRAPHICS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOP_DOCTORS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RECENT_DOCTORS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REVENUE_STATS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REVENUE_DISTRIBUTION });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REVENUE_TRENDS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_METHODS });
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM_HEALTH });
   };
 }
