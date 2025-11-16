@@ -212,7 +212,7 @@ export function ReportsAnalytics() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {appointmentStatusData.map((entry, index) => (
+                      {appointmentStatusData.map((entry: { name: string; value: number; color: string }, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
