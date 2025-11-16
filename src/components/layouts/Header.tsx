@@ -12,6 +12,7 @@ import ReminderIcon from "../common/reminder-icon";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
@@ -19,6 +20,10 @@ export default function Header() {
 
   const { user, isInitialized } = useSelector((state: RootState) => state.auth)
   const isAuthenticated = !!user
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), [])
   const toggleUserMenu = useCallback(() => setIsUserMenuOpen((prev) => !prev), [])
@@ -150,14 +155,12 @@ export default function Header() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            {isAuthenticated && (
-              <div className="hidden sm:block">
-                <ReminderIcon />
-              </div>
-            )}
+            <div className="hidden sm:block">
+              {mounted && isAuthenticated && <ReminderIcon />}
+            </div>
             {/* User Menu hoặc Login Button với Loading State - Cố định kích thước */}
             <div className="hidden sm:block min-w-[120px]">
-              {!isInitialized ? (
+              {!mounted ? (
                 // Loading skeleton với kích thước cố định
                 <div className="flex items-center space-x-3 p-2">
                   <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
