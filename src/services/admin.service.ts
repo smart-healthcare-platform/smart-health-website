@@ -398,7 +398,7 @@ class AdminService {
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8080';
-    
+
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
@@ -434,13 +434,13 @@ class AdminService {
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    
+
     // Try to get token from Redux store first
     const reduxToken = store.getState().auth.token;
     if (reduxToken) {
       return reduxToken;
     }
-    
+
     // Fallback to localStorage for development/testing
     return localStorage.getItem('admin_token') || localStorage.getItem('token');
   }
@@ -581,12 +581,12 @@ class AdminService {
    * Get doctor demographics (specialty distribution)
    * TODO: Not yet implemented in API Gateway
    */
-  // async getDoctorDemographics(): Promise<DoctorDemographics> {
-  //   const response = await this.api.get<ApiResponse<DoctorDemographics>>(
-  //     '/v1/admin/dashboard/doctors/demographics'
-  //   );
-  //   return response.data.data;
-  // }
+  async getDoctorDemographics(): Promise<DoctorDemographics> {
+    const response = await this.api.get<ApiResponse<DoctorDemographics>>(
+      '/v1/admin/dashboard/doctors/demographics'
+    );
+    return response.data.data;
+  }
 
   /**
    * Get top performing doctors
@@ -610,16 +610,16 @@ class AdminService {
    * @param limit - Items per page
    * TODO: Not yet implemented in API Gateway
    */
-  // async getRecentDoctors(
-  //   page: number = 1,
-  //   limit: number = 10
-  // ): Promise<RecentDoctors> {
-  //   const response = await this.api.get<ApiResponse<RecentDoctors>>(
-  //     '/v1/admin/dashboard/doctors/recent',
-  //     { params: { page, limit } }
-  //   );
-  //   return response.data.data;
-  // }
+  async getRecentDoctors(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<RecentDoctors> {
+    const response = await this.api.get<ApiResponse<RecentDoctors>>(
+      '/v1/admin/dashboard/doctors/recent',
+      { params: { page, limit } }
+    );
+    return response.data.data;
+  }
 
   /**
    * Get revenue statistics
@@ -652,7 +652,7 @@ class AdminService {
   ): Promise<RevenueTrends> {
     const params: Record<string, string | number> = { period };
     if (days) params.days = days;
-    
+
     const response = await this.api.get<ApiResponse<RevenueTrends>>(
       '/v1/admin/dashboard/revenue/trends',
       { params }
