@@ -124,12 +124,21 @@ function AppContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <AuthInit />
-      <NotificationProvider userId={userId}>
-        {children}
-      </NotificationProvider>
-      <ToastContainer />
+      <NotificationProvider userId={userId}>{children}</NotificationProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </>
-  )
+  );
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
