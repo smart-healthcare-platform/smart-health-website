@@ -366,7 +366,7 @@ export function RevenueAnalytics() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {paymentMethodChartData.map((entry, index) => (
+                      {paymentMethodChartData.map((entry: { name: string; value: number; revenue: number; percentage: number }, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -438,10 +438,10 @@ export function RevenueAnalytics() {
                     />
                     <Legend />
                     <Bar dataKey="value" name="Transactions">
-                      {paymentStatusChartData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || COLORS[index % COLORS.length]} 
+                      {paymentStatusChartData.map((entry: { name: string; value: number; revenue: number; percentage: number }, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || COLORS[index % COLORS.length]}
                         />
                       ))}
                     </Bar>

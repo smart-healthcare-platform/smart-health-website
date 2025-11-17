@@ -469,7 +469,7 @@ export default function AdminDashboardRealtime() {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {statusPieData.map((entry, index) => (
+                        {statusPieData.map((entry: { name: string; value: number; color: string }, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -519,7 +519,7 @@ export default function AdminDashboardRealtime() {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {demographicsPieData.map((entry, index) => (
+                          {demographicsPieData.map((entry: { name: string; value: number; color: string }, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
