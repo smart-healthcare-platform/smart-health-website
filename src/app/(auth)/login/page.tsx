@@ -49,6 +49,7 @@ export default function ModernHealthLogin() {
           token,
           user: {
             ...user,
+            phone: patient.phone,
             role: "PATIENT",
             referenceId: patient.id,
             profile: {
