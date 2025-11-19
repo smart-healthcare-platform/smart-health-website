@@ -1,19 +1,22 @@
 import { apiAuth } from '@/lib/axios'
 import { Patient } from '@/types/patient/patient.type'
-import { PatientListResponse } from '@/types/patient/patient.response'
-import { ApiResponse } from '@/types/response'
+import { ApiResponse, PaginatedResponse } from '@/types/response'
 
 export const patientService = {
-    async getAll(page = 1, limit = 5, search = ""): Promise<PatientListResponse> {
-        const res = await apiAuth.get<ApiResponse<PatientListResponse>>('/patients', {
-            params: { page, limit, search }
-        })
+    async getAllPatients(
+        page = 1,
+        limit = 5,
+        search = ''
+    ): Promise<PaginatedResponse<Patient>> {
+        const res = await apiAuth.get<ApiResponse<PaginatedResponse<Patient>>>('/patients', {
+            params: { page, limit, search },
+        });
 
         if (!res.data.success) {
-            return { data: [], total: 0, page, limit }
+            return { data: [], total: 0, page, limit };
         }
 
-        return res.data.data
+        return res.data.data; 
     },
 
     async getStats(): Promise<{

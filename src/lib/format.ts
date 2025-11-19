@@ -32,3 +32,23 @@ export const formatDateTime = (dateString: string) => {
   return `${datePart} ${timePart}`
 }
 
+export function formatDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ""
+
+  const day = date.getDate().toString().padStart(2, "0")
+  const month = (date.getMonth() + 1).toString().padStart(2, "0")
+  const year = date.getFullYear()
+
+  return `${day}-${month}-${year}`
+}
+
+export const calculateAge = (dob: string | Date) => {
+  const birthDate = new Date(dob)
+  const diff = Date.now() - birthDate.getTime()
+  const age = new Date(diff).getUTCFullYear() - 1970
+  return age
+}
+
+
+

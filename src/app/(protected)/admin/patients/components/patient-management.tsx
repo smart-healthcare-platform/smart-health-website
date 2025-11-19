@@ -5,43 +5,37 @@ import { patientService } from "@/services/patient.service";
 import StatsCards from "./stats-cards";
 import PatientFilters from "./patient-filters";
 import PatientTable from "./patient-table";
-import Pagination from "./pagination";
+import Pagination from "../../common/pagination";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
-import { PatientListResponse } from "@/types/patient/patient.response";
+import { PaginatedResponse } from "@/types/response";
 
 export function PatientManagement() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(1);
-  const limit = 5;
-  const [patientsResponse, setPatientsResponse] = useState<PatientListResponse>({
+  const [patientsResponse, setPatientsResponse] = useState<PaginatedResponse<Patient>>({
     data: [],
     total: 0,
     page: 1,
     limit: 5,
   });
-  const [stats, setStats] = useState<{
-    totalPatients: { value: number; change: number };
-    newThisMonth: { value: number; change: number };
-    averageAge: { value: number; change: number };
-  }>({
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
+  const [stats, setStats] = useState({
     totalPatients: { value: 0, change: 0 },
     newThisMonth: { value: 0, change: 0 },
     averageAge: { value: 0, change: 0 },
   });
-
 
   // Lấy danh sách bệnh nhân
   useEffect(() => {
     async function fetchPatients() {
       setLoading(true);
       try {
-        const response = await patientService.getAll(page, limit, searchTerm);
-        setPatients(response.data);
-        setPatientsResponse(response);
+        const response = await patientService.getAllPatients(page, limit, searchTerm);
+        setPatientsResponse(response); // chỉ cần 1 state
       } finally {
         setLoading(false);
       }
@@ -106,7 +100,7 @@ export function PatientManagement() {
             <p className="text-center py-10 text-muted-foreground">Đang tải dữ liệu...</p>
           ) : (
             <>
-              <PatientTable patients={patients} />
+              <PatientTable patients={patientsResponse.data} />
 
               <Pagination
                 page={page}

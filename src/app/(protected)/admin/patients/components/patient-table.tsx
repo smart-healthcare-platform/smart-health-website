@@ -17,6 +17,7 @@ import PatientDetailDialog from "@/components/common/patient-detail-dialog";
 import { apiAuth } from "@/lib/axios";
 import { authService } from "@/services/auth.service";
 import { UserAccount } from "@/types/auth/auth-type";
+import { calculateAge, formatDate } from "@/lib/format";
 
 interface PatientTableProps {
     patients: Patient[];
@@ -64,7 +65,12 @@ export default function PatientTable({ patients }: PatientTableProps) {
                                 <TableCell>{patient.full_name}</TableCell>
                                 <TableCell>{patient.phone}</TableCell>
                                 <TableCell>{patient.gender === "FEMALE" ? "Nữ" : patient.gender === "MALE" ? "Nam" : "Khác"}</TableCell>
-                                <TableCell>{patient.date_of_birth}</TableCell>
+                                <TableCell>
+                                    {formatDate(patient.date_of_birth)}
+                                    <div className="text-xs text-muted-foreground">
+                                        ({calculateAge(patient.date_of_birth)} tuổi)
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-right">
                                     <Button
                                         variant="ghost"

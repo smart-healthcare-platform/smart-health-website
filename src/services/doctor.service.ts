@@ -1,13 +1,31 @@
 import { apiNoAuth } from "@/lib/axios"
 import { TimeSlot, TimeSlotStatus } from "@/types/timeSlot"
-import { Doctor, DoctorDetail, PaginatedResponse } from "@/types"
+import { Doctor, DoctorDetail } from "@/types/doctor/doctor.type"
+import { PaginatedResponse } from "@/types/response"
+import { ApiResponse } from "./admin.service"
 
 export const doctorService = {
-  async getPublicDoctors(page = 1, limit = 6, search = "") {
-    const res = await apiNoAuth.get<{ data: PaginatedResponse<Doctor> }>("/public/doctors", { params: { page, limit, search } })
-    console.log(res.data)
-    return res.data.data
+  async getAllDoctors(
+    page = 1,
+    limit = 5,
+    search = ''
+  ): Promise<PaginatedResponse<Doctor>> {
+    try {
+      const res = await apiNoAuth.get<ApiResponse<PaginatedResponse<Doctor>>>('/public/doctors', {
+        params: { page, limit, search },
+      });
+
+      if (!res.data.success) {
+        return { data: [], total: 0, page, limit };
+      }
+
+      return res.data.data;
+    } catch (error) {
+      console.error("Failed to fetch doctors:", error);
+      return { data: [], total: 0, page, limit };
+    }
   },
+
 
   async getDoctorById(id: string): Promise<DoctorDetail> {
     const res = await apiNoAuth.get<{ data: DoctorDetail }>(`/public/doctors/${id}`)
@@ -23,13 +41,13 @@ export const doctorService = {
       if (!res.data.success) return [];
 
       const slots: TimeSlot[] = res.data.data.map((s) => {
-        const [date, time] = s.start_time.split(" "); 
+        const [date, time] = s.start_time.split(" ");
 
         return {
           id: s.id,
           startTime: s.start_time,
-          date,                     
-          time: time.slice(0, 5),   
+          date,
+          time: time.slice(0, 5),
           status: mapStatus(s.status),
         };
       });
