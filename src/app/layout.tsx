@@ -1,12 +1,15 @@
 "use client"
 
 import "./globals.css"
-import { Provider, useDispatch } from "react-redux"
-import { store } from "@/redux"
+import { Provider, useDispatch, useSelector } from "react-redux"
+import { store, RootState } from "@/redux"
 import { useEffect } from "react"
 import { authService } from "@/services/auth.service"
 import { setCredentials, clearAuth, setInitialized } from "@/redux/slices/authSlice"
 import { apiNoAuth } from "@/lib/axios"
+import { NotificationProvider } from "@/components/NotificationProvider"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 function AuthInit() {
   const dispatch = useDispatch()
@@ -114,13 +117,36 @@ function AuthInit() {
   return null
 }
 
+function AppContent({ children }: { children: React.ReactNode }) {
+  const user = useSelector((state: RootState) => state.auth.user)
+  const userId = user?.id
+
+  return (
+    <>
+      <AuthInit />
+      <NotificationProvider userId={userId}>{children}</NotificationProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+    </>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
       <body>
         <Provider store={store}>
-          <AuthInit />
-          {children}
+          <AppContent>{children}</AppContent>
         </Provider>
       </body>
     </html>
