@@ -37,3 +37,10 @@ export type User =
     | (BaseUser & { role: "DOCTOR"; profile: DoctorProfile })
     | (BaseUser & { role: "RECEPTIONIST"; profile: ReceptionistProfile })
     | (BaseUser & { role: "ADMIN" });
+
+export interface UserAccount {
+    id: string
+    username: string
+    email: string
+    isActive: boolean
+}

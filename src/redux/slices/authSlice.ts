@@ -1,4 +1,4 @@
-import { User } from "@/types/auth";
+import { User } from "@/types/auth/auth-type";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 
@@ -25,6 +25,13 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.user = action.payload.user;
       state.isInitialized = true;
+      
+      // Sync token to localStorage for auth-helpers compatibility
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", action.payload.token);
+        localStorage.setItem("user", JSON.stringify(action.payload.user));
+        localStorage.setItem("userId", action.payload.user.id);
+      }
     },
     clearAuth: (state) => {
       state.token = null;

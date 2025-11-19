@@ -21,7 +21,7 @@ export const apiAuth = axios.create({
  */
 export const apiNoAuth = axios.create({
   baseURL: BASE_URL,
-  // withCredentials: true,
+  withCredentials: true,
 });
 
 /**

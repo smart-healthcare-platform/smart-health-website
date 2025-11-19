@@ -19,41 +19,39 @@ import {
   Database,
   ChevronLeft,
   ChevronRight,
-  Package, // Import Package icon
+  Package,
 } from "lucide-react"
-import { useSelector } from "react-redux"
-import { RootState } from "@/redux"
 
 const navigation = [
   {
-    name: "Overview",
+    name: "Tổng quan",
     href: "/admin",
     icon: LayoutDashboard,
     current: true,
   },
   {
-    name: "Patients",
+    name: "Bệnh nhân",
     href: "/admin/patients",
     icon: Users,
     current: false,
     badge: "2,847",
   },
   {
-    name: "Doctors",
+    name: "Bác sĩ",
     href: "/admin/doctors",
     icon: UserCheck,
     current: false,
     badge: "124",
   },
   {
-    name: "Appointments",
+    name: "Cuộc hẹn",
     href: "/admin/appointments",
     icon: Calendar,
     current: false,
     badge: "18",
   },
   {
-    name: "Medicines",
+    name: "Thuốc",
     href: "/admin/medicines",
     icon: Package,
     current: false,
@@ -62,19 +60,19 @@ const navigation = [
 
 const analytics = [
   {
-    name: "Reports",
+    name: "Báo cáo",
     href: "/admin/reports",
     icon: BarChart3,
     current: false,
   },
   {
-    name: "Analytics",
+    name: "Phân tích",
     href: "/admin/analytics",
     icon: Activity,
     current: false,
   },
   {
-    name: "Medical Records",
+    name: "Hồ sơ y tế",
     href: "/admin/records",
     icon: FileText,
     current: false,
@@ -83,19 +81,19 @@ const analytics = [
 
 const system = [
   {
-    name: "Database",
+    name: "Cơ sở dữ liệu",
     href: "/admin/database",
     icon: Database,
     current: false,
   },
   {
-    name: "Security",
+    name: "Bảo mật",
     href: "/admin/security",
     icon: Shield,
     current: false,
   },
   {
-    name: "Settings",
+    name: "Cài đặt",
     href: "/admin/settings",
     icon: Settings,
     current: false,
@@ -122,7 +120,7 @@ export function AdminSidebar() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-sidebar-foreground">Smart Health</h2>
-              <p className="text-xs text-muted-foreground">Admin Panel</p>
+              <p className="text-xs text-muted-foreground">Bảng quản trị</p>
             </div>
           </div>
         )}
@@ -134,11 +132,11 @@ export function AdminSidebar() {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
         <nav className="space-y-6 px-3">
-          {/* Main Navigation */}
+          {/* Quản lý */}
           <div>
             {!collapsed && (
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                Management
+                Quản lý
               </h3>
             )}
             <ul className="space-y-1">
@@ -173,11 +171,11 @@ export function AdminSidebar() {
             </ul>
           </div>
 
-          {/* Analytics */}
+          {/* Phân tích */}
           <div>
             {!collapsed && (
               <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                Analytics
+                Phân tích
               </h3>
             )}
             <ul className="space-y-1">
@@ -203,10 +201,12 @@ export function AdminSidebar() {
             </ul>
           </div>
 
-          {/* System */}
+          {/* Hệ thống */}
           <div>
             {!collapsed && (
-              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">System</h3>
+              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                Hệ thống
+              </h3>
             )}
             <ul className="space-y-1">
               {system.map((item) => {

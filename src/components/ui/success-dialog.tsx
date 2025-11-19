@@ -8,7 +8,7 @@ import { motion } from "framer-motion"
 interface SuccessDialogProps {
   open: boolean
   onClose: () => void
-  title?: string
+  title: string
   message: string
   onConfirm?: () => void
   confirmText?: string

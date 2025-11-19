@@ -8,7 +8,7 @@ import { motion } from "framer-motion"
 interface ErrorDialogProps {
   open: boolean
   onClose: () => void
-  title?: string
+  title: string
   message: string
   onRetry?: () => void
   retryText?: string

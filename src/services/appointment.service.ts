@@ -1,6 +1,6 @@
 import { apiAuth } from '@/lib/axios';
-import { CheckInResponse, CreatePaymentResponse, MedicalRecord } from '@/types';
-import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, LabTest, LabTestOrder, LabTestResult, VitalSigns } from '@/types/examnation';
+import { CheckInResponse, CreatePaymentResponse} from '@/types';
+import { CreateFollowUpSuggestionPayload, CreateMedicalRecordPayload, CreateVitalSignPayload, FollowUpSuggestion, LabTest, LabTestOrder, LabTestResult, MedicalRecord, VitalSigns } from '@/types/examnation';
 import { Appointment, AppointmentDetail } from '@/types/appointment/appointment.type'
 import { CreateAppointmentPayload } from '@/types/appointment/appointment.dto';
 import { AppointmentResponse } from '@/types/appointment/appointment.response';
