@@ -7,7 +7,8 @@ import DoctorSelection from "../components/doctor/DoctorSelection";
 import { useState, useEffect, useCallback } from "react";
 import { doctorService } from "@/services/doctor.service";
 import useDebounce from "@/hooks/use-debounce";
-import { Doctor } from "@/types";
+import { Doctor } from "@/types/doctor/doctor.type";
+
 
 const doctorsPerPage = 6;
 
@@ -25,7 +26,7 @@ export default function Step1() {
   const fetchDoctors = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await doctorService.getPublicDoctors(
+      const res = await doctorService.getAllDoctors(
         currentPage,
         doctorsPerPage,
         debouncedSearch.trim()
