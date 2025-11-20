@@ -12,12 +12,12 @@ import {
   Star,
 } from "lucide-react";
 import { doctorService } from "@/services/doctor.service";
-import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
 import useDebounce from "@/hooks/use-debounce";
 import AppPagination from "@/components/ui/global-pagination";
 import { useDispatch } from "react-redux";
 import { setDoctor } from "@/redux/slices/bookingSlice";
+import { Doctor } from "@/types/doctor/doctor.type";
 
 export default function DoctorList() {
   const router = useRouter();
@@ -121,12 +121,7 @@ export default function DoctorList() {
       setLoading(true);
       const searchTerm = debouncedSearch.trim();
 
-      console.log("Fetching doctors with", {
-        page: currentPage,
-        search: searchTerm,
-      });
-
-      const res = await doctorService.getPublicDoctors(
+      const res = await doctorService.getAllDoctors(
         currentPage,
         doctorsPerPage,
         searchTerm

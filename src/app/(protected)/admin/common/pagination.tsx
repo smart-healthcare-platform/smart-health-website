@@ -17,7 +17,7 @@ export default function Pagination({ page, limit, total, setPage }: PaginationPr
     <div className="flex items-center justify-between space-x-2 py-4">
       <div className="text-sm text-muted-foreground">
         <div>Trang {page} / {totalPages}</div>
-        <div>Tổng số bệnh nhân: {total}</div>
+        <div>Tổng số lượng: {total}</div>
       </div>
 
       <div className="flex items-center space-x-2">
