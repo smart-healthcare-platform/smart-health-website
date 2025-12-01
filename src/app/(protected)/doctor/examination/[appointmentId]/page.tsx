@@ -20,7 +20,7 @@ import SuccessDialog from "@/components/ui/success-dialog"
 import Loading from "@/components/ui/loading"
 
 import type { RootState } from "@/redux"
-import type { CreatePrescriptionRequest, PrescriptionItemInput } from "@/types/medicine"
+import type { CreatePrescriptionRequest, PrescriptionItemInput, MedicationHistory } from "@/types/medicine"
 import type { ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { CreateMedicalRecordPayload, CreateVitalSignPayload } from "@/types/examnation"
 import type { AppointmentDetail } from "@/types/appointment/appointment.type"
@@ -62,38 +62,15 @@ export default function ExaminationPage() {
     setExaminationData((prev) => ({ ...prev, ...data }))
   }
 
-  const formatPrescriptionToText = (items?: PrescriptionItem[]): string => {
-    if (!items?.length) return ""
-    return items
-      .map((item, index) => {
-        const lines = [
-          `${index + 1}. ${item.drugName}`,
-          `   - Hoạt chất: ${item.activeIngredient} (${item.strength})`,
-          `   - Liều lượng: ${item.dosage}`,
-          `   - Số lượng: ${item.quantity}`,
-          `   - Thời gian: ${item.duration} ngày`,
-          `   - Hướng dẫn: ${item.instructions}`,
-        ]
-        if (item.notes) lines.push(`   - Lưu ý: ${item.notes}`)
-        return lines.join("\n")
-      })
-      .join("\n\n")
-  }
-
-  const createMedicalRecord = async (): Promise<string> => {
+  const createMedicalRecord = async (prescriptionId?: string): Promise<string> => {
     if (!examinationData.diagnosis) throw new Error("Vui lòng nhập chẩn đoán trước khi hoàn tất khám bệnh")
-
-    const prescriptionText =
-      examinationData.prescriptionItems?.length
-        ? formatPrescriptionToText(examinationData.prescriptionItems)
-        : examinationData.prescription || ""
 
     const payload: CreateMedicalRecordPayload = {
       appointmentId: appointmentId as string,
       diagnosis: examinationData.diagnosis,
       symptoms: examinationData.symptoms || "",
       doctorNotes: examinationData.additionalNotes || "",
-      prescription: prescriptionText,
+      prescriptionId: prescriptionId,
     }
 
     const record = await appointmentService.createMedicalRecord(payload)
@@ -124,27 +101,106 @@ export default function ExaminationPage() {
 
   const createLabTestOrders = async (medicalRecordId: string) => {
     if (!examinationData.labTests?.length || !user?.referenceId) return
+    
+    console.log(`Creating ${examinationData.labTests.length} lab test orders with automatic payment...`)
+    
     for (const labTest of examinationData.labTests) {
       const payload: CreateLabTestOrderPayload = {
         appointmentId: appointmentId as string,
         type: labTest.type,
         orderedBy: user.referenceId,
+        labTestId: labTest.id, // Include labTestId for price lookup
       }
-      await appointmentService.createLabTestOrder(payload)
+      
+      try {
+        // Use createWithPayment endpoint to automatically create payment
+        const order = await appointmentService.createLabTestOrderWithPayment(payload)
+        console.log(`✅ Lab test order created: ${order.id}, Payment: ${order.paymentId || 'PENDING'}`)
+      } catch (error) {
+        console.error(`❌ Failed to create lab test order for ${labTest.name}:`, error)
+        // Continue with other lab tests even if one fails
+      }
     }
   }
 
   const handleComplete = async () => {
     try {
-      const recordId = await createMedicalRecord()
+      setLoading(true)
+      
+      // Step 1: Create Prescription in Medicine Service (if prescription items exist)
+      let prescriptionId: string | undefined
+      
+      if (examinationData.prescriptionItems?.length && user?.referenceId && appointment) {
+        console.log("Creating prescription with", examinationData.prescriptionItems.length, "items")
+        
+        const prescriptionPayload: CreatePrescriptionRequest = {
+          patientId: appointment.patient.id,
+          doctorId: user.referenceId,
+          appointmentId: appointmentId as string,
+          diagnosis: examinationData.diagnosis || "",
+          notes: examinationData.additionalNotes || "",
+          items: examinationData.prescriptionItems.map((item): PrescriptionItemInput => ({
+            drugId: Number(item.drugId),
+            dosage: item.dosage,
+            frequency: item.dosage,
+            route: "Uống",
+            timing: item.instructions,
+            durationDays: item.duration,
+          }))
+        }
+        
+        const prescriptionResponse = await medicineService.createPrescription(prescriptionPayload)
+        prescriptionId = prescriptionResponse.prescriptionId
+        console.log("✅ Prescription created:", prescriptionId)
+      }
+      
+      // Step 2: Create Medical Record with prescriptionId
+      const recordId = await createMedicalRecord(prescriptionId)
+      console.log("✅ Medical record created:", recordId)
+      
+      // Step 3-5: Other steps
       await createVitalSign(recordId)
       await createLabTestOrders(recordId)
       await createFollowUpSuggestion(recordId)
+      
       setConfirmOpen(false)
       setSuccessOpen(true)
     } catch (error) {
-      console.error("Lỗi hoàn tất khám:", error)
+      console.error("❌ Lỗi hoàn tất khám:", error)
+      alert("Có lỗi xảy ra khi hoàn tất khám bệnh. Vui lòng thử lại.")
+    } finally {
+      setLoading(false)
     }
+  }
+
+  const handleCopyPrescription = (history: MedicationHistory) => {
+    // Convert MedicationHistory items (medicine.ts PrescriptionItem) to examination PrescriptionItem format
+    const copiedItems: PrescriptionItem[] = history.items.map((item) => ({
+      drugId: item.drugId.toString(), // Convert number to string
+      drugName: item.drugName || "",
+      activeIngredient: "", // Not available in history, will need to fetch if needed
+      strength: "", // Not available in history
+      dosage: item.dosage,
+      instructions: [item.frequency, item.timing, item.route]
+        .filter(Boolean)
+        .join(", ") || item.instructions || "",
+      duration: item.durationDays || 7,
+      quantity: item.durationDays || 1, // Use duration as default quantity
+      notes: item.notes,
+    }))
+
+    // Update examination data with copied prescription
+    handleUpdateData({
+      prescriptionItems: copiedItems,
+      diagnosis: history.diagnosis, // Also copy diagnosis if available
+    })
+
+    // If not on step 3, navigate to it
+    if (currentStep !== 3) {
+      setCurrentStep(3)
+    }
+
+    console.log("✅ Copied prescription from", history.prescribedDate, "with", copiedItems.length, "items")
   }
 
   if (loading) return <Loading size="lg" />
@@ -203,7 +259,12 @@ export default function ExaminationPage() {
 
   return (
     <>
-      <ExaminationLayout currentStep={currentStep} onStepClick={setCurrentStep} appointment={appointment}>
+      <ExaminationLayout 
+        currentStep={currentStep} 
+        onStepClick={setCurrentStep} 
+        appointment={appointment}
+        onCopyPrescription={handleCopyPrescription}
+      >
         {renderStep()}
       </ExaminationLayout>
 
