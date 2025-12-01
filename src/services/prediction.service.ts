@@ -98,9 +98,9 @@ function transformMetricsToModelInput(metrics: HealthMetrics): number[] {
   const chestPainType = chestPainTypeMap[metrics.chestPainType];
 
   const restingECGMap: { [key: string]: number } = {
-    Normal: 1,
-    ST: 2,
-    LVH: 0,
+    Normal: 0,
+    ST: 1,
+    LVH: 2,
   };
   const restingECG = restingECGMap[metrics.restingECG];
 
