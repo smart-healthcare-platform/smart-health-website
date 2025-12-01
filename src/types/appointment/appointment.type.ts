@@ -22,6 +22,7 @@ export interface Appointment {
   paidAt?: string | null
   checkedInAt?: string | null
   consultationFee?: number
+  prescriptionId?: string | null
 }
 
 export interface AppointmentDetail extends Appointment {
