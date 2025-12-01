@@ -11,7 +11,7 @@ import LoginRequiredDialog from "@/components/ui/require-login-dialog";
 import { appointmentService } from "@/services/appointment.service";
 import SuccessDialog from "@/components/ui/success-dialog";
 import ErrorDialog from "@/components/ui/error-dialog";
-import { getPatientProfile } from "@/utils/userHelpers";
+import { getPatientProfile } from "@/lib/auth-helpers";
 import { CreateAppointmentPayload } from "@/types/appointment/appointment.dto";
 
 export default function BookingLayout({ children }: { children: React.ReactNode }) {
@@ -166,6 +166,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
           setSuccessDialogOpen(false);
           router.push("/");
         }}
+        title="Đặt lịch thành công!" 
         message="Yêu cầu đặt lịch đã được ghi nhận. Chúng tôi sẽ gửi thông báo sớm nhất đến bạn!"
         onConfirm={() => {
           setSuccessDialogOpen(false);
@@ -173,11 +174,14 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
         }}
       />
 
+
       <ErrorDialog
         open={errorDialogOpen}
         onClose={() => setErrorDialogOpen(false)}
+        title="Có lỗi xảy ra"   
         message={errorMessage}
       />
+
     </div>
   );
 }

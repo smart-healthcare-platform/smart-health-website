@@ -3,21 +3,12 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Patient } from "@/types/patient/patient.type";
 import PatientDetailDialog from "@/components/common/patient-detail-dialog";
-import { apiAuth } from "@/lib/axios";
 import { authService } from "@/services/auth.service";
 import { UserAccount } from "@/types/auth/auth-type";
-import { calculateAge, formatDate } from "@/lib/format";
+import { calculateAge, formatVNDate } from "@/lib/format";
 
 interface PatientTableProps {
     patients: Patient[];
@@ -66,7 +57,7 @@ export default function PatientTable({ patients }: PatientTableProps) {
                                 <TableCell>{patient.phone}</TableCell>
                                 <TableCell>{patient.gender === "FEMALE" ? "Nữ" : patient.gender === "MALE" ? "Nam" : "Khác"}</TableCell>
                                 <TableCell>
-                                    {formatDate(patient.date_of_birth)}
+                                    {formatVNDate(patient.date_of_birth)}
                                     <div className="text-xs text-muted-foreground">
                                         ({calculateAge(patient.date_of_birth)} tuổi)
                                     </div>

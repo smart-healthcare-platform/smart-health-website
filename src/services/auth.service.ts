@@ -9,17 +9,46 @@ export const authService = {
   login: async (email: string, password: string) => {
     try {
       const res = await apiNoAuth.post('/auth/login', { email, password })
-      
+
       // Check if data exists
       if (!res.data || !res.data.data) {
         console.error('[AUTH SERVICE] Invalid response structure:', res.data)
         throw new Error('Invalid response from server')
       }
-      
+
       return res.data.data
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: unknown; status?: number } }
       throw error
+    }
+  },
+
+  register: async (data: {
+    fullName: string;
+    email: string;
+    phone: string;
+    dateOfBirth: string;
+    gender: string;
+    address: string;
+    password: string;
+  }) => {
+    try {
+      const res = await apiNoAuth.post('/auth/register', data);
+
+      if (!res.data.success || !res.data.data) {
+        throw new Error(res.data.message || 'Đăng ký thất bại');
+      }
+
+      return res.data.data;
+    } catch (error: any) {
+      const axiosErr = error as { response?: { data?: any; status?: number } };
+
+      if (axiosErr.response) {
+        const msg = axiosErr.response.data?.message || "Lỗi đăng ký";
+        throw new Error(msg);
+      }
+
+      throw new Error("Lỗi kết nối server");
     }
   },
   logout: async () => {

@@ -32,7 +32,7 @@ export const formatDateTime = (dateString: string) => {
   return `${datePart} ${timePart}`
 }
 
-export function formatDate(dateStr: string): string {
+export function formatVNDate(dateStr: string): string {
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return ""
 
@@ -50,5 +50,11 @@ export const calculateAge = (dob: string | Date) => {
   return age
 }
 
-
+export function formatDate(date: Date | string): string {
+  const d = new Date(date);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 

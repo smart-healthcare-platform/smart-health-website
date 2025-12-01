@@ -1,8 +1,11 @@
-import { apiNoAuth } from "@/lib/axios"
+import { apiAuth, apiNoAuth } from "@/lib/axios"
 import { TimeSlot, TimeSlotStatus } from "@/types/timeSlot"
-import { Doctor, DoctorDetail } from "@/types/doctor/doctor.type"
+import { Doctor, DoctorCertificate, DoctorDetail, WeeklyAvailability } from "@/types/doctor/doctor.type"
 import { PaginatedResponse } from "@/types/response"
 import { ApiResponse } from "./admin.service"
+import { CreateDoctorDto } from "@/types/doctor/dto/create-doctor.dto"
+import { CreateDoctorCertificateDto } from "@/types/doctor/dto/create-certificate.dto"
+import { WeeklyAvailabilityDto } from "@/types/doctor/dto/create-weekly.dto"
 
 export const doctorService = {
   async getAllDoctors(
@@ -58,7 +61,117 @@ export const doctorService = {
       return [];
     }
 
+  },
+  async createDoctor(doctorData: CreateDoctorDto): Promise<Doctor | null> {
+    try {
+      const res = await apiAuth.post<{ success: boolean; data: Doctor }>('/doctors', doctorData);
+
+      if (!res.data.success) {
+        console.error("Failed to create doctor");
+        return null;
+      }
+
+      return res.data.data;
+    } catch (error) {
+      console.error("Error creating doctor:", error);
+      return null;
+    }
+  },
+
+  async createCertificate(
+    payload: CreateDoctorCertificateDto
+  ): Promise<DoctorCertificate | null> {
+    try {
+      const res = await apiAuth.post<ApiResponse<DoctorCertificate>>(
+        "/doctors/certificates",
+        payload
+      )
+
+      if (!res.data.success) {
+        console.error("Create certificate failed")
+        return null
+      }
+
+      return res.data.data
+    } catch (error) {
+      console.error("Error creating certificate:", error)
+      return null
+    }
+  },
+
+  async createOrUpdateWeeklyAvailability(
+    doctorId: string,
+    weekly: WeeklyAvailabilityDto[]
+  ) {
+    try {
+      const res = await apiAuth.post<ApiResponse<WeeklyAvailability>>(
+        `/doctors/${doctorId}/weekly`,
+        { weekly }
+      );
+
+      if (!res.data.success) {
+        console.error("Failed to update weekly availability");
+        return null;
+      }
+
+      return res.data.data;
+    } catch (error) {
+      console.error("Error updating weekly availability:", error);
+      return null;
+    }
+  },
+
+  async getWeeklySchedule(doctorId: string) {
+    try {
+      const res = await apiAuth.get<ApiResponse<any[]>>(
+        `/doctors/${doctorId}/weekly`
+      );
+
+      if (!res.data.success) {
+        console.error("Failed to fetch weekly schedule");
+        return [];
+      }
+
+      return res.data.data;
+    } catch (error) {
+      console.error("Error fetching weekly schedule:", error);
+      return [];
+    }
+  },
+
+  async getStats(): Promise<{
+    totalDoctors: { value: number; change: number };
+    newThisMonth: { value: number; change: number };
+    averageAge: { value: number; change: number };
+  }> {
+    const res = await apiAuth.get('/doctors/stats');
+
+    if (!res.data.success) {
+      return {
+        totalDoctors: { value: 0, change: 0 },
+        newThisMonth: { value: 0, change: 0 },
+        averageAge: { value: 0, change: 0 },
+      };
+    }
+
+    const { totalDoctors, newThisMonth, averageAge } = res.data.data;
+
+    return {
+      totalDoctors: {
+        value: totalDoctors.value,
+        change: totalDoctors.change,
+      },
+      newThisMonth: {
+        value: newThisMonth.value,
+        change: newThisMonth.change,
+      },
+      averageAge: {
+        value: Math.round(averageAge.value),
+        change: averageAge.change,
+      },
+    };
   }
+
 }
 
 // map API status -> TimeSlotStatus

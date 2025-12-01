@@ -3,23 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowDown, ArrowUp, UserCheck, Users, UserPlus, Clock } from "lucide-react"
 
 interface StatItem {
-  value: number | string
+  value: number
   change: number
 }
 
 interface DoctorStatsCardsProps {
   totalDoctors: StatItem
-  activeToday: StatItem
   newThisMonth: StatItem
-  onLeave: StatItem
+  averageAge: StatItem
 }
 
-export function DoctorStatsCards({ totalDoctors, activeToday, newThisMonth, onLeave }: DoctorStatsCardsProps) {
+export function DoctorStatsCards({ totalDoctors, newThisMonth, averageAge }: DoctorStatsCardsProps) {
   const statsData = [
     { title: "Tổng bác sĩ", value: totalDoctors.value, change: totalDoctors.change, icon: Users },
-    { title: "Hoạt động hôm nay", value: activeToday.value, change: activeToday.change, icon: UserCheck },
     { title: "Bác sĩ mới trong tháng", value: newThisMonth.value, change: newThisMonth.change, icon: UserPlus },
-    { title: "Đang nghỉ", value: onLeave.value, change: onLeave.change, icon: Clock },
+    { title: "Độ tuổi trung bình", value: averageAge.value.toFixed(1), change: averageAge.change, icon: UserCheck },
   ]
 
   return (

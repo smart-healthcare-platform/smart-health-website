@@ -2,7 +2,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, Clock, Eye, Star, Award } from "lucide-react"
-import type { Doctor } from "@/types"
+import { Doctor } from "@/types/doctor/doctor.type"
 
 interface DoctorCardProps {
   doctor: Doctor
@@ -42,11 +42,10 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
         <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
             <Award className="w-4 h-4" />
-            {doctor.degree}
+            Tim mạch
           </span>
         </div>
 
-        <p className="text-sm text-gray-500 mt-2">{doctor.specialty}</p>
       </div>
 
       {/* Experience */}

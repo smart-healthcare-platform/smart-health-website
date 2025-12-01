@@ -1,18 +1,21 @@
+
 import { Gender } from "../patient/enums/patient-gender.enum.dto";
+import { DayOfWeek } from "./dto/create-weekly.dto";
+import { CertificateType } from "./enums/doctor-certificate.type";
 
 export interface Doctor {
     id: string;
     full_name: string;
     display_name: string;
     avatar: string;
-    specialty: string;
     experience_years: number;
     bio: string;
     active: boolean;
     degree: string;
-    phone:string
+    phone: string
     gender: Gender,
-    date_of_birth:string
+    date_of_birth: string,
+    user_id: string
 }
 
 export interface DoctorDetail {
@@ -23,25 +26,13 @@ export interface DoctorDetail {
     gender: string
     date_of_birth: string
     avatar: string
-    specialty: string
     experience_years: number
     bio: string
     active: boolean
     created_at: string
     updated_at: string
     display_name: string
-    certificates: Array<{
-        id: string
-        doctor_id: string
-        type: 'degree' | 'license'
-        title: string
-        field: string | null
-        graduation_year: string | null
-        issued_date: Date | null
-        expiry_date: Date | null
-        certificate_file: string
-        created_at: string
-    }>
+    certificates: DoctorCertificate[];
 
     ratings: Array<{
         id: string
@@ -80,4 +71,43 @@ export interface DoctorDetail {
         created_at: string
         updated_at: string
     }>
+}
+
+export interface DoctorCertificate {
+    id: string;
+
+    doctor: Doctor | null;
+
+
+    type: CertificateType;
+
+    title: string;
+    field: string | null;
+    certificate_number: string | null;
+    graduation_year: number | null;
+
+    issued_date: string | null;
+    expiry_date: string | null;
+
+    issued_by: string | null;
+    description: string | null;
+
+    certificate_file: string | null;
+
+    status: "PENDING" | "APPROVED" | "REJECTED";
+
+    is_verified: boolean;
+
+    verified_at: string | null;
+    verified_by: string | null;
+
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WeeklyAvailability {
+    id: string;
+    day_of_week: DayOfWeek;
+    start_time: string;
+    end_time: string;
 }
