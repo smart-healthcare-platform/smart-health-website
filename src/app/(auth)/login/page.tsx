@@ -7,6 +7,7 @@ import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
 
 import { apiNoAuth } from '@/lib/axios';
+import { handleUserLogin } from '@/lib/auth-helpers';
 // Removed unused imports
 export default function ModernHealthLogin() {
   const [email, setEmail] = useState('');
@@ -17,112 +18,21 @@ export default function ModernHealthLogin() {
 
   const dispatch = useDispatch()
   const router = useRouter()
-  const setCookie = (name: string, value: string, days: number) => {
-    let expires = "";
-    if (days) {
-      const date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
-    console.log(`Cookie set: ${name}=${value}`);
-  };
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+  
     try {
-      const { token, user, refreshToken } = await authService.login(email, password)
-      if (refreshToken) {
-        setCookie('refreshToken', refreshToken, 7);
-        localStorage.setItem("isLogin", "true")
-      }
-      
-      if (user.role === "PATIENT") {
-        const patientRes = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-
-        const patient = patientRes.data.data
-        dispatch(setCredentials({
-          token,
-          user: {
-            ...user,
-            phone: patient.phone,
-            role: "PATIENT",
-            referenceId: patient.id,
-            profile: {
-              fullName: patient.full_name,
-              gender: patient.gender,
-              address: patient.address,
-              dateOfBirth: patient.date_of_birth
-            }
-          }
-        }))
-      } else if (user.role === "DOCTOR") {
-        const doctorRes = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-
-        const doctor = doctorRes.data.data
-        dispatch(setCredentials({
-          token,
-          user: {
-            ...user,
-            role: "DOCTOR",
-            referenceId: doctor.id,
-            profile: {
-              fullName: doctor.full_name,
-              gender: doctor.gender,
-              specialty: doctor.specialty,
-              dateOfBirth: doctor.date_of_birth,
-              yearsOfExperience: doctor.experience_years,
-              avatar: doctor.avatar
-            }
-          }
-        }))
-      } else if (user.role === "RECEPTIONIST") {
-        // RECEPTIONIST doesn't need additional profile fetch
-        dispatch(setCredentials({
-          token,
-          user: {
-            ...user,
-            role: "RECEPTIONIST",
-            referenceId: user.id,
-            profile: {
-              fullName: user.username || "Lễ tân",
-              employeeId: user.id,
-              department: "Front Desk",
-              shift: "full-time",
-            }
-          }
-        }))
-      } else if (user.role === "ADMIN") {
-        dispatch(setCredentials({
-          token,
-          user: {
-            ...user,
-          }
-        }))
-      }
-      
-      // Redirect
-      const params = new URLSearchParams(window.location.search)
-      const redirect = params.get("redirect")
-
-      if (redirect) router.push(redirect)
-      else if (user.role === "ADMIN") router.push("/admin")
-      else if (user.role === "DOCTOR") router.push("/doctor")
-      else if (user.role === "RECEPTIONIST") router.push("/receptionist")
-      else router.push("/")
+      const loginResult = await authService.login(email, password);
+      await handleUserLogin(loginResult, dispatch, router);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } }
-      setError(error.response?.data?.message || "Đăng nhập thất bại")
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      setError(errorObj.response?.data?.message || 'Đăng nhập thất bại');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
 
   return (

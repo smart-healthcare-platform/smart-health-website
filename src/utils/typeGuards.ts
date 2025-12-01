@@ -1,4 +1,4 @@
-import { User } from "@/types/auth";
+import { User } from "@/types/auth/auth-type";
 
 
 export function isDoctor(user: User | null | undefined): user is Extract<User, { role: "DOCTOR" }> {

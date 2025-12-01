@@ -3,6 +3,13 @@
  * Provides helper functions for managing authentication tokens and making authenticated API calls
  */
 
+import { User } from "@/types/auth/auth-type";
+import { isDoctor, isPatient } from "@/utils/typeGuards";
+import { Dispatch } from "@reduxjs/toolkit";
+import { apiNoAuth } from "./axios";
+import { setCredentials } from "@/redux/slices/authSlice";
+import Cookies from 'js-cookie'
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v1';
 
 /**
@@ -242,3 +249,108 @@ export const api = {
 export function getApiUrl(): string {
   return API_URL;
 }
+
+
+export function getPatientProfile(user: User | null | undefined) {
+  return isPatient(user) ? user.profile : null;
+}
+
+export function getDoctorProfile(user: User | null | undefined) {
+  return isDoctor(user) ? user.profile : null;
+}
+
+interface LoginResult {
+  token: string;
+  refreshToken?: string;
+  user: User;
+}
+
+export const handleUserLogin = async (
+  loginResult: LoginResult,
+  dispatch: Dispatch,
+  router: AppRouterInstance
+) => {
+  const { token, refreshToken, user } = loginResult;
+
+  if (refreshToken) {
+    Cookies.set('refreshToken', refreshToken, { expires: 7 });
+    localStorage.setItem('isLogin', 'true');
+  }
+
+  let profileData: any = {};
+
+  if (user.role === 'PATIENT') {
+    const res = await apiNoAuth.get(`/patients/by-user/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const patient = res.data.data;
+    profileData = {
+      fullName: patient.full_name,
+      gender: patient.gender,
+      address: patient.address,
+      dateOfBirth: patient.date_of_birth,
+    };
+    dispatch(setCredentials({
+      token,
+      user: {
+        ...user,
+        phone: patient.phone,
+        role: 'PATIENT',
+        referenceId: patient.id,
+        profile: profileData,
+      },
+    }));
+  } else if (user.role === 'DOCTOR') {
+    const res = await apiNoAuth.get(`/doctors/by-user/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const doctor = res.data.data;
+    profileData = {
+      fullName: doctor.full_name,
+      gender: doctor.gender,
+      specialty: doctor.specialty,
+      dateOfBirth: doctor.date_of_birth,
+      yearsOfExperience: doctor.experience_years,
+      avatar: doctor.avatar,
+    };
+    dispatch(setCredentials({
+      token,
+      user: {
+        ...user,
+        role: 'DOCTOR',
+        referenceId: doctor.id,
+        profile: profileData,
+      },
+    }));
+  } else if (user.role === 'RECEPTIONIST') {
+    profileData = {
+      fullName: user.username || 'Lễ tân',
+      employeeId: user.id,
+      department: 'Front Desk',
+      shift: 'full-time',
+    };
+    dispatch(setCredentials({
+      token,
+      user: {
+        ...user,
+        role: 'RECEPTIONIST',
+        referenceId: user.id,
+        profile: profileData,
+      },
+    }));
+  } else if (user.role === 'ADMIN') {
+    dispatch(setCredentials({
+      token,
+      user,
+    }));
+  }
+
+  // Redirect
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+  if (redirect) router.push(redirect);
+  else if (user.role === 'ADMIN') router.push('/admin');
+  else if (user.role === 'DOCTOR') router.push('/doctor');
+  else if (user.role === 'RECEPTIONIST') router.push('/receptionist');
+  else router.push('/');
+};

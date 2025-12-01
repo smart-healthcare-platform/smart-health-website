@@ -7,6 +7,7 @@ import { DoctorFilters } from "./doctor-filters"
 import { DoctorTable } from "./doctor-table"
 import Pagination from "../../common/pagination"
 import { doctorService } from "@/services/doctor.service"
+import AddDoctorDialog from "./doctor-create-dialog"
 
 export function DoctorManagement() {
   const [doctors, setDoctors] = useState<any[]>([])
@@ -16,6 +17,17 @@ export function DoctorManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [loading, setLoading] = useState(false)
+  const [openAddDialog, setOpenAddDialog] = useState(false)
+  const [stats, setStats] = useState({
+    totalDoctors: { value: 0, change: 0 },
+    newThisMonth: { value: 0, change: 0 },
+    averageAge: { value: 0, change: 0 },
+  });
+
+  const fetchStats = async () => {
+    const res = await doctorService.getStats();
+    setStats(res);
+  };
 
   const fetchDoctors = async () => {
     setLoading(true)
@@ -27,16 +39,14 @@ export function DoctorManagement() {
   }
 
   useEffect(() => {
-    fetchDoctors()
-  }, [page, searchTerm])
+    fetchDoctors();
+  }, [page, searchTerm]);
 
-  // Dữ liệu thống kê giả lập, bạn có thể lấy từ API nếu có
-  const stats = {
-    totalDoctors: { value: totalDoctors, change: 2.1 },
-    activeToday: { value: 89, change: 5.3 },
-    newThisMonth: { value: 8, change: 12.5 },
-    onLeave: { value: 12, change: -1.2 },
-  }
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -51,19 +61,17 @@ export function DoctorManagement() {
             <Download className="h-4 w-4 mr-2" />
             Xuất dữ liệu
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setOpenAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Thêm bác sĩ
           </Button>
         </div>
       </div>
 
-
       <DoctorStatsCards
         totalDoctors={stats.totalDoctors}
-        activeToday={stats.activeToday}
         newThisMonth={stats.newThisMonth}
-        onLeave={stats.onLeave}
+        averageAge={stats.averageAge}
       />
 
       <DoctorFilters
@@ -79,12 +87,19 @@ export function DoctorManagement() {
         <DoctorTable doctors={doctors} />
       )}
 
-      {/* Pagination */}
       <Pagination
         page={page}
         limit={limit}
         total={totalDoctors}
         setPage={setPage}
+      />
+
+      <AddDoctorDialog
+        isOpen={openAddDialog}
+        onClose={() => setOpenAddDialog(false)}
+        onSave={() => {
+          fetchDoctors(); // reload danh sách sau khi thêm bác sĩ
+        }}
       />
     </div>
   )
