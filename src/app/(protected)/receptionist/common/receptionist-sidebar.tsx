@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Clock,
 } from "lucide-react";
 
 const management = [
@@ -38,9 +39,14 @@ const management = [
     badge: "12",
   },
   {
-    name: "Thanh toán",
+    name: "Thanh toán hôm nay",
     href: "/receptionist/payments",
     icon: CreditCard,
+  },
+  {
+    name: "Thanh toán chờ xử lý",
+    href: "/receptionist/payments/pending",
+    icon: Clock,
   },
   {
     name: "Tìm kiếm",

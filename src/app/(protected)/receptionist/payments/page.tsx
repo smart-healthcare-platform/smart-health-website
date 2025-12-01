@@ -33,90 +33,37 @@ import {
   DollarSign,
   TrendingUp,
   CheckCircle2,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
-
-interface Payment {
-  id: string;
-  paymentCode: string;
-  appointmentId: string;
-  patientName: string;
-  amount: number;
-  paymentType: string;
-  paymentMethod: string;
-  status: string;
-  paidAt: string;
-  notes?: string;
-}
+import { billingService, type PaymentResponse, type PaymentStatus } from "@/services/billing.service";
+import { CashPaymentDialog } from "@/components/receptionist/cash-payment-dialog";
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<PaymentResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [cashPaymentDialogOpen, setCashPaymentDialogOpen] = useState(false);
 
-  // Mock data - thay bằng API call thực
+  // Fetch payments from real API
   const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       
-      // TODO: Replace with actual API call
-      // const response = await api.get('/billings/receptionist/today', {
-      //   params: { status: statusFilter !== 'all' ? statusFilter : undefined }
-      // });
+      // Call real API to get today's payments
+      const statusParam = statusFilter !== "all" ? (statusFilter as PaymentStatus) : undefined;
+      const data = await billingService.getTodayPayments(statusParam);
       
-      // Mock data
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      setPayments(data);
       
-      const mockPayments: Payment[] = [
-        {
-          id: "pay-001",
-          paymentCode: "CASH-2025-001",
-          appointmentId: "apt-001",
-          patientName: "Nguyễn Văn A",
-          amount: 200000,
-          paymentType: "CONSULTATION",
-          paymentMethod: "CASH",
-          status: "COMPLETED",
-          paidAt: new Date().toISOString(),
-          notes: "Thanh toán phí khám",
-        },
-        {
-          id: "pay-002",
-          paymentCode: "CASH-2025-002",
-          appointmentId: "apt-002",
-          patientName: "Trần Thị B",
-          amount: 350000,
-          paymentType: "MEDICATION",
-          paymentMethod: "CASH",
-          status: "COMPLETED",
-          paidAt: new Date().toISOString(),
-        },
-        {
-          id: "pay-003",
-          paymentCode: "CASH-2025-003",
-          appointmentId: "apt-003",
-          patientName: "Lê Văn C",
-          amount: 200000,
-          paymentType: "CONSULTATION",
-          paymentMethod: "CASH",
-          status: "COMPLETED",
-          paidAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ];
-
-      // Apply filter
-      let filtered = mockPayments;
-      if (statusFilter !== "all") {
-        filtered = mockPayments.filter((p) => p.status === statusFilter);
-      }
-
-      setPayments(filtered);
+      console.log("✅ Fetched payments:", data);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách thanh toán:", err);
       toast.error("Không thể tải danh sách thanh toán");
+      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -128,16 +75,16 @@ export default function PaymentsPage() {
 
   // Calculate statistics
   const stats = {
-    totalAmount: payments.reduce((sum, p) => sum + p.amount, 0),
+    totalAmount: payments.reduce((sum, p) => sum + Number(p.amount), 0),
     totalCount: payments.length,
     completedCount: payments.filter((p) => p.status === "COMPLETED").length,
   };
 
   const getPaymentTypeBadge = (type: string) => {
     const typeMap: Record<string, { label: string; className: string }> = {
-      CONSULTATION: { label: "Phí khám", className: "bg-blue-500" },
-      MEDICATION: { label: "Tiền thuốc", className: "bg-green-500" },
-      PROCEDURE: { label: "Thủ thuật", className: "bg-purple-500" },
+      APPOINTMENT_FEE: { label: "Phí khám", className: "bg-blue-500" },
+      LAB_TEST: { label: "Xét nghiệm", className: "bg-green-500" },
+      PRESCRIPTION: { label: "Đơn thuốc", className: "bg-purple-500" },
       OTHER: { label: "Khác", className: "bg-gray-500" },
     };
 
@@ -175,12 +122,21 @@ export default function PaymentsPage() {
             Danh sách các giao dịch thanh toán hôm nay
           </p>
         </div>
-        <Button onClick={fetchPayments} disabled={loading}>
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
-          Làm mới
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setCashPaymentDialogOpen(true)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo thanh toán
+          </Button>
+          <Button onClick={fetchPayments} disabled={loading} variant="outline">
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* Statistics */}
@@ -296,18 +252,18 @@ export default function PaymentsPage() {
                 </TableHeader>
                 <TableBody>
                   {payments.map((payment) => (
-                    <TableRow key={payment.id}>
+                    <TableRow key={payment.paymentCode}>
                       <TableCell className="font-mono text-xs">
                         {payment.paymentCode}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {payment.patientName}
+                        {payment.referenceId}
                       </TableCell>
                       <TableCell>
                         {getPaymentTypeBadge(payment.paymentType)}
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {payment.amount.toLocaleString("vi-VN")} VNĐ
+                        {Number(payment.amount).toLocaleString("vi-VN")} VNĐ
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
@@ -316,7 +272,7 @@ export default function PaymentsPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
                       <TableCell>
-                        {format(new Date(payment.paidAt), "HH:mm:ss")}
+                        {payment.paidAt ? format(new Date(payment.paidAt), "HH:mm:ss") : format(new Date(payment.createdAt), "HH:mm:ss")}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -366,9 +322,9 @@ export default function PaymentsPage() {
 
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Bệnh nhân:</span>
+                  <span className="text-muted-foreground">Mã tham chiếu:</span>
                   <span className="font-medium">
-                    {selectedPayment.patientName}
+                    {selectedPayment.referenceId}
                   </span>
                 </div>
 
@@ -380,7 +336,7 @@ export default function PaymentsPage() {
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-muted-foreground">Số tiền:</span>
                   <span className="font-bold text-lg text-green-600">
-                    {selectedPayment.amount.toLocaleString("vi-VN")} VNĐ
+                    {Number(selectedPayment.amount).toLocaleString("vi-VN")} VNĐ
                   </span>
                 </div>
 
@@ -400,18 +356,18 @@ export default function PaymentsPage() {
                   <span className="text-muted-foreground">Thời gian:</span>
                   <span>
                     {format(
-                      new Date(selectedPayment.paidAt),
+                      new Date(selectedPayment.paidAt || selectedPayment.createdAt),
                       "HH:mm:ss - dd/MM/yyyy"
                     )}
                   </span>
                 </div>
 
-                {selectedPayment.notes && (
+                {selectedPayment.transactionId && (
                   <div className="py-2">
                     <p className="text-sm text-muted-foreground mb-1">
-                      Ghi chú:
+                      Mã giao dịch:
                     </p>
-                    <p className="text-sm">{selectedPayment.notes}</p>
+                    <p className="text-sm font-mono">{selectedPayment.transactionId}</p>
                   </div>
                 )}
               </div>
@@ -435,6 +391,16 @@ export default function PaymentsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Cash Payment Dialog */}
+      <CashPaymentDialog
+        open={cashPaymentDialogOpen}
+        onOpenChange={setCashPaymentDialogOpen}
+        onSuccess={() => {
+          toast.success("Thanh toán tiền mặt thành công!");
+          fetchPayments();
+        }}
+      />
     </div>
   );
 }
