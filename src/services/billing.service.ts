@@ -123,10 +123,16 @@ export const billingService = {
    * Lấy payments hôm nay
    */
   async getTodayPayments(status?: PaymentStatus): Promise<PaymentResponse[]> {
+    console.log(`🌐 [BILLING SERVICE] Calling GET /billings/today with status: ${status || 'undefined'}`);
+    
     const response = await apiAuth.get<PaymentResponse[]>(
       "/billings/today",
       { params: { status } }
     );
+    
+    console.log(`✅ [BILLING SERVICE] Received ${response.data.length} payments from API`);
+    console.log(`   Response data:`, response.data);
+    
     return response.data;
   },
 
