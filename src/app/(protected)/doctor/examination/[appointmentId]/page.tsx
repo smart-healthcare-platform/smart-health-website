@@ -100,9 +100,13 @@ export default function ExaminationPage() {
   }
 
   const createLabTestOrders = async (medicalRecordId: string) => {
-    if (!examinationData.labTests?.length || !user?.referenceId) return
+    if (!examinationData.labTests?.length || !user?.referenceId) {
+      console.log('⏭️  Skipping lab test orders - no lab tests selected or user not found')
+      return
+    }
     
-    console.log(`Creating ${examinationData.labTests.length} lab test orders with automatic payment...`)
+    console.log(`🧪 Creating ${examinationData.labTests.length} lab test orders with automatic payment...`)
+    console.log('   Lab tests to create:', examinationData.labTests.map(t => ({ name: t.name, type: t.type, id: t.id })))
     
     for (const labTest of examinationData.labTests) {
       const payload: CreateLabTestOrderPayload = {
@@ -112,15 +116,29 @@ export default function ExaminationPage() {
         labTestId: labTest.id, // Include labTestId for price lookup
       }
       
+      console.log(`📤 Sending create lab test order request for "${labTest.name}"...`)
+      console.log('   Payload:', payload)
+      
       try {
         // Use createWithPayment endpoint to automatically create payment
         const order = await appointmentService.createLabTestOrderWithPayment(payload)
-        console.log(`✅ Lab test order created: ${order.id}, Payment: ${order.paymentId || 'PENDING'}`)
-      } catch (error) {
-        console.error(`❌ Failed to create lab test order for ${labTest.name}:`, error)
+        console.log(`✅ Lab test order created successfully!`)
+        console.log(`   Order ID: ${order.id}`)
+        console.log(`   Payment ID: ${order.paymentId || 'NOT CREATED'}`, order.paymentId ? '✅' : '⚠️')
+        console.log(`   Full response:`, order)
+      } catch (error: any) {
+        console.error(`❌ Failed to create lab test order for "${labTest.name}"`)
+        console.error('   Error:', error)
+        console.error('   Error message:', error.message)
+        if (error.response) {
+          console.error('   Response status:', error.response.status)
+          console.error('   Response data:', error.response.data)
+        }
         // Continue with other lab tests even if one fails
       }
     }
+    
+    console.log('🏁 Finished creating all lab test orders')
   }
 
   const handleComplete = async () => {
