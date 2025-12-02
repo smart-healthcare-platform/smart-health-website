@@ -20,6 +20,7 @@ import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
+import { BulkPaymentDialog } from "@/components/receptionist/BulkPaymentDialog";
 import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function CheckInPage() {
@@ -33,6 +34,7 @@ export default function CheckInPage() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked">("unchecked");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
 
   // Fetch appointments hôm nay
   const fetchAppointments = useCallback(async () => {
@@ -374,14 +376,29 @@ export default function CheckInPage() {
                       </Button>
                     )}
 
-                  {/* ✅ NÚT THU TIỀN - Chỉ hiện nếu chưa thanh toán */}
-                  {selectedAppointment.paymentStatus === "UNPAID" && (
+                  {/* 🆕 NÚT THANH TOÁN TỔNG HỢP - Ưu tiên hàng đầu */}
+                  {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
+                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS ||
+                    selectedAppointment.status === AppointmentStatus.COMPLETED) && (
+                    <Button 
+                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold shadow-lg"
+                      onClick={() => setBulkPaymentDialogOpen(true)}
+                    >
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Thu tiền tổng hợp
+                    </Button>
+                  )}
+
+                  {/* ⚠️ NÚT THU TIỀN ĐƠN LẺ - Chỉ cho appointment chưa check-in */}
+                  {selectedAppointment.paymentStatus === "UNPAID" && 
+                   selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
+                   selectedAppointment.status !== AppointmentStatus.IN_PROGRESS && (
                     <Button 
                       className="w-full bg-green-600 hover:bg-green-700"
                       onClick={() => setPaymentDialogOpen(true)}
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
-                      Thu tiền (Cash/MOMO/VNPAY)
+                      Thu phí khám trước
                     </Button>
                   )}
 
@@ -402,12 +419,17 @@ export default function CheckInPage() {
                   )}
                   
                   {/* ✅ GỢI Ý THANH TOÁN SAU KHÁM */}
-                  {selectedAppointment.paymentStatus === "UNPAID" && 
-                   (selectedAppointment.status === AppointmentStatus.CHECKED_IN || selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
-                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                      <p className="text-sm text-orange-700">
-                        💡 <strong>Gợi ý:</strong> Thu tiền sau khi khám để tính đúng tổng chi phí
+                  {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
+                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border-2 border-blue-300">
+                      <p className="text-sm font-semibold text-blue-700 mb-2">
+                        💡 Quy trình thanh toán hiện đại
                       </p>
+                      <ul className="text-sm text-blue-600 space-y-1 ml-4">
+                        <li>✓ Bệnh nhân đã check-in thành công</li>
+                        <li>✓ Bác sĩ đang khám và chỉ định</li>
+                        <li>✓ Sử dụng <strong>"Thu tiền tổng hợp"</strong> để thu tất cả chi phí một lần</li>
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -427,6 +449,21 @@ export default function CheckInPage() {
           amount={parseFloat(selectedAppointment.consultationFee?.toString() || "200000")}
           onSuccess={() => {
             toast.success("Thanh toán thành công!");
+            fetchAppointments();
+            setSelectedAppointment(null);
+          }}
+        />
+      )}
+
+      {/* 🆕 Bulk Payment Dialog - Thu tiền tổng hợp */}
+      {selectedAppointment && (
+        <BulkPaymentDialog
+          open={bulkPaymentDialogOpen}
+          onOpenChange={setBulkPaymentDialogOpen}
+          appointmentId={selectedAppointment.id}
+          patientName={selectedAppointment.patientName || "Bệnh nhân"}
+          onSuccess={() => {
+            toast.success("Thanh toán tổng hợp thành công!");
             fetchAppointments();
             setSelectedAppointment(null);
           }}
