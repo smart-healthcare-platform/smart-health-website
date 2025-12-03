@@ -2,7 +2,7 @@
 
 export type PaymentMethodType = "MOMO" | "VNPAY" | "CASH" | "COD";
 export type PaymentType = "APPOINTMENT_FEE" | "LAB_TEST" | "PRESCRIPTION" | "OTHER";
-export type PaymentStatus = "PENDING" | "PAID" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED" | "UNPAID";
+export type PaymentStatus = "PENDING" | "PROCESSING" | "PAID" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED" | "UNPAID";
 
 /**
  * Single payment item in outstanding payments list

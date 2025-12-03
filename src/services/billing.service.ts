@@ -25,7 +25,7 @@ export interface PageResponse<T> {
 
 export type PaymentMethodType = "MOMO" | "VNPAY" | "CASH" | "COD";
 export type PaymentType = "APPOINTMENT_FEE" | "LAB_TEST" | "PRESCRIPTION" | "OTHER";
-export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED";
+export type PaymentStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED";
 
 export interface CreatePaymentRequest {
   paymentType: PaymentType;

@@ -324,7 +324,7 @@ export default function PendingPaymentsPage() {
                       <TableCell className="text-right">
                         <Badge variant="outline">
                           {apt.paymentInfo?.payments.filter(
-                            (p) => p.status === "PENDING" || p.status === "UNPAID"
+                            (p) => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
                           ).length || 0}{" "}
                           khoản
                         </Badge>

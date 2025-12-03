@@ -47,7 +47,7 @@ export default function PaymentDetailPage() {
     if (!paymentData) return;
 
     const unpaidPayments = paymentData.payments.filter(
-      (p) => p.status === "PENDING" || p.status === "UNPAID"
+      (p) => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
     );
 
     if (unpaidPayments.length === 0) {
@@ -66,7 +66,7 @@ export default function PaymentDetailPage() {
     if (!paymentData) return;
 
     const unpaidPayments = paymentData.payments.filter(
-      (p) => p.status === "PENDING" || p.status === "UNPAID"
+      (p) => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
     );
 
     const paymentCodes = unpaidPayments.map((p) => p.paymentCode);

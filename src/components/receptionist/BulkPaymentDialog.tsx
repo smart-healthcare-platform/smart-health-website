@@ -11,19 +11,19 @@ import { toast } from "react-toastify";
 import { billingService, type PaymentMethodType } from "@/services/billing.service";
 import type { OutstandingPaymentResponse, BulkPaymentRequest } from "@/types/billing";
 
+import type { Appointment } from "@/types/appointment/appointment.type";
+
 interface BulkPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointmentId: string;
-  patientName: string;
+  appointment: Appointment;
   onSuccess?: () => void;
 }
 
 export function BulkPaymentDialog({
   open,
   onOpenChange,
-  appointmentId,
-  patientName,
+  appointment,
   onSuccess,
 }: BulkPaymentDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -33,13 +33,26 @@ export function BulkPaymentDialog({
 
   // Fetch outstanding payments khi dialog mở
   const fetchOutstandingPayments = useCallback(async () => {
-    if (!appointmentId) return;
+    if (!appointment) return;
     
     try {
       setFetching(true);
-      console.log(`🔍 [BULK PAYMENT] Fetching outstanding payments for appointment: ${appointmentId}`);
       
-      const data = await billingService.getOutstandingPayments([appointmentId]);
+      // Build referenceIds array: appointmentId + all labTestOrder IDs
+      const referenceIds = [appointment.id];
+      
+      if (appointment.labTestOrders && appointment.labTestOrders.length > 0) {
+        const labTestOrderIds = appointment.labTestOrders.map(order => order.id);
+        referenceIds.push(...labTestOrderIds);
+        
+        console.log(`🔍 [BULK PAYMENT] Fetching outstanding payments for:
+  - Appointment: ${appointment.id}
+  - Lab Test Orders (${labTestOrderIds.length}): ${labTestOrderIds.join(', ')}`);
+      } else {
+        console.log(`🔍 [BULK PAYMENT] Fetching outstanding payments for appointment: ${appointment.id} (no lab tests)`);
+      }
+      
+      const data = await billingService.getOutstandingPayments(referenceIds);
       
       console.log(`✅ [BULK PAYMENT] Outstanding data:`, data);
       setOutstandingData(data);
@@ -49,7 +62,7 @@ export function BulkPaymentDialog({
     } finally {
       setFetching(false);
     }
-  }, [appointmentId]);
+  }, [appointment]);
 
   useEffect(() => {
     if (open) {
@@ -61,7 +74,7 @@ export function BulkPaymentDialog({
     if (!outstandingData) return;
     
     const unpaidPayments = outstandingData.payments.filter(
-      p => p.status === "PENDING" || p.status === "UNPAID"
+      p => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
     );
     
     if (unpaidPayments.length === 0) {
@@ -112,7 +125,7 @@ export function BulkPaymentDialog({
   };
 
   const unpaidPayments = outstandingData?.payments.filter(
-    p => p.status === "PENDING" || p.status === "UNPAID"
+    p => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
   ) || [];
   
   const paidPayments = outstandingData?.payments.filter(
@@ -142,7 +155,7 @@ export function BulkPaymentDialog({
             {/* Patient Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-muted-foreground">Bệnh nhân</p>
-              <p className="text-lg font-bold text-blue-700">{patientName}</p>
+              <p className="text-lg font-bold text-blue-700">{appointment.patientName || "Bệnh nhân"}</p>
             </div>
 
             {/* Outstanding Payments */}
