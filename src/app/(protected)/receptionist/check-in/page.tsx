@@ -65,7 +65,8 @@ export default function CheckInPage() {
       filtered = data.filter(
         (apt) =>
           apt.status === AppointmentStatus.CONFIRMED ||
-          apt.status === AppointmentStatus.PENDING
+          apt.status === AppointmentStatus.PENDING ||
+          apt.status === AppointmentStatus.CHECKED_IN
       );
     }
 
@@ -460,8 +461,7 @@ export default function CheckInPage() {
         <BulkPaymentDialog
           open={bulkPaymentDialogOpen}
           onOpenChange={setBulkPaymentDialogOpen}
-          appointmentId={selectedAppointment.id}
-          patientName={selectedAppointment.patientName || "Bệnh nhân"}
+          appointment={selectedAppointment}
           onSuccess={() => {
             toast.success("Thanh toán tổng hợp thành công!");
             fetchAppointments();
