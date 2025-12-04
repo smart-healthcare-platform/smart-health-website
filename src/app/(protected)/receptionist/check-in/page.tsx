@@ -413,21 +413,6 @@ export default function CheckInPage() {
                   </div>
                 </div>
 
-                {/* Debug Info */}
-              <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-xs space-y-1">
-                <div className="font-bold text-yellow-800">🔍 Debug Info:</div>
-                <div><strong>Status:</strong> {selectedAppointment.status}</div>
-                <div><strong>Payment Status:</strong> {selectedAppointment.paymentStatus}</div>
-                <div><strong>Checked In:</strong> {selectedAppointment.checkedInAt ? 'Yes' : 'No'}</div>
-                <div><strong>Lab Tests:</strong> {selectedAppointment.labTestOrders?.length || 0}</div>
-                <div className="text-yellow-700 mt-2">
-                  {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
-                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && 
-                   selectedAppointment.paymentStatus !== "PAID" 
-                    ? "✅ Nút thanh toán SHOULD show" 
-                    : "❌ Nút thanh toán will NOT show"}
-                </div>
-              </div>
 
               {/* Actions */}
               <div className="space-y-3 pt-4 border-t">
@@ -489,22 +474,8 @@ export default function CheckInPage() {
                         </p>
                       )}
                     </div>
-                  )}
-                  
-                  {/* ✅ GỢI Ý THANH TOÁN SAU KHÁM */}
-                  {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
-                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border-2 border-blue-300">
-                      <p className="text-sm font-semibold text-blue-700 mb-2">
-                        💡 Quy trình thanh toán hiện đại
-                      </p>
-                      <ul className="text-xs text-blue-600 space-y-1">
-                        <li>✅ Bệnh nhân check-in trước</li>
-                        <li>✅ Khám bệnh và chỉ định xét nghiệm (nếu cần)</li>
-                        <li>✅ Thu phí tổng hợp sau khi hoàn tất</li>
-                      </ul>
-                    </div>
-                  )}
+                  )}                
+          
                 </div>
               </div>
             )}
