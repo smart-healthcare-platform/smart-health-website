@@ -58,20 +58,10 @@ export function BulkPaymentDialog({
       
       const referenceIds = getReferenceIds();
       
-      if (appointment.labTestOrders && appointment.labTestOrders.length > 0) {
-        console.log(`🔍 [BULK PAYMENT] Fetching outstanding payments for:
-  - Appointment: ${appointment.id}
-  - Lab Test Orders (${appointment.labTestOrders.length}): ${appointment.labTestOrders.map(o => o.id).join(', ')}`);
-      } else {
-        console.log(`🔍 [BULK PAYMENT] Fetching outstanding payments for appointment: ${appointment.id} (no lab tests)`);
-      }
-      
       const data = await billingService.getOutstandingPayments(referenceIds);
-      
-      console.log(`✅ [BULK PAYMENT] Outstanding data:`, data);
       setOutstandingData(data);
     } catch (err) {
-      console.error("❌ [BULK PAYMENT] Error fetching outstanding payments:", err);
+      console.error("[BulkPaymentDialog] Error fetching outstanding payments:", err);
       toast.error("Không thể tải thông tin thanh toán");
     } finally {
       setFetching(false);
@@ -103,8 +93,6 @@ export function BulkPaymentDialog({
 
   // Polling function để check payment status
   const startPollingPaymentStatus = useCallback((paymentId: number) => {
-    console.log(`🔄 [COMPOSITE PAYMENT] Starting to poll payment status for ID: ${paymentId}`);
-    
     // Clear existing interval nếu có
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
@@ -125,7 +113,6 @@ export function BulkPaymentDialog({
 
       try {
         const payment = await billingService.getPaymentStatus(paymentId);
-        console.log(`🔄 Poll ${pollCount}: Payment status = ${payment.status}`);
 
         if (payment.status === "COMPLETED") {
           clearInterval(pollingIntervalRef.current!);
@@ -168,12 +155,6 @@ export function BulkPaymentDialog({
       // Nếu là thanh toán online (MOMO/VNPAY), dùng composite payment
       if (paymentMethod === "MOMO" || paymentMethod === "VNPAY") {
         const referenceIds = getReferenceIds();
-        
-        console.log(`💳 [COMPOSITE PAYMENT] Creating composite payment...`);
-        console.log(`   Appointment ID: ${appointment.id}`);
-        console.log(`   Reference IDs (${referenceIds.length}): ${referenceIds.join(', ')}`);
-        console.log(`   Payment method: ${paymentMethod}`);
-        console.log(`   Total amount: ${outstandingData.totalUnpaid}`);
 
         const compositeResponse = await billingService.createCompositePayment({
           appointmentId: appointment.id,
@@ -181,8 +162,6 @@ export function BulkPaymentDialog({
           paymentMethod: paymentMethod,
           description: `Thanh toán tổng hợp cho lịch khám ${appointment.id}`,
         });
-
-        console.log(`✅ [COMPOSITE PAYMENT] Created:`, compositeResponse);
         
         setCompositePayment(compositeResponse);
         setShowQrCode(true);
@@ -198,11 +177,6 @@ export function BulkPaymentDialog({
         toast.info("Vui lòng hoàn tất thanh toán trên trang thanh toán đã mở");
       } else {
         // Thanh toán tiền mặt - dùng bulk payment như cũ
-        console.log(`💳 [BULK PAYMENT] Processing cash payment...`);
-        console.log(`   Payment method: ${paymentMethod}`);
-        console.log(`   Total amount: ${outstandingData.totalUnpaid}`);
-        console.log(`   Payment codes:`, unpaidPayments.map(p => p.paymentCode));
-
         const request: BulkPaymentRequest = {
           paymentCodes: unpaidPayments.map(p => p.paymentCode),
           paymentMethod: paymentMethod,
@@ -211,15 +185,13 @@ export function BulkPaymentDialog({
 
         const result = await billingService.processBulkPayment(request);
         
-        console.log(`✅ [BULK PAYMENT] Success:`, result);
-        
         toast.success(`Thanh toán thành công ${Number(result.totalAmount).toLocaleString("vi-VN")} VNĐ!`);
         
         onOpenChange(false);
         onSuccess?.();
       }
     } catch (err) {
-      console.error("❌ [PAYMENT] Error:", err);
+      console.error("[BulkPaymentDialog] Payment error:", err);
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || "Thanh toán thất bại");
     } finally {

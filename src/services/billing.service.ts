@@ -99,8 +99,6 @@ export const billingService = {
       { paymentMethod: request.paymentMethod }
     );
     
-    console.log("🔍 Create payment response from backend:", response.data);
-    
     if (!response.data.success) {
       throw new Error("Failed to create payment");
     }
@@ -116,8 +114,6 @@ export const billingService = {
       referenceId: response.data.appointmentId,
       createdAt: new Date().toISOString(),
     };
-    
-    console.log("✅ Mapped payment object:", mappedPayment);
     
     return mappedPayment;
   },
@@ -149,15 +145,10 @@ export const billingService = {
    * Lấy payments hôm nay
    */
   async getTodayPayments(status?: PaymentStatus): Promise<PaymentResponse[]> {
-    console.log(`🌐 [BILLING SERVICE] Calling GET /billings/today with status: ${status || 'undefined'}`);
-    
     const response = await apiAuth.get<PaymentResponse[]>(
       "/billings/today",
       { params: { status } }
     );
-    
-    console.log(`✅ [BILLING SERVICE] Received ${response.data.length} payments from API`);
-    console.log(`   Response data:`, response.data);
     
     return response.data;
   },
@@ -230,14 +221,11 @@ export const billingService = {
    * Tất cả các khoản phí (appointment fee + lab tests) được gộp vào một URL thanh toán
    */
   async createCompositePayment(request: CompositePaymentRequest): Promise<CompositePaymentResponse> {
-    console.log('🌐 [BILLING SERVICE] Creating composite payment for appointment:', request.appointmentId);
-    
     const response = await apiAuth.post<CompositePaymentResponse>(
       "/billings/composite-payment",
       request
     );
     
-    console.log('✅ [BILLING SERVICE] Composite payment created:', response.data);
     return response.data;
   },
 
