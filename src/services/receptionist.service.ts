@@ -28,6 +28,33 @@ export interface CashPaymentResponse {
   paidAt: string;
 }
 
+export interface PaymentTypeBreakdown {
+  paymentType: string;
+  revenue: number;
+  transactionCount: number;
+  percentage: number;
+}
+
+export interface PaymentMethodBreakdown {
+  paymentMethod: string;
+  revenue: number;
+  transactionCount: number;
+  percentage: number;
+}
+
+export interface DailyStatistics {
+  date: string;
+  totalRevenue: number;
+  totalTransactions: number;
+  pendingTransactions: number;
+  failedTransactions: number;
+  paymentTypeBreakdown: PaymentTypeBreakdown[];
+  paymentMethodBreakdown: PaymentMethodBreakdown[];
+  cashRevenue: number;
+  onlineRevenue: number;
+  averageTransactionAmount: number;
+}
+
 export const receptionistService = {
   /**
    * Lấy danh sách appointments trong ngày
@@ -120,5 +147,23 @@ export const receptionistService = {
       notes ? { notes } : {}
     );
     return response.data;
+  },
+
+  /**
+   * Lấy thống kê doanh thu theo ngày cho receptionist
+   * @param date - Ngày cần thống kê (YYYY-MM-DD), mặc định là hôm nay
+   */
+  getDailyStatistics: async (date?: string): Promise<DailyStatistics> => {
+    const params = date ? `?date=${date}` : "";
+    const response = await api.get(`/billings/receptionist/daily-statistics${params}`);
+    return response.data.data;
+  },
+
+  /**
+   * Lấy tóm tắt nhanh doanh thu hôm nay
+   */
+  getTodaySummary: async (): Promise<DailyStatistics> => {
+    const response = await api.get("/billings/receptionist/today-summary");
+    return response.data.data;
   },
 };
