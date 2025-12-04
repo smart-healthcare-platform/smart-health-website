@@ -24,7 +24,7 @@ export interface PageResponse<T> {
 }
 
 export type PaymentMethodType = "MOMO" | "VNPAY" | "CASH" | "COD";
-export type PaymentType = "APPOINTMENT_FEE" | "LAB_TEST" | "PRESCRIPTION" | "OTHER";
+export type PaymentType = "APPOINTMENT_FEE" | "LAB_TEST" | "PRESCRIPTION" | "OTHER" | "COMPOSITE_PAYMENT";
 export type PaymentStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED";
 
 export interface CreatePaymentRequest {
@@ -52,6 +52,32 @@ export interface PaymentResponse {
   createdAt: string;
   paidAt?: string;
   transactionId?: string;
+}
+
+export interface CompositePaymentRequest {
+  appointmentId: string;
+  referenceIds: string[]; // appointmentId + labTestOrderIds
+  paymentMethod: PaymentMethodType;
+  description?: string;
+}
+
+export interface PaymentBreakdownItem {
+  paymentId: number;
+  paymentCode: string;
+  paymentType: string;
+  referenceId: string;
+  amount: number;
+  description?: string;
+}
+
+export interface CompositePaymentResponse {
+  paymentId: number;
+  paymentCode: string;
+  paymentUrl: string;
+  totalAmount: number;
+  paymentMethod: string;
+  breakdown: PaymentBreakdownItem[];
+  expiredAt: string;
 }
 
 export const billingService = {
@@ -196,6 +222,32 @@ export const billingService = {
       request
     );
     
+    return response.data;
+  },
+
+  /**
+   * Tạo thanh toán tổng hợp (composite payment) cho appointment
+   * Tất cả các khoản phí (appointment fee + lab tests) được gộp vào một URL thanh toán
+   */
+  async createCompositePayment(request: CompositePaymentRequest): Promise<CompositePaymentResponse> {
+    console.log('🌐 [BILLING SERVICE] Creating composite payment for appointment:', request.appointmentId);
+    
+    const response = await apiAuth.post<CompositePaymentResponse>(
+      "/billings/composite-payment",
+      request
+    );
+    
+    console.log('✅ [BILLING SERVICE] Composite payment created:', response.data);
+    return response.data;
+  },
+
+  /**
+   * Lấy trạng thái payment theo paymentId
+   */
+  async getPaymentStatus(paymentId: number): Promise<PaymentResponse> {
+    const response = await apiAuth.get<PaymentResponse>(
+      `/billings/${paymentId}`
+    );
     return response.data;
   },
 };
