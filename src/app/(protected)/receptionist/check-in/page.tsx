@@ -32,7 +32,7 @@ export default function CheckInPage() {
     useState<Appointment | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked" | "checked_in">("all");
+  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked" | "checked_in" | "checkout">("all");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
 
@@ -79,6 +79,11 @@ export default function CheckInPage() {
         (apt) =>
           apt.status === AppointmentStatus.CHECKED_IN ||
           apt.status === AppointmentStatus.IN_PROGRESS
+      );
+    } else if (filter === "checkout") {
+      // Hiển thị appointments đã khám xong (COMPLETED) - để thu tiền lab test, thuốc
+      filtered = data.filter(
+        (apt) => apt.status === AppointmentStatus.COMPLETED
       );
     }
 
@@ -251,6 +256,20 @@ export default function CheckInPage() {
               {appointments.filter((apt) => apt.paymentStatus === "UNPAID").length}
               )
             </Button>
+            <Button
+              variant={filter === "checkout" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("checkout")}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Cần checkout (
+              {
+                appointments.filter(
+                  (apt) => apt.status === AppointmentStatus.COMPLETED
+                ).length
+              }
+              )
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -260,7 +279,9 @@ export default function CheckInPage() {
         {/* List */}
         <Card>
           <CardHeader>
-            <CardTitle>Danh sách chờ check-in</CardTitle>
+            <CardTitle>
+              {filter === "checkout" ? "Danh sách cần checkout" : "Danh sách chờ check-in"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -429,21 +450,46 @@ export default function CheckInPage() {
                     </Button>
                   )}
 
-                {/* 🆕 NÚT THANH TOÁN TỔNG HỢP - LUÔN hiển thị khi CHECKED_IN/IN_PROGRESS */}
+                {/* 💰 THÔNG BÁO CHECKOUT - Khi COMPLETED */}
+                {selectedAppointment.status === AppointmentStatus.COMPLETED && (
+                  <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
+                    <div className="flex items-center gap-2 text-purple-700 mb-2">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="font-semibold">Đã khám xong - Cần checkout</span>
+                    </div>
+                    <p className="text-sm text-purple-600 mb-3">
+                      Bác sĩ đã hoàn thành khám bệnh. Vui lòng thu tiền cho các dịch vụ:
+                    </p>
+                    <ul className="text-sm text-purple-600 space-y-1 mb-3 ml-4 list-disc">
+                      {selectedAppointment.paymentStatus !== "PAID" && (
+                        <li>Phí khám bệnh</li>
+                      )}
+                      {selectedAppointment.labTestOrders && selectedAppointment.labTestOrders.length > 0 && (
+                        <li>Xét nghiệm ({selectedAppointment.labTestOrders.length} loại)</li>
+                      )}
+                      <li>Đơn thuốc (nếu có)</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* 🆕 NÚT THANH TOÁN TỔNG HỢP */}
                 {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
                   selectedAppointment.status === AppointmentStatus.IN_PROGRESS ||
                   selectedAppointment.status === AppointmentStatus.COMPLETED) && (
                   <Button 
-                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold shadow-lg"
+                    className={`w-full font-semibold shadow-lg ${
+                      selectedAppointment.status === AppointmentStatus.COMPLETED
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        : "bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    } text-white`}
                     onClick={() => {
-                      console.log('🔥 Opening BulkPaymentDialog');
-                      console.log('Appointment:', selectedAppointment);
-                      console.log('Lab Tests:', selectedAppointment.labTestOrders);
                       setBulkPaymentDialogOpen(true);
                     }}
                   >
                     <CreditCard className="mr-2 h-5 w-5" />
-                    Thu tiền tổng hợp
+                    {selectedAppointment.status === AppointmentStatus.COMPLETED 
+                      ? "Checkout & Thu tiền" 
+                      : "Thu tiền tổng hợp"}
                   </Button>
                 )}
 
