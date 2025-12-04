@@ -12,9 +12,11 @@ import {
   CreditCard,
   FileText,
   User,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { receptionistService } from "@/services/receptionist.service";
+import { receptionistService, DailyStatistics } from "@/services/receptionist.service";
 import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
@@ -23,24 +25,36 @@ import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function ReceptionistDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStatistics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
-    const fetchTodayAppointments = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await receptionistService.getTodayAppointments();
-        setAppointments(data);
+        setStatsLoading(true);
+        
+        // Fetch appointments and statistics in parallel
+        const [appointmentsData, statsData] = await Promise.all([
+          receptionistService.getTodayAppointments(),
+          receptionistService.getTodaySummary(),
+        ]);
+        
+        setAppointments(appointmentsData);
+        setDailyStats(statsData);
       } catch (err) {
-        console.error("Lỗi khi lấy lịch hẹn:", err);
+        console.error("Lỗi khi lấy dữ liệu:", err);
+        toast.error("Không thể tải dữ liệu dashboard");
       } finally {
         setLoading(false);
+        setStatsLoading(false);
       }
     };
 
-    fetchTodayAppointments();
+    fetchData();
   }, []);
 
   const totalAppointments = appointments.length;
@@ -50,9 +64,12 @@ export default function ReceptionistDashboard() {
   const unpaidCount = appointments.filter(
     (apt) => apt.paymentStatus === "UNPAID"
   ).length;
-  const paidAmount = appointments
-    .filter((apt) => apt.paymentStatus === "PAID")
-    .reduce((sum, apt) => sum + parseFloat(apt.paidAmount?.toString() || "0"), 0);
+  
+  // Use comprehensive statistics from billing service
+  const totalRevenue = dailyStats?.totalRevenue || 0;
+  const totalTransactions = dailyStats?.totalTransactions || 0;
+  const cashRevenue = dailyStats?.cashRevenue || 0;
+  const onlineRevenue = dailyStats?.onlineRevenue || 0;
 
   const upcomingAppointments = appointments
     .filter((apt) => apt.status === AppointmentStatus.CONFIRMED || apt.status === AppointmentStatus.PENDING)
@@ -89,12 +106,16 @@ export default function ReceptionistDashboard() {
   };
 
   const handlePaymentSuccess = async () => {
-    // Refresh danh sách appointments
+    // Refresh both appointments and statistics
     try {
-      const data = await receptionistService.getTodayAppointments();
-      setAppointments(data);
+      const [appointmentsData, statsData] = await Promise.all([
+        receptionistService.getTodayAppointments(),
+        receptionistService.getTodaySummary(),
+      ]);
+      setAppointments(appointmentsData);
+      setDailyStats(statsData);
     } catch (err) {
-      console.error("Error refreshing appointments:", err);
+      console.error("Error refreshing data:", err);
     }
   };
 
@@ -155,18 +176,97 @@ export default function ReceptionistDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Doanh thu hôm nay
+              Tổng doanh thu hôm nay
             </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {(paidAmount / 1000000).toFixed(1)}M
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {appointments.filter((apt) => apt.paymentStatus === "PAID").length}{" "}
-              giao dịch
-            </p>
+            {statsLoading ? (
+              <div className="text-2xl font-bold text-gray-400">...</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-green-600">
+                  {(totalRevenue / 1000000).toFixed(1)}M
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {totalTransactions} giao dịch • Trung bình {dailyStats?.averageTransactionAmount 
+                    ? (dailyStats.averageTransactionAmount / 1000).toFixed(0) + 'k' 
+                    : '0'}
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Revenue Breakdown Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tiền mặt</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <div className="text-2xl font-bold text-gray-400">...</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-blue-600">
+                  {(cashRevenue / 1000000).toFixed(1)}M
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {dailyStats?.paymentMethodBreakdown?.find(m => m.paymentMethod === 'CASH')?.transactionCount || 0} giao dịch
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Online</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <div className="text-2xl font-bold text-gray-400">...</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-purple-600">
+                  {(onlineRevenue / 1000000).toFixed(1)}M
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  MOMO + VNPAY
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Phân loại</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <div className="text-sm text-gray-400">Đang tải...</div>
+            ) : (
+              <div className="space-y-1">
+                {dailyStats?.paymentTypeBreakdown?.map((type) => (
+                  <div key={type.paymentType} className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      {type.paymentType === 'APPOINTMENT_FEE' ? 'Khám' : 
+                       type.paymentType === 'LAB_TEST' ? 'XN' : 
+                       type.paymentType === 'PRESCRIPTION' ? 'Thuốc' : type.paymentType}:
+                    </span>
+                    <span className="font-medium">
+                      {(type.revenue / 1000000).toFixed(1)}M ({type.percentage.toFixed(0)}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
