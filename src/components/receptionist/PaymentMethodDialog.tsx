@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CreditCard, Smartphone, Wallet, Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
 import { billingService, PaymentMethodType } from "@/services/billing.service";
 import { appointmentService } from "@/services/appointment.service";
 
@@ -72,37 +73,29 @@ export default function PaymentMethodDialog({
           notes: notes || undefined,
         });
 
-        console.log("Cash payment success:", response.paymentCode);
-        alert(`Thanh toán tiền mặt thành công!\nMã thanh toán: ${response.paymentCode}`);
+        toast.success(`Thanh toán tiền mặt thành công! Mã: ${response.paymentCode}`);
 
         onOpenChange(false);
         onSuccess?.();
       } else {
-        // MOMO hoặc VNPAY - GỌI APPOINTMENTSERVICE.CREATEPAYMENT() GIỐNG PATIENT
-        console.log("🔍 Creating payment with appointmentService:", {
-          appointmentId,
-          paymentMethod: selectedMethod,
-        });
-
+        // MOMO hoặc VNPAY - Tạo payment request
         const response = await appointmentService.createPayment(
           appointmentId,
           selectedMethod
         );
 
-        console.log("✅ Payment created:", response);
-
-        // Mở payment URL trong tab mới (giống patient)
+        // Mở payment URL trong tab mới
         window.open(response.paymentUrl, "_blank");
 
-        alert(`Đã tạo yêu cầu thanh toán!\nVui lòng hoàn tất thanh toán trong tab mới.`);
+        toast.info("Đã tạo yêu cầu thanh toán! Vui lòng hoàn tất thanh toán trong tab mới.");
 
         onOpenChange(false);
-        onSuccess?.(); // Refresh để thấy status cập nhật
+        onSuccess?.();
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      console.error("Payment error:", error);
-      alert(`Không thể tạo thanh toán\n${err?.response?.data?.message || "Vui lòng thử lại"}`);
+      console.error("[PaymentMethodDialog] Payment error:", error);
+      toast.error(err?.response?.data?.message || "Không thể tạo thanh toán. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
