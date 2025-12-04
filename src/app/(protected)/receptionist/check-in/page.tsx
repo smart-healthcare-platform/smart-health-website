@@ -32,7 +32,7 @@ export default function CheckInPage() {
     useState<Appointment | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked">("unchecked");
+  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked" | "checked_in">("all");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
 
@@ -59,14 +59,26 @@ export default function CheckInPage() {
   const applyFilter = useCallback((data: Appointment[]) => {
     let filtered = data;
 
-    if (filter === "unpaid") {
+    if (filter === "all") {
+      // Loại bỏ COMPLETED và CANCELLED khỏi danh sách
+      filtered = data.filter(
+        (apt) =>
+          apt.status !== AppointmentStatus.COMPLETED &&
+          apt.status !== AppointmentStatus.CANCELLED
+      );
+    } else if (filter === "unpaid") {
       filtered = data.filter((apt) => apt.paymentStatus === "UNPAID");
     } else if (filter === "unchecked") {
       filtered = data.filter(
         (apt) =>
           apt.status === AppointmentStatus.CONFIRMED ||
-          apt.status === AppointmentStatus.PENDING ||
-          apt.status === AppointmentStatus.CHECKED_IN
+          apt.status === AppointmentStatus.PENDING
+      );
+    } else if (filter === "checked_in") {
+      filtered = data.filter(
+        (apt) =>
+          apt.status === AppointmentStatus.CHECKED_IN ||
+          apt.status === AppointmentStatus.IN_PROGRESS
       );
     }
 
@@ -124,11 +136,27 @@ export default function CheckInPage() {
 
   // Get status badge
   const getStatusBadge = (apt: Appointment) => {
+    if (apt.status === AppointmentStatus.COMPLETED) {
+      return (
+        <Badge className="bg-blue-500">
+          <CheckCircle2 className="mr-1 h-3 w-3" />
+          Hoàn thành
+        </Badge>
+      );
+    }
     if (apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS) {
       return (
         <Badge className="bg-green-500">
           <CheckCircle2 className="mr-1 h-3 w-3" />
           Đã check-in
+        </Badge>
+      );
+    }
+    if (apt.status === AppointmentStatus.CONFIRMED) {
+      return (
+        <Badge className="bg-yellow-500">
+          <Clock className="mr-1 h-3 w-3" />
+          Đã xác nhận
         </Badge>
       );
     }
@@ -176,7 +204,15 @@ export default function CheckInPage() {
               size="sm"
               onClick={() => setFilter("all")}
             >
-              Tất cả ({appointments.length})
+              Tất cả (
+              {
+                appointments.filter(
+                  (apt) =>
+                    apt.status !== AppointmentStatus.COMPLETED &&
+                    apt.status !== AppointmentStatus.CANCELLED
+                ).length
+              }
+              )
             </Button>
             <Button
               variant={filter === "unchecked" ? "default" : "outline"}
@@ -188,6 +224,20 @@ export default function CheckInPage() {
                 appointments.filter(
                   (apt) =>
                     apt.status === AppointmentStatus.CONFIRMED || apt.status === AppointmentStatus.PENDING
+                ).length
+              }
+              )
+            </Button>
+            <Button
+              variant={filter === "checked_in" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("checked_in")}
+            >
+              Đã check-in (
+              {
+                appointments.filter(
+                  (apt) =>
+                    apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS
                 ).length
               }
               )
@@ -363,32 +413,54 @@ export default function CheckInPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="space-y-3 pt-4 border-t">
-                  {/* ✅ NÚT CHECK-IN - Không cần validate payment */}
-                  {selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
-                    selectedAppointment.status !== AppointmentStatus.IN_PROGRESS && (
-                      <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => handleCheckIn(selectedAppointment)}
-                      >
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Check-in ngay
-                      </Button>
-                    )}
-
-                  {/* 🆕 NÚT THANH TOÁN TỔNG HỢP - Ưu tiên hàng đầu */}
+                {/* Debug Info */}
+              <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-xs space-y-1">
+                <div className="font-bold text-yellow-800">🔍 Debug Info:</div>
+                <div><strong>Status:</strong> {selectedAppointment.status}</div>
+                <div><strong>Payment Status:</strong> {selectedAppointment.paymentStatus}</div>
+                <div><strong>Checked In:</strong> {selectedAppointment.checkedInAt ? 'Yes' : 'No'}</div>
+                <div><strong>Lab Tests:</strong> {selectedAppointment.labTestOrders?.length || 0}</div>
+                <div className="text-yellow-700 mt-2">
                   {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
-                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS ||
-                    selectedAppointment.status === AppointmentStatus.COMPLETED) && (
-                    <Button 
-                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold shadow-lg"
-                      onClick={() => setBulkPaymentDialogOpen(true)}
+                    selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && 
+                   selectedAppointment.paymentStatus !== "PAID" 
+                    ? "✅ Nút thanh toán SHOULD show" 
+                    : "❌ Nút thanh toán will NOT show"}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-3 pt-4 border-t">
+                {/* ✅ NÚT CHECK-IN - Chỉ hiển thị khi chưa check-in */}
+                {selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
+                  selectedAppointment.status !== AppointmentStatus.IN_PROGRESS &&
+                  selectedAppointment.status !== AppointmentStatus.COMPLETED && (
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => handleCheckIn(selectedAppointment)}
                     >
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      Thu tiền tổng hợp
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Check-in ngay
                     </Button>
                   )}
+
+                {/* 🆕 NÚT THANH TOÁN TỔNG HỢP - LUÔN hiển thị khi CHECKED_IN/IN_PROGRESS */}
+                {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
+                  selectedAppointment.status === AppointmentStatus.IN_PROGRESS ||
+                  selectedAppointment.status === AppointmentStatus.COMPLETED) && (
+                  <Button 
+                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold shadow-lg"
+                    onClick={() => {
+                      console.log('🔥 Opening BulkPaymentDialog');
+                      console.log('Appointment:', selectedAppointment);
+                      console.log('Lab Tests:', selectedAppointment.labTestOrders);
+                      setBulkPaymentDialogOpen(true);
+                    }}
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Thu tiền tổng hợp
+                  </Button>
+                )}
 
                   {/* ⚠️ NÚT THU TIỀN ĐƠN LẺ - Chỉ cho appointment chưa check-in */}
                   {selectedAppointment.paymentStatus === "UNPAID" && 
@@ -426,10 +498,10 @@ export default function CheckInPage() {
                       <p className="text-sm font-semibold text-blue-700 mb-2">
                         💡 Quy trình thanh toán hiện đại
                       </p>
-                      <ul className="text-sm text-blue-600 space-y-1 ml-4">
-                        <li>✓ Bệnh nhân đã check-in thành công</li>
-                        <li>✓ Bác sĩ đang khám và chỉ định</li>
-                        <li>✓ Sử dụng <strong>"Thu tiền tổng hợp"</strong> để thu tất cả chi phí một lần</li>
+                      <ul className="text-xs text-blue-600 space-y-1">
+                        <li>✅ Bệnh nhân check-in trước</li>
+                        <li>✅ Khám bệnh và chỉ định xét nghiệm (nếu cần)</li>
+                        <li>✅ Thu phí tổng hợp sau khi hoàn tất</li>
                       </ul>
                     </div>
                   )}
