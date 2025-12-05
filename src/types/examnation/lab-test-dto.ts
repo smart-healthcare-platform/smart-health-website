@@ -7,6 +7,7 @@ export interface CreateLabTestOrderPayload {
     type: LabTestType;
     status?: LabTestOrderStatus;
     orderedBy?: string;
+    labTestId?: string; // Optional: For direct price lookup
 }
 
 export interface CreateLabTestResultPayload {

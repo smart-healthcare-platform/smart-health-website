@@ -57,6 +57,9 @@ export function PrescriptionBuilder({ selectedItems, onUpdate }: PrescriptionBui
   const [searchTerm, setSearchTerm] = useState("")
   const [popoverOpen, setPopoverOpen] = useState(false)
   
+  // Debug: Log selectedItems whenever it changes
+  console.log("📋 PrescriptionBuilder received selectedItems:", selectedItems)
+  
   // Sử dụng hook useDrugs với search filter
   const { drugs, loading: loadingDrugs, updateFilters } = useDrugs({ search: searchTerm })
   

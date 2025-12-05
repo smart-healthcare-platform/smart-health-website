@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function ReceptionistPage() {
-  redirect("/receptionist/dashboard");
+  // Redirect to check-in page as main landing page
+  redirect("/receptionist/check-in");
 }

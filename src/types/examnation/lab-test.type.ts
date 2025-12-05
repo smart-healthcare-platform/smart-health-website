@@ -20,6 +20,7 @@ export interface LabTestOrder extends CreateLabTestOrderPayload {
     id: string
     patientId: string,
     patientName: string
+    paymentId?: string
     result?: LabTestResult
     vitalSigns?: VitalSigns[]
     createdAt: string

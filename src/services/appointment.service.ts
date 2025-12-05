@@ -155,6 +155,19 @@ export const appointmentService = {
     return res.data.data
   },
 
+  // Create lab test order WITH automatic payment creation (recommended)
+  async createLabTestOrderWithPayment(payload: CreateLabTestOrderPayload): Promise<LabTestOrder> {
+    const res = await apiAuth.post<{ success: boolean; message: string; data: LabTestOrder }>(
+      "/appointments/lab-test-orders/with-payment",
+      payload
+    )
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Không thể tạo đơn xét nghiệm")
+    }
+
+    return res.data.data
+  },
+
   async createLabTestResult(payload: CreateLabTestResultPayload): Promise<LabTestResult> {
     const res = await apiAuth.post<{ success: boolean; message: string; data: LabTestResult }>(
       "/appointments/lab-test-results",
