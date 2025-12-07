@@ -13,14 +13,12 @@ import { FollowUpStep } from "../components/follow-up-step"
 import { SummaryStep } from "../components/summary-step"
 
 import { appointmentService } from "@/services/appointment.service"
-import { medicineService } from "@/services/medicine.service"
 
 import ConfirmDialog from "@/components/ui/confirm-dialog"
 import SuccessDialog from "@/components/ui/success-dialog"
 import Loading from "@/components/ui/loading"
 
 import type { RootState } from "@/redux"
-import type { CreatePrescriptionRequest, PrescriptionItemInput } from "@/types/medicine"
 import type { ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { CreateMedicalRecordPayload, CreateVitalSignPayload } from "@/types/examnation"
 import type { AppointmentDetail } from "@/types/appointment/appointment.type"

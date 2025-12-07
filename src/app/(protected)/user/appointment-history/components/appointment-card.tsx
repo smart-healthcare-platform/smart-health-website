@@ -29,7 +29,6 @@ export default function AppointmentCard({
   const router = useRouter();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // 👉 Tạo cuộc trò chuyện
   const handleStartChat = async () => {
     if (!user?.id || !appointment.doctorId) {
       console.error("Thiếu user ID hoặc doctor ID");
@@ -49,7 +48,6 @@ export default function AppointmentCard({
     }
   };
 
-  // 👉 Cấu hình trạng thái
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -144,15 +142,15 @@ export default function AppointmentCard({
           <div className="flex flex-col gap-2 mt-4">
             {(appointment.status === AppointmentStatus.COMPLETED ||
               appointment.status === AppointmentStatus.CONFIRMED) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleStartChat}
-                className="self-start"
-              >
-                Bắt đầu trò chuyện
-              </Button>
-            )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartChat}
+                  className="self-start"
+                >
+                  Bắt đầu trò chuyện
+                </Button>
+              )}
           </div>
         </div>
       </Card>

@@ -1,5 +1,3 @@
-// Integrated DoctorScheduleDialog into DoctorTable
-
 "use client"
 
 import { useState } from "react"

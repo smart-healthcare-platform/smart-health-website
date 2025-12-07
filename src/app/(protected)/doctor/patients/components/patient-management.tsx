@@ -5,12 +5,11 @@ import { patientService } from "@/services/patient.service";
 import StatsCards from "./stats-cards";
 import PatientFilters from "./patient-filters";
 import PatientTable from "./patient-table";
-
+import Pagination from "@/components/ui/pagination-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 import { PaginatedResponse } from "@/types/response";
-import PaginationTable from "@/components/ui/pagination-table";
 
 export function PatientManagement() {
   const [patientsResponse, setPatientsResponse] = useState<PaginatedResponse<Patient>>({
@@ -36,7 +35,7 @@ export function PatientManagement() {
       setLoading(true);
       try {
         const response = await patientService.getAllPatients(page, limit, searchTerm);
-        setPatientsResponse(response); // chỉ cần 1 state
+        setPatientsResponse(response);
       } finally {
         setLoading(false);
       }
@@ -47,7 +46,7 @@ export function PatientManagement() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await patientService.getStats(); 
+        const response = await patientService.getStats();
         setStats(response);
       } catch (error) {
         console.error("Không thể lấy số liệu thống kê", error);
@@ -103,7 +102,7 @@ export function PatientManagement() {
             <>
               <PatientTable patients={patientsResponse.data} />
 
-              <PaginationTable
+              <Pagination
                 page={page}
                 limit={limit}
                 total={patientsResponse.total}

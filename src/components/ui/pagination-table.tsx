@@ -9,7 +9,7 @@ interface PaginationProps {
   setPage: (page: number) => void
 }
 
-export default function Pagination({ page, limit, total, setPage }: PaginationProps) {
+export default function PaginationTable({ page, limit, total, setPage }: PaginationProps) {
 
   const totalPages = Math.ceil(total / limit)
 

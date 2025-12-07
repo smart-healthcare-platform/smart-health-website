@@ -29,7 +29,6 @@ export default function Step2() {
       setLoadingSlots(true)
       try {
         const slots = await doctorService.getDoctorSlots(doctor.id)
-        console.log(slots)
         setAllSlots(slots)
         setAvailableDates(Array.from(new Set(slots.map((s) => s.date))))
 

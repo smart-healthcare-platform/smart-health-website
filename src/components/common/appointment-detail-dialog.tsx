@@ -35,6 +35,7 @@ import { RootState } from "@/redux"
 import { VitalSignStatus } from "@/types/examnation"
 import { AppointmentDetail } from "@/types/appointment/appointment.type"
 import { AppointmentStatus } from "@/types/appointment/index"
+import { Gender } from "@/types/patient/enums/patient-gender.enum.dto"
 
 interface AppointmentDetailDialogProps {
   open: boolean
@@ -273,9 +274,9 @@ export default function AppointmentDetailDialog({
                     <div>
                       <p className="text-sm text-muted-foreground">Giới tính</p>
                       <p className="font-medium">
-                        {appointment.patient.gender === "male"
+                        {appointment.patient.gender === Gender.MALE
                           ? "Nam"
-                          : appointment.patient.gender === "female"
+                          : appointment.patient.gender === Gender.FEMALE
                             ? "Nữ"
                             : "Khác"}
                       </p>
