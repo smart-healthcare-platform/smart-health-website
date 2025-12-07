@@ -585,7 +585,7 @@ export default function AppointmentDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          {isDoctor && appointment.status === AppointmentStatus.CONFIRMED && (
+          {isDoctor && (appointment.status === AppointmentStatus.CONFIRMED || appointment.status === AppointmentStatus.CHECKED_IN) && (
             <Button onClick={handleStartExamination}>Bắt đầu khám</Button>
           )}
 

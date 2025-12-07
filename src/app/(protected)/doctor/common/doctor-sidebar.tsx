@@ -17,6 +17,7 @@ import {
   Brain,
   User,
   TestTube,
+  FilePlus,
 } from "lucide-react"
 
 const management = [
@@ -45,6 +46,11 @@ const management = [
     name: "Xét nghiệm",
     href: "/doctor/lab-tests",
     icon: TestTube,
+  },
+  {
+    name: "Mẫu đơn thuốc",
+    href: "/doctor/templates",
+    icon: FilePlus,
   },
   {
     name: "Chat History",

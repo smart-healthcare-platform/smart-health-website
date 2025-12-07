@@ -10,14 +10,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import type { ExaminationStepData, ExaminationStepProps } from "@/types/examination"
 import { PrescriptionBuilder } from "./prescription-builder"
+import { TemplateSelector } from "@/components/doctor/examination/TemplateSelector"
 import { appointmentService } from "@/services/appointment.service"
 import { LabTest } from "@/types/examnation"
+import { PrescriptionTemplate } from "@/types/medicine"
+import type { PrescriptionItem } from "@/types/examination"
 
 export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: ExaminationStepProps) {
   const [formData, setFormData] = useState<ExaminationStepData>(data)
   const [labTests, setLabTests] = useState<LabTest[]>([])
   const [open, setOpen] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof ExaminationStepData, string>>>({})
+
+  // Sync formData with data prop when it changes (e.g., from copy prescription)
+  useEffect(() => {
+    console.log("📥 ExaminationStep received new data prop:", data)
+    setFormData(data)
+  }, [data])
 
   useEffect(() => {
     async function fetchLabTests() {
@@ -30,6 +39,8 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
   // Cập nhật dữ liệu và gọi callback
   const handleChange = <K extends keyof ExaminationStepData>(field: K, value: ExaminationStepData[K]) => {
     const newData = { ...formData, [field]: value }
+    console.log(`🔄 handleChange - field: ${field}, value:`, value)
+    console.log(`🔄 newData.prescriptionItems:`, newData.prescriptionItems)
     setFormData(newData)
     onUpdate(newData)
   }
@@ -72,6 +83,45 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
   }
 
   const handleSubmit = () => onNext()
+
+  const handleApplyTemplate = (template: PrescriptionTemplate) => {
+    console.log("🎯 Applying template:", template)
+    
+    // Convert template items to PrescriptionItem format for examination flow
+    const templateItems: PrescriptionItem[] = template.items.map((item) => {
+      console.log("📝 Template item:", item)
+      
+      return {
+        drugId: item.drugId.toString(), // Convert number to string
+        drugName: item.drugName,
+        activeIngredient: item.activeIngredient,
+        strength: item.strength,
+        quantity: item.durationDays || 1, // Use duration as default quantity
+        dosage: item.dosage,
+        duration: item.durationDays || 7,
+        instructions: [item.frequency, item.timing, item.route]
+          .filter(Boolean)
+          .join(", ") || item.specialInstructions || "",
+        notes: item.specialInstructions,
+      }
+    });
+
+    console.log("✅ Converted to prescription items:", templateItems)
+    
+    // Update form data with BOTH prescriptionItems AND diagnosis in ONE call
+    // This prevents the race condition where diagnosis update overwrites prescriptionItems
+    const updates: any = { prescriptionItems: templateItems }
+    if (template.diagnosis) {
+      updates.diagnosis = template.diagnosis
+    }
+    
+    const newData = { ...formData, ...updates }
+    console.log("🔄 Final newData:", newData)
+    setFormData(newData)
+    onUpdate(newData)
+
+    console.log("✅ Applied template:", template.templateName, "with", templateItems.length, "items");
+  };
 
   const selectedNames =
     formData.labTests && formData.labTests.length > 0
@@ -180,12 +230,18 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
 
       <Separator />
 
-      {/* Đơn thuốc */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Pill className="w-4 h-4 text-primary" />
-          Đơn thuốc
-        </Label>
+
+      <Separator />
+
+      {/* Đơn thuốc - NEW: Sử dụng PrescriptionBuilder */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2">
+            <Pill className="w-4 h-4 text-primary" />
+            Đơn thuốc
+          </Label>
+          <TemplateSelector onSelectTemplate={handleApplyTemplate} />
+        </div>
         <PrescriptionBuilder
           selectedItems={formData.prescriptionItems || []}
           onUpdate={(items) => handleChange("prescriptionItems", items)}

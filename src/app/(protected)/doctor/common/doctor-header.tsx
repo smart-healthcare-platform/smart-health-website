@@ -96,7 +96,7 @@ export function DoctorHeader() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <div className="px-3 py-2">
               <p className="text-sm font-medium leading-none text-foreground">
-                {isDoctor(user) ? user.profile.fullName : "Bác sĩ"}
+                {user && isDoctor(user) ? (user as any).profile.fullName : "Bác sĩ"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Tài khoản bác sĩ</p>
             </div>

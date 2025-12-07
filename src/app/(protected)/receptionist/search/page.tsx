@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, User, Calendar, Phone, CreditCard, UserCheck } from "lucide-react";
+import { Search, User, Calendar, Phone, CreditCard, UserCheck, Printer } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
 import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { CashPaymentDialog } from "@/components/receptionist/CashPaymentDialog";
+import { PrescriptionPrintDialog } from "@/components/receptionist/PrescriptionPrintDialog";
 import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function SearchPage() {
@@ -21,6 +22,8 @@ export default function SearchPage() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
+  const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
 
   const handleSearch = useCallback(async () => {
     if (!keyword.trim()) {
@@ -230,6 +233,21 @@ export default function SearchPage() {
                                   Check-in
                                 </Button>
                               )}
+
+                            {apt.status === AppointmentStatus.COMPLETED && apt.prescriptionId && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-purple-50 hover:bg-purple-100 border-purple-500/50"
+                                onClick={() => {
+                                  setSelectedPrescriptionId(apt.prescriptionId || null);
+                                  setPrescriptionDialogOpen(true);
+                                }}
+                              >
+                                <Printer className="mr-2 h-4 w-4" />
+                                In đơn thuốc
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -250,6 +268,17 @@ export default function SearchPage() {
         onSuccess={() => {
           handleSearch(); // Re-search to refresh
           setSelectedAppointment(null);
+        }}
+      />
+
+      {/* Prescription Print Dialog */}
+      <PrescriptionPrintDialog
+        open={prescriptionDialogOpen}
+        onOpenChange={setPrescriptionDialogOpen}
+        prescriptionId={selectedPrescriptionId}
+        onSuccess={() => {
+          handleSearch(); // Re-search to refresh
+          setSelectedPrescriptionId(null);
         }}
       />
     </div>

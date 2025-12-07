@@ -2,13 +2,17 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Clock, Home, FileText, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Home, FileText, Loader2, ArrowLeft } from "lucide-react";
+import { RootState } from "@/redux";
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const user = useSelector((state: RootState) => state.auth.user);
+  
   const [paymentStatus, setPaymentStatus] = useState<"loading" | "success" | "failed" | "pending">("loading");
   const [paymentDetails, setPaymentDetails] = useState<{
     orderId?: string;
@@ -54,12 +58,44 @@ function PaymentSuccessContent() {
     }
   }, [searchParams]);
 
+  // Determine home path based on user role
+  const getHomePath = () => {
+    if (!user) return "/";
+    
+    switch (user.role) {
+      case "RECEPTIONIST":
+        return "/receptionist/check-in";
+      case "DOCTOR":
+        return "/doctor/dashboard";
+      case "ADMIN":
+        return "/admin/dashboard";
+      case "PATIENT":
+      default:
+        return "/";
+    }
+  };
+
+  // Determine appointments path based on user role
+  const getAppointmentsPath = () => {
+    if (!user) return "/user/appointment-history";
+    
+    switch (user.role) {
+      case "RECEPTIONIST":
+        return "/receptionist/check-in";
+      case "DOCTOR":
+        return "/doctor/appointments";
+      case "PATIENT":
+      default:
+        return "/user/appointment-history";
+    }
+  };
+
   const handleGoHome = () => {
-    router.push("/");
+    router.push(getHomePath());
   };
 
   const handleViewAppointments = () => {
-    router.push("/user/appointment-history");
+    router.push(getAppointmentsPath());
   };
 
   const formatAmount = (amount?: string) => {
@@ -72,6 +108,26 @@ function PaymentSuccessContent() {
     if (partnerCode?.includes("VNPAY")) return "VNPay";
     return "Cổng thanh toán";
   };
+
+  // Get button labels based on role
+  const getButtonLabels = () => {
+    if (user?.role === "RECEPTIONIST") {
+      return {
+        primary: "Quay lại danh sách",
+        secondary: "Về trang làm việc",
+        primaryIcon: ArrowLeft,
+        secondaryIcon: Home,
+      };
+    }
+    return {
+      primary: "Xem lịch hẹn",
+      secondary: "Về trang chủ",
+      primaryIcon: FileText,
+      secondaryIcon: Home,
+    };
+  };
+
+  const buttonLabels = getButtonLabels();
 
   if (paymentStatus === "loading") {
     return (
@@ -115,7 +171,9 @@ function PaymentSuccessContent() {
               <div className="flex justify-between items-center border-t pt-3">
                 <span className="text-gray-600">Mã đơn hàng</span>
                 <span className="font-mono text-sm text-gray-900">
-                  {paymentDetails.orderId.slice(0, 20)}...
+                  {paymentDetails.orderId.length > 20 
+                    ? `${paymentDetails.orderId.slice(0, 20)}...`
+                    : paymentDetails.orderId}
                 </span>
               </div>
             )}
@@ -156,28 +214,30 @@ function PaymentSuccessContent() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
-              <strong>Lưu ý:</strong> Vui lòng đến đúng giờ hẹn và mang theo giấy tờ tùy thân. 
-              Bạn có thể kiểm tra chi tiết lịch hẹn trong mục "Lịch sử đặt khám".
-            </p>
-          </div>
+          {user?.role !== "RECEPTIONIST" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>Lưu ý:</strong> Vui lòng đến đúng giờ hẹn và mang theo giấy tờ tùy thân. 
+                Bạn có thể kiểm tra chi tiết lịch hẹn trong mục "Lịch sử đặt khám".
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleViewAppointments}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Xem lịch hẹn
+              <buttonLabels.primaryIcon className="h-4 w-4 mr-2" />
+              {buttonLabels.primary}
             </Button>
             <Button
               onClick={handleGoHome}
               variant="outline"
               className="flex-1"
             >
-              <Home className="h-4 w-4 mr-2" />
-              Về trang chủ
+              <buttonLabels.secondaryIcon className="h-4 w-4 mr-2" />
+              {buttonLabels.secondary}
             </Button>
           </div>
         </Card>
@@ -211,7 +271,9 @@ function PaymentSuccessContent() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Mã đơn hàng:</span>
                   <span className="font-mono text-gray-900">
-                    {paymentDetails.orderId.slice(0, 20)}...
+                    {paymentDetails.orderId.length > 20 
+                      ? `${paymentDetails.orderId.slice(0, 20)}...`
+                      : paymentDetails.orderId}
                   </span>
                 </div>
                 {paymentDetails.amount && (
@@ -231,16 +293,16 @@ function PaymentSuccessContent() {
               onClick={handleViewAppointments}
               className="flex-1 bg-amber-600 hover:bg-amber-700"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Xem lịch hẹn
+              <buttonLabels.primaryIcon className="h-4 w-4 mr-2" />
+              {buttonLabels.primary}
             </Button>
             <Button
               onClick={handleGoHome}
               variant="outline"
               className="flex-1"
             >
-              <Home className="h-4 w-4 mr-2" />
-              Về trang chủ
+              <buttonLabels.secondaryIcon className="h-4 w-4 mr-2" />
+              {buttonLabels.secondary}
             </Button>
           </div>
         </Card>
@@ -270,7 +332,9 @@ function PaymentSuccessContent() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Mã đơn hàng:</span>
                 <span className="font-mono text-gray-900">
-                  {paymentDetails.orderId.slice(0, 20)}...
+                  {paymentDetails.orderId.length > 20 
+                    ? `${paymentDetails.orderId.slice(0, 20)}...`
+                    : paymentDetails.orderId}
                 </span>
               </div>
             </div>
@@ -292,7 +356,7 @@ function PaymentSuccessContent() {
             onClick={handleViewAppointments}
             className="flex-1 bg-blue-600 hover:bg-blue-700"
           >
-            <FileText className="h-4 w-4 mr-2" />
+            <buttonLabels.primaryIcon className="h-4 w-4 mr-2" />
             Thử lại thanh toán
           </Button>
           <Button
@@ -300,8 +364,8 @@ function PaymentSuccessContent() {
             variant="outline"
             className="flex-1"
           >
-            <Home className="h-4 w-4 mr-2" />
-            Về trang chủ
+            <buttonLabels.secondaryIcon className="h-4 w-4 mr-2" />
+            {buttonLabels.secondary}
           </Button>
         </div>
       </Card>

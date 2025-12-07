@@ -20,6 +20,7 @@ import { Appointment } from "@/types/appointment/appointment.type";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
+import { BulkPaymentDialog } from "@/components/receptionist/BulkPaymentDialog";
 import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function CheckInPage() {
@@ -31,8 +32,9 @@ export default function CheckInPage() {
     useState<Appointment | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked">("unchecked");
+  const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked" | "checked_in" | "checkout">("all");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
 
   // Fetch appointments hôm nay
   const fetchAppointments = useCallback(async () => {
@@ -57,13 +59,31 @@ export default function CheckInPage() {
   const applyFilter = useCallback((data: Appointment[]) => {
     let filtered = data;
 
-    if (filter === "unpaid") {
+    if (filter === "all") {
+      // Loại bỏ COMPLETED và CANCELLED khỏi danh sách
+      filtered = data.filter(
+        (apt) =>
+          apt.status !== AppointmentStatus.COMPLETED &&
+          apt.status !== AppointmentStatus.CANCELLED
+      );
+    } else if (filter === "unpaid") {
       filtered = data.filter((apt) => apt.paymentStatus === "UNPAID");
     } else if (filter === "unchecked") {
       filtered = data.filter(
         (apt) =>
           apt.status === AppointmentStatus.CONFIRMED ||
           apt.status === AppointmentStatus.PENDING
+      );
+    } else if (filter === "checked_in") {
+      filtered = data.filter(
+        (apt) =>
+          apt.status === AppointmentStatus.CHECKED_IN ||
+          apt.status === AppointmentStatus.IN_PROGRESS
+      );
+    } else if (filter === "checkout") {
+      // Hiển thị appointments đã khám xong (COMPLETED) - để thu tiền lab test, thuốc
+      filtered = data.filter(
+        (apt) => apt.status === AppointmentStatus.COMPLETED
       );
     }
 
@@ -121,11 +141,27 @@ export default function CheckInPage() {
 
   // Get status badge
   const getStatusBadge = (apt: Appointment) => {
+    if (apt.status === AppointmentStatus.COMPLETED) {
+      return (
+        <Badge className="bg-blue-500">
+          <CheckCircle2 className="mr-1 h-3 w-3" />
+          Hoàn thành
+        </Badge>
+      );
+    }
     if (apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS) {
       return (
         <Badge className="bg-green-500">
           <CheckCircle2 className="mr-1 h-3 w-3" />
           Đã check-in
+        </Badge>
+      );
+    }
+    if (apt.status === AppointmentStatus.CONFIRMED) {
+      return (
+        <Badge className="bg-yellow-500">
+          <Clock className="mr-1 h-3 w-3" />
+          Đã xác nhận
         </Badge>
       );
     }
@@ -173,7 +209,15 @@ export default function CheckInPage() {
               size="sm"
               onClick={() => setFilter("all")}
             >
-              Tất cả ({appointments.length})
+              Tất cả (
+              {
+                appointments.filter(
+                  (apt) =>
+                    apt.status !== AppointmentStatus.COMPLETED &&
+                    apt.status !== AppointmentStatus.CANCELLED
+                ).length
+              }
+              )
             </Button>
             <Button
               variant={filter === "unchecked" ? "default" : "outline"}
@@ -190,12 +234,40 @@ export default function CheckInPage() {
               )
             </Button>
             <Button
+              variant={filter === "checked_in" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("checked_in")}
+            >
+              Đã check-in (
+              {
+                appointments.filter(
+                  (apt) =>
+                    apt.status === AppointmentStatus.CHECKED_IN || apt.status === AppointmentStatus.IN_PROGRESS
+                ).length
+              }
+              )
+            </Button>
+            <Button
               variant={filter === "unpaid" ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter("unpaid")}
             >
               Chưa thanh toán (
               {appointments.filter((apt) => apt.paymentStatus === "UNPAID").length}
+              )
+            </Button>
+            <Button
+              variant={filter === "checkout" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("checkout")}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Cần checkout (
+              {
+                appointments.filter(
+                  (apt) => apt.status === AppointmentStatus.COMPLETED
+                ).length
+              }
               )
             </Button>
           </div>
@@ -207,7 +279,9 @@ export default function CheckInPage() {
         {/* List */}
         <Card>
           <CardHeader>
-            <CardTitle>Danh sách chờ check-in</CardTitle>
+            <CardTitle>
+              {filter === "checkout" ? "Danh sách cần checkout" : "Danh sách chờ check-in"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -360,28 +434,75 @@ export default function CheckInPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="space-y-3 pt-4 border-t">
-                  {/* ✅ NÚT CHECK-IN - Không cần validate payment */}
-                  {selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
-                    selectedAppointment.status !== AppointmentStatus.IN_PROGRESS && (
-                      <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => handleCheckIn(selectedAppointment)}
-                      >
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Check-in ngay
-                      </Button>
-                    )}
 
-                  {/* ✅ NÚT THU TIỀN - Chỉ hiện nếu chưa thanh toán */}
-                  {selectedAppointment.paymentStatus === "UNPAID" && (
+              {/* Actions */}
+              <div className="space-y-3 pt-4 border-t">
+                {/* ✅ NÚT CHECK-IN - Chỉ hiển thị khi chưa check-in */}
+                {selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
+                  selectedAppointment.status !== AppointmentStatus.IN_PROGRESS &&
+                  selectedAppointment.status !== AppointmentStatus.COMPLETED && (
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => handleCheckIn(selectedAppointment)}
+                    >
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Check-in ngay
+                    </Button>
+                  )}
+
+                {/* 💰 THÔNG BÁO CHECKOUT - Khi COMPLETED */}
+                {selectedAppointment.status === AppointmentStatus.COMPLETED && (
+                  <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
+                    <div className="flex items-center gap-2 text-purple-700 mb-2">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="font-semibold">Đã khám xong - Cần checkout</span>
+                    </div>
+                    <p className="text-sm text-purple-600 mb-3">
+                      Bác sĩ đã hoàn thành khám bệnh. Vui lòng thu tiền cho các dịch vụ:
+                    </p>
+                    <ul className="text-sm text-purple-600 space-y-1 mb-3 ml-4 list-disc">
+                      {selectedAppointment.paymentStatus !== "PAID" && (
+                        <li>Phí khám bệnh</li>
+                      )}
+                      {selectedAppointment.labTestOrders && selectedAppointment.labTestOrders.length > 0 && (
+                        <li>Xét nghiệm ({selectedAppointment.labTestOrders.length} loại)</li>
+                      )}
+                      <li>Đơn thuốc (nếu có)</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* 🆕 NÚT THANH TOÁN TỔNG HỢP */}
+                {(selectedAppointment.status === AppointmentStatus.CHECKED_IN || 
+                  selectedAppointment.status === AppointmentStatus.IN_PROGRESS ||
+                  selectedAppointment.status === AppointmentStatus.COMPLETED) && (
+                  <Button 
+                    className={`w-full font-semibold shadow-lg ${
+                      selectedAppointment.status === AppointmentStatus.COMPLETED
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        : "bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    } text-white`}
+                    onClick={() => {
+                      setBulkPaymentDialogOpen(true);
+                    }}
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    {selectedAppointment.status === AppointmentStatus.COMPLETED 
+                      ? "Checkout & Thu tiền" 
+                      : "Thu tiền tổng hợp"}
+                  </Button>
+                )}
+
+                  {/* ⚠️ NÚT THU TIỀN ĐƠN LẺ - Chỉ cho appointment chưa check-in */}
+                  {selectedAppointment.paymentStatus === "UNPAID" && 
+                   selectedAppointment.status !== AppointmentStatus.CHECKED_IN &&
+                   selectedAppointment.status !== AppointmentStatus.IN_PROGRESS && (
                     <Button 
                       className="w-full bg-green-600 hover:bg-green-700"
                       onClick={() => setPaymentDialogOpen(true)}
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
-                      Thu tiền (Cash/MOMO/VNPAY)
+                      Thu phí khám trước
                     </Button>
                   )}
 
@@ -399,17 +520,8 @@ export default function CheckInPage() {
                         </p>
                       )}
                     </div>
-                  )}
-                  
-                  {/* ✅ GỢI Ý THANH TOÁN SAU KHÁM */}
-                  {selectedAppointment.paymentStatus === "UNPAID" && 
-                   (selectedAppointment.status === AppointmentStatus.CHECKED_IN || selectedAppointment.status === AppointmentStatus.IN_PROGRESS) && (
-                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                      <p className="text-sm text-orange-700">
-                        💡 <strong>Gợi ý:</strong> Thu tiền sau khi khám để tính đúng tổng chi phí
-                      </p>
-                    </div>
-                  )}
+                  )}                
+          
                 </div>
               </div>
             )}
@@ -427,6 +539,20 @@ export default function CheckInPage() {
           amount={parseFloat(selectedAppointment.consultationFee?.toString() || "200000")}
           onSuccess={() => {
             toast.success("Thanh toán thành công!");
+            fetchAppointments();
+            setSelectedAppointment(null);
+          }}
+        />
+      )}
+
+      {/* 🆕 Bulk Payment Dialog - Thu tiền tổng hợp */}
+      {selectedAppointment && (
+        <BulkPaymentDialog
+          open={bulkPaymentDialogOpen}
+          onOpenChange={setBulkPaymentDialogOpen}
+          appointment={selectedAppointment}
+          onSuccess={() => {
+            toast.success("Thanh toán tổng hợp thành công!");
             fetchAppointments();
             setSelectedAppointment(null);
           }}

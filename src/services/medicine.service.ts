@@ -2,13 +2,18 @@ import { apiAuth } from '@/lib/axios'
 import { 
   PrescriptionSummary, 
   PrescriptionDetail,
+  PrescriptionResponse,
   Drug,
   DrugFilters,
   CreatePrescriptionRequest,
   PrescriptionFilters,
   DrugStatistic,
   PrescriptionStatistics,
-  MedicineOverviewStats
+  MedicineOverviewStats,
+  MedicationHistory,
+  DrugFrequency,
+  PrescriptionTemplate,
+  CreateTemplateRequest
 } from '@/types/medicine';
 
 export const medicineService = {
@@ -82,8 +87,58 @@ export const medicineService = {
    * Tạo đơn thuốc mới
    * @param data - Dữ liệu đơn thuốc
    */
-  createPrescription: async (data: CreatePrescriptionRequest): Promise<PrescriptionDetail> => {
+  createPrescription: async (data: CreatePrescriptionRequest): Promise<PrescriptionResponse> => {
     const response = await apiAuth.post('/medicine/prescriptions', data);
+    return response.data;
+  },
+
+  /**
+   * Đánh dấu đơn thuốc đã được in
+   * Cập nhật status: ACTIVE -> PRINTED
+   * @param prescriptionId - ID đơn thuốc
+   */
+  markAsPrinted: async (prescriptionId: string): Promise<void> => {
+    await apiAuth.post(`/medicine/prescriptions/${prescriptionId}/mark-printed`);
+  },
+
+  /**
+   * Hủy đơn thuốc
+   * Chỉ cho phép hủy đơn chưa in
+   * @param prescriptionId - ID đơn thuốc
+   */
+  cancelPrescription: async (prescriptionId: string): Promise<void> => {
+    await apiAuth.post(`/medicine/prescriptions/${prescriptionId}/cancel`);
+  },
+
+  // ============================================
+  // MEDICATION HISTORY (For Doctor's Review)
+  // ============================================
+
+  /**
+   * Lấy lịch sử dùng thuốc của bệnh nhân
+   * Dùng cho bác sĩ xem khi khám bệnh (đặc biệt là tái khám)
+   * @param patientId - ID bệnh nhân
+   * @param months - Số tháng gần nhất (undefined = tất cả)
+   */
+  getPatientMedicationHistory: async (
+    patientId: string, 
+    months?: number
+  ): Promise<MedicationHistory[]> => {
+    const params = months ? { months } : {};
+    const response = await apiAuth.get(
+      `/medicine/patients/${patientId}/medication-history`,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lấy thống kê tần suất dùng thuốc của bệnh nhân
+   * Shows which drugs patient has been prescribed most frequently
+   * @param patientId - ID bệnh nhân
+   */
+  getPatientDrugFrequency: async (patientId: string): Promise<DrugFrequency[]> => {
+    const response = await apiAuth.get(`/medicine/patients/${patientId}/drug-frequency`);
     return response.data;
   },
 
@@ -151,5 +206,67 @@ export const medicineService = {
     // const response = await apiAuth.get('/medicine/statistics/overview');
     // return response.data;
     throw new Error('API getOverviewStats chưa được triển khai từ backend');
+  },
+
+  // ============================================
+  // PRESCRIPTION TEMPLATES
+  // ============================================
+
+  /**
+   * Tạo mẫu đơn thuốc mới
+   * @param data - Dữ liệu mẫu đơn
+   */
+  createTemplate: async (data: CreateTemplateRequest): Promise<PrescriptionTemplate> => {
+    const response = await apiAuth.post('/medicine/templates', data);
+    return response.data;
+  },
+
+  /**
+   * Lấy tất cả mẫu đơn của bác sĩ
+   */
+  getDoctorTemplates: async (): Promise<PrescriptionTemplate[]> => {
+    const response = await apiAuth.get('/medicine/templates');
+    return response.data;
+  },
+
+  /**
+   * Lấy chi tiết mẫu đơn
+   * @param templateId - ID mẫu đơn
+   */
+  getTemplateById: async (templateId: number): Promise<PrescriptionTemplate> => {
+    const response = await apiAuth.get(`/medicine/templates/${templateId}`);
+    return response.data;
+  },
+
+  /**
+   * Cập nhật mẫu đơn
+   * @param templateId - ID mẫu đơn
+   * @param data - Dữ liệu cập nhật
+   */
+  updateTemplate: async (
+    templateId: number, 
+    data: CreateTemplateRequest
+  ): Promise<PrescriptionTemplate> => {
+    const response = await apiAuth.put(`/medicine/templates/${templateId}`, data);
+    return response.data;
+  },
+
+  /**
+   * Xóa mẫu đơn
+   * @param templateId - ID mẫu đơn
+   */
+  deleteTemplate: async (templateId: number): Promise<void> => {
+    await apiAuth.delete(`/medicine/templates/${templateId}`);
+  },
+
+  /**
+   * Tìm kiếm mẫu đơn theo tên
+   * @param searchTerm - Từ khóa tìm kiếm
+   */
+  searchTemplates: async (searchTerm: string): Promise<PrescriptionTemplate[]> => {
+    const response = await apiAuth.get('/medicine/templates/search', {
+      params: { q: searchTerm }
+    });
+    return response.data;
   },
 };
