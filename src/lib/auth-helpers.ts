@@ -127,12 +127,11 @@ export async function apiCall<T = any>(
   const url = `${API_URL}${path}`;
 
   // Prepare headers
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...(options.headers as Record<string, string>),
   };
 
-  // Add authentication if required
   if (requireAuth) {
     const token = getAuthToken();
     if (!token) {

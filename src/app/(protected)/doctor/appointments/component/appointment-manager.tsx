@@ -1,70 +1,61 @@
-"use client";
+"use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, Table, Plus } from "lucide-react"
 import { AppointmentCalendar } from "./appointment-cenlendar"
-import type { ViewMode } from "@/types/appointment"
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux"
+import { AppointmentTable } from "./appointment-table"
+import { useAppointments } from "@/hooks/use-appointments"
+import { StatCards } from "./start-card"
 
 export function AppointmentManager() {
-  const [viewMode, setViewMode] = useState<ViewMode>("calendar")
-  const doctorId = useSelector((state: RootState) => state.auth.user?.referenceId);
-  const handleCreateAppointment = () => {
-    // mở modal hoặc điều hướng sang trang tạo lịch hẹn
-    console.log("Create new appointment");
-  };
+  const doctorId = useSelector((state: RootState) => state.auth.user?.referenceId)
+  const { appointments, loading } = useAppointments(doctorId)
+  const [viewMode, setViewMode] = useState("calendar")
+
+  const stats = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10)
+    return {
+      total: appointments.length,
+      today: appointments.filter(a => a.startAt.startsWith(todayStr)).length,
+      completed: appointments.filter(a => a.status === "COMPLETED").length
+    }
+  }, [appointments])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Lịch khám bệnh</h1>
-        </div>
-        <Button onClick={handleCreateAppointment} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Thêm lịch hẹn
+        <h1 className="text-3xl font-bold">Lịch khám bệnh</h1>
+        <Button className="gap-2">
+          <Plus className="w-4 h-4" /> Thêm lịch hẹn
         </Button>
       </div>
+      {/* STAT CARDS */}
+      <StatCards total={stats.total} today={stats.today} completed={stats.completed} />
 
-      {/* Toggle view */}
-      <Tabs
-        value={viewMode}
-        onValueChange={(val) => setViewMode(val as ViewMode)}
-      >
-        <TabsList className="grid w-fit grid-cols-2">
-          <TabsTrigger value="table" className="gap-2">
-            <Table className="w-4 h-4" />
-            Bảng
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            Lịch
-          </TabsTrigger>
+      {/* TITLE + BUTTON */}
+
+
+      {/* TABS */}
+      <Tabs value={viewMode} onValueChange={setViewMode}>
+        <TabsList className="grid grid-cols-2 w-fit">
+
+          <TabsTrigger value="calendar"><Calendar className="w-4 h-4" /> Lịch</TabsTrigger>
+          <TabsTrigger value="table"><Table className="w-4 h-4" /> Bảng</TabsTrigger>
         </TabsList>
 
-        {/* View: Bảng */}
-        <TabsContent value="table" className="mt-6">
-          {/* <AppointmentTable /> */}
-          <div className="text-center py-12 text-muted-foreground">
-            <Table className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Chế độ xem bảng đang được phát triển</p>
-          </div>
-        </TabsContent>
 
-        {/* View: Lịch */}
-        <TabsContent value="calendar" className="mt-6">
-          <TabsContent value="calendar" className="mt-6">
-            {doctorId ? (
-              <AppointmentCalendar doctorId={doctorId} />
-            ) : (
-              <p className="text-muted-foreground">Không tìm thấy Doctor ID</p>
-            )}
-          </TabsContent>
+
+        <TabsContent value="calendar">
+          <AppointmentCalendar appointments={appointments} loading={loading} />
+        </TabsContent>
+        <TabsContent value="table">
+          <AppointmentTable appointments={appointments} loading={loading} />
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

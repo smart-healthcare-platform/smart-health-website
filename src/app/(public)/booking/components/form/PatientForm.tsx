@@ -91,9 +91,9 @@ const PatientForm: React.FC<PatientFormProps> = ({ formData, onFormChange }) => 
           <input
             type="text"
             value={
-              formData.gender === "male"
+              formData.gender === "MALE"
                 ? "Nam"
-                : formData.gender === "female"
+                : formData.gender === "FEMALE"
                   ? "Nữ"
                   : "Khác"
             }

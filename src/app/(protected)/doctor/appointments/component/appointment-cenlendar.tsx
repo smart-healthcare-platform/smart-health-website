@@ -1,15 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { useAppointments } from "@/hooks/use-appointments"
 import { CalendarBase } from "./calendar-base"
 import AppointmentDetailDialog from "@/components/common/appointment-detail-dialog"
-
 import { appointmentService } from "@/services/appointment.service"
 import { Appointment, AppointmentDetail } from "@/types/appointment/appointment.type"
 
-export function AppointmentCalendar({ doctorId }: { doctorId: string }) {
-  const { appointments, loading } = useAppointments(doctorId)
+interface Props {
+  appointments: Appointment[]
+  loading?: boolean
+}
+
+export function AppointmentCalendar({ appointments, loading = false }: Props) {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -18,7 +20,6 @@ export function AppointmentCalendar({ doctorId }: { doctorId: string }) {
     try {
       setLoadingDetail(true)
       const fullDetail = await appointmentService.getDetailsAppointmentForDoctor(apt.id)
-      console.log("Chi tiết appointment",fullDetail)
       setSelectedAppointment(fullDetail)
       setDialogOpen(true)
     } catch (err) {

@@ -1,5 +1,5 @@
 import { apiAuth } from '@/lib/axios'
-import { Patient } from '@/types/patient/patient.type'
+import { Patient, UpdatePatientDto } from '@/types/patient/patient.type'
 import { ApiResponse, PaginatedResponse } from '@/types/response'
 
 export const patientService = {
@@ -16,7 +16,7 @@ export const patientService = {
             return { data: [], total: 0, page, limit };
         }
 
-        return res.data.data; 
+        return res.data.data;
     },
 
     async getStats(): Promise<{
@@ -41,6 +41,21 @@ export const patientService = {
             newThisMonth: { value: newThisMonth.value, change: newThisMonth.change },
             averageAge: { value: Math.round(averageAge.value), change: averageAge.change },
         };
+    },
+
+    async updatePatient(id: string, data: UpdatePatientDto): Promise<Patient | null> {
+        try {
+            const res = await apiAuth.put<ApiResponse<Patient>>(`/patients/${id}`, data);
+
+            if (!res.data.success) {
+                return null;
+            }
+
+            return res.data.data;
+        } catch (error) {
+            console.error("Failed to update patient", error);
+            return null;
+        }
     }
 
 

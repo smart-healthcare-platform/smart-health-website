@@ -13,7 +13,6 @@ import { FollowUpStep } from "../components/follow-up-step"
 import { SummaryStep } from "../components/summary-step"
 
 import { appointmentService } from "@/services/appointment.service"
-import { medicineService } from "@/services/medicine.service"
 
 import ConfirmDialog from "@/components/ui/confirm-dialog"
 import SuccessDialog from "@/components/ui/success-dialog"
@@ -25,6 +24,7 @@ import type { ExaminationData, PrescriptionItem } from "@/types/examination"
 import type { CreateMedicalRecordPayload, CreateVitalSignPayload } from "@/types/examnation"
 import type { AppointmentDetail } from "@/types/appointment/appointment.type"
 import type { CreateLabTestOrderPayload } from "@/types/examnation/lab-test-dto"
+import { medicineService } from "@/services/medicine.service"
 
 export default function ExaminationPage() {
   const { appointmentId } = useParams()
@@ -104,10 +104,10 @@ export default function ExaminationPage() {
       console.log('⏭️  Skipping lab test orders - no lab tests selected or user not found')
       return
     }
-    
+
     console.log(`🧪 Creating ${examinationData.labTests.length} lab test orders with automatic payment...`)
     console.log('   Lab tests to create:', examinationData.labTests.map(t => ({ name: t.name, type: t.type, id: t.id })))
-    
+
     for (const labTest of examinationData.labTests) {
       const payload: CreateLabTestOrderPayload = {
         appointmentId: appointmentId as string,
@@ -115,10 +115,10 @@ export default function ExaminationPage() {
         orderedBy: user.referenceId,
         labTestId: labTest.id, // Include labTestId for price lookup
       }
-      
+
       console.log(`📤 Sending create lab test order request for "${labTest.name}"...`)
       console.log('   Payload:', payload)
-      
+
       try {
         // Use createWithPayment endpoint to automatically create payment
         const order = await appointmentService.createLabTestOrderWithPayment(payload)
@@ -137,20 +137,20 @@ export default function ExaminationPage() {
         // Continue with other lab tests even if one fails
       }
     }
-    
+
     console.log('🏁 Finished creating all lab test orders')
   }
 
   const handleComplete = async () => {
     try {
       setLoading(true)
-      
+
       // Step 1: Create Prescription in Medicine Service (if prescription items exist)
       let prescriptionId: string | undefined
-      
+
       if (examinationData.prescriptionItems?.length && user?.referenceId && appointment) {
         console.log("Creating prescription with", examinationData.prescriptionItems.length, "items")
-        
+
         const prescriptionPayload: CreatePrescriptionRequest = {
           patientId: appointment.patient.id,
           doctorId: user.referenceId,
@@ -166,21 +166,21 @@ export default function ExaminationPage() {
             durationDays: item.duration,
           }))
         }
-        
+
         const prescriptionResponse = await medicineService.createPrescription(prescriptionPayload)
         prescriptionId = prescriptionResponse.prescriptionId
         console.log("✅ Prescription created:", prescriptionId)
       }
-      
+
       // Step 2: Create Medical Record with prescriptionId
       const recordId = await createMedicalRecord(prescriptionId)
       console.log("✅ Medical record created:", recordId)
-      
+
       // Step 3-5: Other steps
       await createVitalSign(recordId)
       await createLabTestOrders(recordId)
       await createFollowUpSuggestion(recordId)
-      
+
       setConfirmOpen(false)
       setSuccessOpen(true)
     } catch (error) {
@@ -277,9 +277,9 @@ export default function ExaminationPage() {
 
   return (
     <>
-      <ExaminationLayout 
-        currentStep={currentStep} 
-        onStepClick={setCurrentStep} 
+      <ExaminationLayout
+        currentStep={currentStep}
+        onStepClick={setCurrentStep}
         appointment={appointment}
         onCopyPrescription={handleCopyPrescription}
       >

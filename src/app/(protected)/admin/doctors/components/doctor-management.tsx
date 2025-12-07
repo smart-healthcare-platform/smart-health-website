@@ -5,9 +5,10 @@ import { Download, Plus } from "lucide-react"
 import { DoctorStatsCards } from "./stats-cards"
 import { DoctorFilters } from "./doctor-filters"
 import { DoctorTable } from "./doctor-table"
-import Pagination from "../../common/pagination"
+
 import { doctorService } from "@/services/doctor.service"
 import AddDoctorDialog from "./doctor-create-dialog"
+import PaginationTable from "@/components/ui/pagination-table"
 
 export function DoctorManagement() {
   const [doctors, setDoctors] = useState<any[]>([])
@@ -32,7 +33,6 @@ export function DoctorManagement() {
   const fetchDoctors = async () => {
     setLoading(true)
     const res = await doctorService.getAllDoctors(page, limit, searchTerm)
-    console.log(res)
     setDoctors(res.data)
     setTotalDoctors(res.total)
     setLoading(false)
@@ -87,7 +87,7 @@ export function DoctorManagement() {
         <DoctorTable doctors={doctors} />
       )}
 
-      <Pagination
+      <PaginationTable
         page={page}
         limit={limit}
         total={totalDoctors}

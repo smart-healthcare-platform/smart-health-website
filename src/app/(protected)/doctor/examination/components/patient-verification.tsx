@@ -1,10 +1,22 @@
 "use client"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { User, Calendar, Phone, MapPin, Droplet, AlertCircle } from "lucide-react"
-import { AppointmentDetail } from "@/types/appointment/appointment.type"
 
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { User, Calendar, Phone, MapPin } from "lucide-react"
+import { AppointmentDetail } from "@/types/appointment/appointment.type"
+import { Gender } from "@/types/patient/enums/patient-gender.enum.dto"
+import { patientService } from "@/services/patient.service"
+
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import SuccessDialog from "@/components/ui/success-dialog"
 
 interface PatientVerificationProps {
   appointment: AppointmentDetail
@@ -12,34 +24,87 @@ interface PatientVerificationProps {
 }
 
 export function PatientVerification({ appointment, onNext }: PatientVerificationProps) {
-  const calculateAge = (dateString: string): number => {
+  const [open, setOpen] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
+
+  const [editName, setEditName] = useState(appointment.patientName)
+  const [editDOB, setEditDOB] = useState(appointment.patient.dateOfBirth)
+  const [editGender, setEditGender] = useState<Gender>(
+    appointment.patient.gender || Gender.MALE
+  )
+  const [editPhone, setEditPhone] = useState(appointment.patient.phone)
+  const [editAddress, setEditAddress] = useState(appointment.patient.address)
+
+  const calculateAge = (dateString: string) => {
     const birthDate = new Date(dateString)
     const today = new Date()
     let age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
-
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--
     }
-
     return age
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     })
+
+  const handleSave = async () => {
+    try {
+      const updated = await patientService.updatePatient(appointment.patient.id, {
+        full_name: editName,
+        date_of_birth: editDOB,
+        gender: editGender,
+        phone: editPhone,
+        address: editAddress,
+      })
+
+      if (updated) {
+        appointment.patientName = updated.full_name
+        appointment.patient.dateOfBirth = updated.date_of_birth
+
+        // Xử lý Gender an toàn
+        if (updated.gender === Gender.MALE || updated.gender === Gender.FEMALE) {
+          appointment.patient.gender = updated.gender
+        } else {
+          appointment.patient.gender = Gender.MALE
+        }
+
+        appointment.patient.phone = updated.phone || ""
+        appointment.patient.address = updated.address || ""
+
+        // Cập nhật state hiển thị
+        setEditName(updated.full_name)
+        setEditDOB(updated.date_of_birth)
+        setEditGender(appointment.patient.gender)
+        setEditPhone(updated.phone || "")
+        setEditAddress(updated.address || "")
+
+        setOpen(false)
+        setSuccessOpen(true)
+      }
+    } catch (error) {
+      console.error("Failed to update patient", error)
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2 text-balance">Xác nhận thông tin bệnh nhân</h2>
-        <p className="text-sm text-muted-foreground text-pretty">
-          Vui lòng kiểm tra kỹ thông tin bệnh nhân trước khi bắt đầu khám
-        </p>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold mb-2 text-balance">Xác nhận thông tin bệnh nhân</h2>
+          <p className="text-sm text-muted-foreground text-pretty">
+            Vui lòng kiểm tra kỹ thông tin bệnh nhân trước khi bắt đầu khám
+          </p>
+        </div>
+        <Button onClick={() => setOpen(true)} variant="outline" size="sm">
+          Điều chỉnh thông tin
+        </Button>
       </div>
 
       {/* Basic Information */}
@@ -48,6 +113,7 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
           <User className="w-4 h-4 text-primary" />
           Thông tin cơ bản
         </h3>
+
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Họ và tên</p>
@@ -65,14 +131,13 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Giới tính</p>
             <p className="font-medium">
-              {appointment.patient.gender === "male"
+              {appointment.patient.gender === Gender.MALE
                 ? "Nam"
-                : appointment.patient.gender === "female"
+                : appointment.patient.gender === Gender.FEMALE
                   ? "Nữ"
                   : "Khác"}
             </p>
           </div>
-
         </div>
       </div>
 
@@ -81,19 +146,13 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
       {/* Contact Information */}
       <div className="space-y-4">
         <h3 className="font-semibold">Thông tin liên hệ</h3>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          {/* <div className="space-y-1">
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <Phone className="w-3 h-3" />
-              Số điện thoại
-            </p>
-            <p className="font-medium">{appointment.patient.}</p>
-          </div> */}
-          <div className="space-y-1 col-span-2">
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              Địa chỉ
-            </p>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1">
+            <Phone className="w-3 h-3" />
+            <p className="font-medium">{appointment.patient.phone}</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
             <p className="font-medium text-pretty">{appointment.patient.address}</p>
           </div>
         </div>
@@ -101,41 +160,12 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
 
       <Separator />
 
-      {/* Medical Alerts */}
-      {/* <div className="space-y-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-destructive" />
-          Cảnh báo y tế
-        </h3>
-        <div className="space-y-3">
-          {appointment.allergies && (
-            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-sm font-medium text-destructive mb-2">Dị ứng</p>
-              <p className="text-sm">{appointment.allergies}</p>
-            </div>
-          )}
-
-          {appointment.chronicDiseases && (
-            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-500 mb-2">Bệnh mạn tính</p>
-              <p className="text-sm">{appointment.chronicDiseases}</p>
-            </div>
-          )}
-
-          {!appointment.allergies && !appointment.chronicDiseases && (
-            <p className="text-sm text-muted-foreground italic">Không có cảnh báo y tế</p>
-          )}
-        </div>
-      </div> */}
-
+      {/* Notes */}
       {appointment.notes && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <h3 className="font-semibold">Lý do khám</h3>
-            <p className="text-sm text-pretty bg-muted p-4 rounded-lg">{appointment.notes}</p>
-          </div>
-        </>
+        <div className="space-y-2">
+          <h3 className="font-semibold">Lý do khám</h3>
+          <p className="text-sm text-pretty bg-muted p-4 rounded-lg">{appointment.notes}</p>
+        </div>
       )}
 
       {/* Actions */}
@@ -144,6 +174,73 @@ export function PatientVerification({ appointment, onNext }: PatientVerification
           Xác nhận và tiếp tục
         </Button>
       </div>
+
+      {/* Dialog chỉnh sửa */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa thông tin bệnh nhân</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <p className="text-sm">Họ và tên</p>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm">Ngày sinh</p>
+              <Input type="date" value={editDOB} onChange={(e) => setEditDOB(e.target.value)} />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm">Giới tính</p>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={editGender === Gender.MALE}
+                    onChange={() => setEditGender(Gender.MALE)}
+                  />
+                  Nam
+                </label>
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={editGender === Gender.FEMALE}
+                    onChange={() => setEditGender(Gender.FEMALE)}
+                  />
+                  Nữ
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm">Số điện thoại</p>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm">Địa chỉ</p>
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
+            <Button onClick={handleSave}>Lưu thay đổi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog success */}
+      <SuccessDialog
+        open={successOpen}
+        onClose={() => setSuccessOpen(false)}
+        title="Cập nhật thành công"
+        message="Thông tin bệnh nhân đã được cập nhật thành công."
+        confirmText="Đóng"
+      />
     </div>
   )
 }

@@ -13,8 +13,30 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, Bell, Settings, User, LogOut, HelpCircle } from "lucide-react"
+import { useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "@/redux"
+import { authService } from "@/services/auth.service"
+import { clearAuth } from "@/redux/slices/authSlice"
+import { isAdmin } from "@/utils/typeGuards"
 
 export function AdminHeader() {
+  const { user } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch()
+  const router = useRouter()
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout()
+    } catch (err) {
+      console.error("Đăng xuất thất bại:", err)
+    } finally {
+      dispatch(clearAuth())
+      router.push("/login")
+    }
+  }, [dispatch, router])
+
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
       {/* Search */}
@@ -27,7 +49,6 @@ export function AdminHeader() {
 
       {/* Right side */}
       <div className="flex items-center space-x-4">
-        {/* Environment Badge */}
         <Badge variant="outline" className="text-xs">
           Production
         </Badge>
@@ -53,24 +74,34 @@ export function AdminHeader() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Admin User</p>
-                <p className="text-xs leading-none text-muted-foreground">admin@smarthealth.com</p>
+                <p className="text-sm font-medium leading-none">
+                  {isAdmin(user) ? user.username : "Admin"}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email || "admin@smarthealth.com"}
+                </p>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
+
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
