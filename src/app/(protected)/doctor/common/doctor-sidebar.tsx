@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   LayoutDashboard,
-  Users,
   Calendar,
   Settings,
   Activity,
@@ -28,16 +27,15 @@ const management = [
     icon: LayoutDashboard,
   },
   {
-    name: "Lịch hẹn",
+    name: "Lịch khám bệnh",
     href: "/doctor/appointments",
     icon: Calendar,
     badge: "12",
   },
   {
-    name: "Bệnh nhân",
-    href: "/doctor/patients",
-    icon: Users,
-    badge: "48",
+    name: "Lịch làm việc",
+    href: "/doctor/schedule",
+    icon: Calendar,
   },
   {
     name: "Hồ sơ y tế",

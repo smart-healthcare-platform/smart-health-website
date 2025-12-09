@@ -2,11 +2,9 @@
 import { useState } from 'react';
 import { Heart, Shield, Activity, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useDispatch } from "react-redux"
-import { setCredentials } from "@/redux/slices/authSlice"
 import { authService } from '@/services/auth.service';
 import { useRouter } from "next/navigation"
 
-import { apiNoAuth } from '@/lib/axios';
 import { handleUserLogin } from '@/lib/auth-helpers';
 // Removed unused imports
 export default function ModernHealthLogin() {
@@ -22,7 +20,7 @@ export default function ModernHealthLogin() {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
+
     try {
       const loginResult = await authService.login(email, password);
       await handleUserLogin(loginResult, dispatch, router);

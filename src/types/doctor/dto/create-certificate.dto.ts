@@ -1,21 +1,27 @@
 import { CertificateType } from "../enums/doctor-certificate.type";
+import { AcademicDegree } from "../enums/academic-degree.enum";
 
 export type CreateDoctorCertificateDto = {
     doctor_id: string;
     type: CertificateType;
-    title: string;
 
+    // DEGREE ONLY
+    academic_degree?: AcademicDegree;
     field?: string;
-    certificate_number?: string;
     graduation_year?: number;
-    issued_date?: string;  
+
+    // LICENSE ONLY
+    license_number?: string;
+    issued_date?: string;
     expiry_date?: string;
     issued_by?: string;
+
+    // COMMON
     description?: string;
     certificate_file?: string;
 
     status?: 'PENDING' | 'APPROVED' | 'REJECTED';
     is_verified?: boolean;
-    verified_at?: Date;
+    verified_at?: string;     
     verified_by?: string;
 };

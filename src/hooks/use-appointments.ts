@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { appointmentService } from "@/services/appointment.service"
-import { Appointment} from '@/types/appointment/appointment.type'
+import { Appointment } from '@/types/appointment/appointment.type'
 
 
 export function useAppointments(doctorId?: string) {

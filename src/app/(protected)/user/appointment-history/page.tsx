@@ -45,7 +45,6 @@ export default function AppointmentHistoryPage() {
         filters.status as any,
         filters.dateRange as any,
       );
-      console.log(data);
       setApiData(data);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);

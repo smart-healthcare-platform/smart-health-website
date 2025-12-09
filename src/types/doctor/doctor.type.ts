@@ -1,6 +1,7 @@
 
 import { Gender } from "../patient/enums/patient-gender.enum.dto";
 import { DayOfWeek } from "./dto/create-weekly.dto";
+import { AcademicDegree } from "./enums/academic-degree.enum";
 import { CertificateType } from "./enums/doctor-certificate.type";
 
 export interface Doctor {
@@ -43,7 +44,7 @@ export interface DoctorDetail {
         created_at: string
     }>
 
-    availabilities: Array<{
+    weeklyAvailabilities: Array<{
         id: string
         doctor_id: string
         day_of_week: string
@@ -75,15 +76,14 @@ export interface DoctorDetail {
 
 export interface DoctorCertificate {
     id: string;
-
     doctor: Doctor | null;
-
 
     type: CertificateType;
 
-    title: string;
+    academic_degree: AcademicDegree | null;
+
     field: string | null;
-    certificate_number: string | null;
+    license_number: number | null;
     graduation_year: number | null;
 
     issued_date: string | null;
@@ -104,6 +104,7 @@ export interface DoctorCertificate {
     created_at: string;
     updated_at: string;
 }
+
 
 export interface WeeklyAvailability {
     id: string;
