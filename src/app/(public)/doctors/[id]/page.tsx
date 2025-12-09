@@ -1,26 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, Clock, Star, GraduationCap, Phone, Mail, Shield, CheckCircle, HeartPulse } from "lucide-react"
-import type { DoctorDetail } from "@/types"
 import { doctorService } from "@/services/doctor.service"
 import Loading from "@/components/ui/loading"
 import { useDispatch } from "react-redux"
 import { useRouter } from "next/navigation";
 import { setDoctor } from "@/redux/slices/bookingSlice";
+import { Doctor, DoctorDetail } from "@/types/doctor/doctor.type"
+import { CertificateType } from "@/types/doctor/enums/doctor-certificate.type"
+import { mapDegreeTitle } from "@/utils/mapping"
 const dayTranslations: { [key: string]: string } = {
-  mon: "Thứ 2",
-  tue: "Thứ 3",
-  wed: "Thứ 4",
-  thu: "Thứ 5",
-  fri: "Thứ 6",
-  sat: "Thứ 7",
-  sun: "Chủ nhật",
-}
+  MON: "Thứ 2",
+  TUE: "Thứ 3",
+  WED: "Thứ 4",
+  THU: "Thứ 5",
+  FRI: "Thứ 6",
+  SAT: "Thứ 7",
+  SUN: "Chủ nhật",
+};
 
 export default function DoctorDetailPage() {
   const params = useParams()
@@ -29,16 +31,28 @@ export default function DoctorDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const dispatch = useDispatch();
   const router = useRouter();
-  useEffect(() => {
-    const doctorId = Array.isArray(params.id) ? params.id[0] : params.id
-    if (!doctorId) return
 
-    doctorService
-      .getDoctorById(doctorId)
-      .then(setDoctorDetail)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [params.id])
+
+  const fetchDoctorDetail = useCallback(async () => {
+    const doctorId = Array.isArray(params.id) ? params.id[0] : params.id;
+    if (!doctorId) return;
+
+    try {
+      setLoading(true);
+      const data = await doctorService.getDoctorById(doctorId);
+      setDoctorDetail(data);
+      setError(null);
+    } catch (error: any) {
+      setError(error?.message ?? "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id]);
+
+
+  useEffect(() => {
+    fetchDoctorDetail();
+  }, [fetchDoctorDetail]);
 
   const calculateAverageRating = (ratings: DoctorDetail["ratings"]) => {
     if (ratings.length === 0) return 0
@@ -92,8 +106,8 @@ export default function DoctorDetailPage() {
     )
   }
 
-  const degrees = doctorDetail.certificates.filter((cert) => cert.type === "degree")
-  const licenses = doctorDetail.certificates.filter((cert) => cert.type === "license")
+  const degrees = doctorDetail.certificates.filter((cert) => cert.type === CertificateType.DEGREE)
+  const licenses = doctorDetail.certificates.filter((cert) => cert.type === CertificateType.LICENSE)
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -121,12 +135,6 @@ export default function DoctorDetailPage() {
                 <h1 className="text-3xl font-bold text-gray-900">{doctorDetail.display_name}</h1>
 
                 <div className="flex flex-wrap items-center gap-4 mt-2">
-                  <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full 
-                           bg-gradient-to-r from-emerald-500 to-emerald-600 
-                           text-white font-medium shadow">
-                    <HeartPulse className="w-4 h-4" />
-                    {doctorDetail.specialty}
-                  </span>
                   <span className="text-gray-700 font-medium">{doctorDetail.experience_years} năm kinh nghiệm</span>
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -144,7 +152,7 @@ export default function DoctorDetailPage() {
               <Button
                 onClick={() => {
                   dispatch(setDoctor(doctorDetail)); // lưu bác sĩ vào redux
-                  router.push("/user/booking/step-2"); // nhảy thẳng Step 2
+                  router.push("/booking/step-2"); // nhảy thẳng Step 2
                 }}
                 className="
           px-8 py-3 
@@ -192,50 +200,70 @@ export default function DoctorDetailPage() {
               </div>
             </div>
 
-            {/* Degrees and Licenses */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Học vị & Giấy phép</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Học vị */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">Học vị</h3>
-                  {degrees.map((degree) => (
-                    <div key={degree.id} className="p-4 bg-gray-50 rounded-lg mb-3">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Học vị</h3>
+                  {degrees.map((deg) => (
+                    <div key={deg.id} className="p-4 bg-gray-50 rounded-lg shadow-sm mb-3">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-medium text-gray-800">{degree.title}</h4>
-                          <p className="text-gray-600 text-sm">{degree.field}</p>
+                          <h4 className="font-medium text-gray-800">
+                            {mapDegreeTitle(deg.academic_degree)}
+                          </h4>
+                          {deg.field && <p className="text-gray-600 text-sm">{deg.field}</p>}
                         </div>
-                        <Badge className="bg-gray-200 text-gray-700">{degree.graduation_year}</Badge>
+
+                        {deg.graduation_year && (
+                          <Badge className="bg-gray-200 text-gray-700">
+                            {deg.graduation_year}
+                          </Badge>
+                        )}
                       </div>
-                      {degree.certificate_file && (
+
+                      {deg.certificate_file && (
                         <div className="flex items-center gap-2 mt-2 text-green-600 text-sm">
                           <CheckCircle className="w-4 h-4" />
-                          <span>Đã xác minh</span>
+                          <span>Đã tải tài liệu</span>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
+
+                {/* Giấy phép hành nghề */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">Giấy phép hành nghề</h3>
-                  {licenses.map((license) => (
-                    <div key={license.id} className="p-4 bg-gray-50 rounded-lg mb-3">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Giấy phép hành nghề</h3>
+                  {licenses.map((lic) => (
+                    <div key={lic.id} className="p-4 bg-gray-50 rounded-lg shadow-sm mb-3">
                       <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-gray-800">{license.title}</h4>
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 font-semibold px-3 py-1">
-                          Có hiệu lực
+                        <h4 className="font-medium text-gray-800">
+                          GP Hành nghề
+                        </h4>
+                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 px-3 py-1">
+                          {lic.expiry_date ? "Còn hiệu lực" : "Không xác định"}
                         </Badge>
                       </div>
-                      <p className="text-gray-600 text-sm mt-1">
-                        <span className="font-medium">Cấp ngày:</span> {formatDate(license.issued_date)}
+
+                      {lic.license_number && (
+                        <p className="text-gray-600 text-sm mt-1">
+                          <span className="font-medium">Số giấy phép:</span> {lic.license_number}
+                        </p>
+                      )}
+
+                      <p className="text-gray-600 text-sm">
+                        <span className="font-medium">Cấp ngày:</span> {formatDate(lic.issued_date)}
                       </p>
                       <p className="text-gray-600 text-sm">
-                        <span className="font-medium">Hết hạn:</span> {formatDate(license.expiry_date)}
+                        <span className="font-medium">Hết hạn:</span> {formatDate(lic.expiry_date)}
                       </p>
-                      {license.certificate_file && (
+
+                      {lic.certificate_file && (
                         <div className="flex items-center gap-2 mt-2 text-green-600 text-sm">
                           <CheckCircle className="w-4 h-4" />
-                          <span>Đã xác minh</span>
+                          <span>Đã tải tài liệu</span>
                         </div>
                       )}
                     </div>
@@ -273,20 +301,22 @@ export default function DoctorDetailPage() {
               {/* Schedule */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Lịch làm việc</h3>
-                {doctorDetail.availabilities.map((availability) => (
+                {doctorDetail.weeklyAvailabilities.map((w) => (
                   <div
-                    key={availability.id}
+                    key={w.id}
                     className="flex justify-between items-center p-3 bg-blue-50 rounded-lg mb-2"
                   >
                     <span className="font-medium text-gray-800">
-                      {dayTranslations[availability.day_of_week]}
+                      {dayTranslations[w.day_of_week]}
                     </span>
-                    {/* <div className="flex items-center gap-2 text-blue-600 text-sm">
+
+                    <div className="flex items-center gap-2 text-blue-600 text-sm">
                       <Clock className="w-4 h-4" />
-                      <span>{shiftToTime[availability.] || "—"}</span>
-                    </div> */}
+                      <span>{w.start_time.slice(0, 5)} - {w.end_time.slice(0, 5)}</span>
+                    </div>
                   </div>
                 ))}
+
               </div>
 
               {/* Stats */}

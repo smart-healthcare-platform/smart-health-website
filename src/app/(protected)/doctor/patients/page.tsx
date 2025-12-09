@@ -1,10 +1,5 @@
-import { PatientManager } from "./components/patient-manager";
+import { PatientManagement} from '@/app/(protected)/admin/patients/components/patient-management'
 
-
-export default function HomePage() {
-  return (
-    <main className="container mx-auto py-8 px-4">
-      <PatientManager />
-    </main>
-  )
+export default function PatientsPage() {
+  return <PatientManagement />
 }

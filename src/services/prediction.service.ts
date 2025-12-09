@@ -20,19 +20,58 @@ interface PredictionResponse {
   prediction: number[];
 }
 
+interface DiagnosisResult {
+  riskLevel: "low" | "medium" | "high";
+  riskPercentage: number;
+  recommendations: string[];
+  keyFactors: string[];
+  explanation: string;
+}
+
 const PREDICTION_BASE_URL = "prediction";
 
 export const predictionService = {
   /**
-   * Gửi dữ liệu sức khỏe để dự đoán nguy cơ tim mạch
+   * Gửi dữ liệu sức khỏe để dự đoán nguy cơ tim mạch và trả về kết quả chẩn đoán đầy đủ
    * @param metrics Dữ liệu sức khỏe của người dùng
-   * @returns Kết quả dự đoán từ AI
+   * @returns Kết quả chẩn đoán với mức độ rủi ro và khuyến nghị
    */
- predict: async (metrics: HealthMetrics): Promise<PredictionResponse> => {
-    const response = await apiNoAuth.post(`${PREDICTION_BASE_URL}/predict`, {
+ predict: async (metrics: HealthMetrics): Promise<DiagnosisResult> => {
+    const response = await apiNoAuth.post<PredictionResponse>(`${PREDICTION_BASE_URL}/predict`, {
       input_data: transformMetricsToModelInput(metrics),
     });
-    return response.data;
+
+    const predictionData = response.data;
+
+    // Invert the prediction: model predicts probability of NO heart disease.
+    // So, risk = 1 - prediction.
+    const riskPercentage = Math.round((1 - predictionData.prediction[0]) * 100);
+
+    let riskLevel: "low" | "medium" | "high";
+    if (riskPercentage < 30) {
+      riskLevel = "low";
+    } else if (riskPercentage < 60) {
+      riskLevel = "medium";
+    } else {
+      riskLevel = "high";
+    }
+
+    // Tạo kết quả trả về
+    const result: DiagnosisResult = {
+      riskLevel,
+      riskPercentage,
+      recommendations: [
+        "Duy trì chế độ ăn uống lành mạnh, ít muối và chất béo bão hòa.",
+        "Tập thể dục đều đặn, ít nhất 150 phút mỗi tuần.",
+        "Kiểm tra huyết áp và cholesterol định kỳ.",
+        "Tránh hút thuốc và hạn chế rượu bia.",
+        "Quản lý căng thẳng hiệu quả.",
+      ],
+      keyFactors: ["Tuổi", "Huyết áp", "Cholesterol", "Nhịp tim tối đa"],
+      explanation: `Dựa trên các chỉ số bạn cung cấp, hệ thống AI của chúng tôi ước tính nguy cơ mắc bệnh tim của bạn là ${riskPercentage}%. Đây là mức ${riskLevel === "low" ? "thấp" : riskLevel === "medium" ? "trung bình" : "cao"}.`,
+    };
+
+    return result;
   },
 
  /**
@@ -59,9 +98,9 @@ function transformMetricsToModelInput(metrics: HealthMetrics): number[] {
   const chestPainType = chestPainTypeMap[metrics.chestPainType];
 
   const restingECGMap: { [key: string]: number } = {
-    Normal: 1,
-    ST: 2,
-    LVH: 0,
+    Normal: 0,
+    ST: 1,
+    LVH: 2,
   };
   const restingECG = restingECGMap[metrics.restingECG];
 

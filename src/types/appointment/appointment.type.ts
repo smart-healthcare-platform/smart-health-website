@@ -1,7 +1,8 @@
 import { MedicalRecord } from "../examnation/medical-records.type";
+import { LabTestOrder } from "../examnation/lab-test.type";
 import { AppointmentType } from "./enums/appointment-type.enum";
-import { AppointmentCategory } from "./enums/appointment-category.enum";
 import { AppointmentStatus } from "./enums/appointment-status.enum";
+import { Gender } from "../patient/enums/patient-gender.enum.dto";
 
 export interface Appointment {
   id: string;
@@ -16,6 +17,7 @@ export interface Appointment {
   createdAt: string;
   updatedAt: string;
   startAt: string;
+  endAt: string;
   followUpId?: string;
   paymentStatus?: "UNPAID" | "PENDING" | "PAID" | "REFUNDED"
   paymentId?: string | null
@@ -23,15 +25,18 @@ export interface Appointment {
   paidAt?: string | null
   checkedInAt?: string | null
   consultationFee?: number
+  prescriptionId?: string | null
+  labTestOrders?: LabTestOrder[]
 }
 
 export interface AppointmentDetail extends Appointment {
   patient: {
     id: string;
     fullName: string;
-    gender: "male" | "female" | "other";
+    gender: Gender;
     dateOfBirth: string;
     address: string;
+    phone: string
   };
   medicalRecord?: MedicalRecord;
 }

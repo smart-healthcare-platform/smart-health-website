@@ -13,10 +13,18 @@ export enum StockStatus {
 
 /**
  * Trạng thái đơn thuốc
+ * 
+ * LƯU Ý: Hệ thống KHÔNG bán thuốc trực tiếp.
+ * Đơn thuốc chỉ được in ra để bệnh nhân mua tại nhà thuốc liên kết.
  */
 export enum PrescriptionStatus {
-  PENDING_PAYMENT = "PENDING_PAYMENT",
-  COMPLETED = "COMPLETED",
+  /** Đơn đang được bác sĩ soạn (chưa hoàn tất khám) */
+  DRAFT = "DRAFT",
+  /** Đơn đã được tạo, bệnh nhân có thể lấy đơn tại quầy */
+  ACTIVE = "ACTIVE",
+  /** Đơn đã được in và trao cho bệnh nhân */
+  PRINTED = "PRINTED",
+  /** Đơn đã bị hủy */
   CANCELLED = "CANCELLED"
 }
 
@@ -59,6 +67,101 @@ export interface DrugPaginatedResponse {
 // ============================================
 
 /**
+ * Medication History - Lịch sử dùng thuốc của bệnh nhân
+ * Backend response: MedicationHistoryDto.java
+ * Dùng để bác sĩ xem lịch sử kê đơn khi khám bệnh
+ */
+export interface MedicationHistory {
+  prescriptionId: string;
+  appointmentId: string;
+  prescribedDate: string;       // ISO 8601 date string
+  diagnosis: string;
+  doctorName?: string;
+  notes?: string;
+  status: PrescriptionStatus;
+  items: PrescriptionItem[];
+  totalDrugs: number;           // Số loại thuốc trong đơn
+}
+
+/**
+ * Drug Frequency - Thống kê tần suất dùng thuốc
+ * Backend response: DrugFrequencyDto.java
+ */
+export interface DrugFrequency {
+  drugId: number;
+  drugName: string;
+  activeIngredient: string;
+  strength: string;
+  prescriptionCount: number;    // Số lần được kê
+  lastPrescribed: string;       // ISO 8601 date string
+  firstPrescribed: string;      // ISO 8601 date string
+  mostCommonDosage?: string;    // Liều dùng phổ biến nhất
+}
+
+// ============================================
+// PRESCRIPTION TEMPLATES (Mẫu đơn thuốc)
+// ============================================
+
+/**
+ * Template Item - Thuốc trong mẫu đơn
+ * Backend response: PrescriptionTemplateItemDto.java
+ */
+export interface PrescriptionTemplateItem {
+  id?: number;
+  drugId: number;
+  drugName: string;
+  activeIngredient: string;
+  strength: string;
+  dosage: string;
+  frequency: string;
+  route?: string;
+  timing?: string;
+  durationDays?: number;
+  specialInstructions?: string;
+}
+
+/**
+ * Prescription Template - Mẫu đơn thuốc
+ * Backend response: PrescriptionTemplateDto.java
+ */
+export interface PrescriptionTemplate {
+  id: number;
+  doctorId: string;
+  templateName: string;
+  diagnosis?: string;
+  notes?: string;
+  items: PrescriptionTemplateItem[];
+  createdAt: string;
+  updatedAt: string;
+  totalDrugs: number;
+}
+
+/**
+ * Template Item Input - Dữ liệu thuốc khi tạo/sửa mẫu
+ * Backend request: TemplateItemInput.java
+ */
+export interface TemplateItemInput {
+  drugId: number;
+  dosage: string;
+  frequency: string;
+  route?: string;
+  timing?: string;
+  durationDays?: number;
+  specialInstructions?: string;
+}
+
+/**
+ * Create Template Request - Tạo mẫu đơn mới
+ * Backend request: CreateTemplateRequest.java
+ */
+export interface CreateTemplateRequest {
+  templateName: string;
+  diagnosis?: string;
+  notes?: string;
+  items: TemplateItemInput[];
+}
+
+/**
  * Prescription Summary - Dùng cho danh sách
  * Backend response: PrescriptionSummaryDto.java
  */
@@ -80,10 +183,13 @@ export interface PrescriptionItem {
   drugId: number;
   drugName?: string;               // Populated khi fetch
   dosage: string;                  // Liều dùng (vd: "1 viên")
+  quantity?: string;               // Số lượng
+  instructions?: string;           // Hướng dẫn chi tiết
   frequency: string;               // Tần suất (vd: "2 lần/ngày")
   route?: string;                  // Đường dùng (vd: "Uống")
   timing?: string;                 // Thời điểm (vd: "Sau ăn")
   durationDays?: number;           // Thời gian dùng (số ngày)
+  notes?: string;                  // Ghi chú
 }
 
 /**
@@ -93,7 +199,9 @@ export interface PrescriptionItem {
 export interface PrescriptionDetail {
   id: string;
   patientId: string;
+  patientName?: string;
   doctorId: string;
+  doctorName?: string;
   appointmentId: string;
   diagnosis: string;
   notes: string;
@@ -113,6 +221,15 @@ export interface CreatePrescriptionRequest {
   diagnosis?: string;
   notes?: string;
   items: PrescriptionItemInput[];
+}
+
+/**
+ * Response khi tạo đơn thuốc thành công
+ * Backend response: PrescriptionResponse.java
+ */
+export interface PrescriptionResponse {
+  prescriptionId: string;
+  status: PrescriptionStatus;
 }
 
 /**

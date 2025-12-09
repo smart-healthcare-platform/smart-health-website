@@ -51,7 +51,7 @@ export default function ReminderIcon() {
       }
     }
     fetchReminders()
-  }, [user?.id])
+  }, [user?.referenceId])
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {

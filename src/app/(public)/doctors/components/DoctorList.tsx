@@ -12,12 +12,12 @@ import {
   Star,
 } from "lucide-react";
 import { doctorService } from "@/services/doctor.service";
-import { Doctor } from "@/types";
 import Loading from "@/components/ui/loading";
 import useDebounce from "@/hooks/use-debounce";
 import AppPagination from "@/components/ui/global-pagination";
 import { useDispatch } from "react-redux";
 import { setDoctor } from "@/redux/slices/bookingSlice";
+import { Doctor } from "@/types/doctor/doctor.type";
 
 export default function DoctorList() {
   const router = useRouter();
@@ -121,17 +121,12 @@ export default function DoctorList() {
       setLoading(true);
       const searchTerm = debouncedSearch.trim();
 
-      console.log("Fetching doctors with", {
-        page: currentPage,
-        search: searchTerm,
-      });
-
-      const res = await doctorService.getPublicDoctors(
+      const res = await doctorService.getAllDoctors(
         currentPage,
         doctorsPerPage,
         searchTerm
       );
-
+      console.log(res)
       setDoctors(res.data || []);
       setTotal(res.total || 0);
 
@@ -270,20 +265,19 @@ export default function DoctorList() {
           )}
         </div>
 
-        {/* Doctor Grid & Empty State Container */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12 min-h-[450px]">
           {doctors.length > 0
-            ? // Render danh sách bác sĩ nếu có
+            ?
             doctors.map((doctor, index) => (
               <div
                 key={doctor.id}
-                className="transform transition-all duration-300 hover:-translate-y-1 animate-fade-in" // Thêm animation cho mượt
+                className="transform transition-all duration-300 hover:-translate-y-1 animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <DoctorCard doctor={doctor} onBook={handleBook} />
               </div>
             ))
-            : // Render Empty State nếu không có bác sĩ và không đang loading
+            :
             !loading &&
             !isSearching && (
               <div className="col-span-full flex flex-col items-center justify-center text-center py-16">

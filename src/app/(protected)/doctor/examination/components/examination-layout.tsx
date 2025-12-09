@@ -9,12 +9,15 @@ import { Appointment, AppointmentDetail } from "@/types/appointment/appointment.
 import { useState } from "react"
 import { appointmentService } from "@/services/appointment.service"
 import AppointmentDetailDialog from "@/components/common/appointment-detail-dialog"
+import { MedicationHistoryPanel } from "@/components/doctor/examination/MedicationHistoryPanel"
+import { MedicationHistory } from "@/types/medicine"
 
 interface ExaminationLayoutProps {
   currentStep: 1 | 2 | 3 | 4 | 5
   onStepClick: (step: 1 | 2 | 3 | 4 | 5) => void
   children: React.ReactNode
   appointment?: Appointment
+  onCopyPrescription?: (history: MedicationHistory) => void
 }
 
 const steps = [
@@ -25,10 +28,13 @@ const steps = [
   { id: 5, label: "Hoàn thành", description: "Tổng kết khám bệnh" },
 ]
 
-export function ExaminationLayout({ currentStep, onStepClick, children, appointment }: ExaminationLayoutProps) {
+export function ExaminationLayout({ currentStep, onStepClick, children, appointment, onCopyPrescription }: ExaminationLayoutProps) {
   const [previousAppointment, setPreviousAppointment] = useState<AppointmentDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
+  
+  // Show medication history sidebar from step 3 onward
+  const showMedicationHistory = currentStep >= 3 && appointment?.patient?.id
 
   const handleViewPrevious = async () => {
     if (!appointment?.followUpId && !appointment?.id) return
@@ -137,7 +143,22 @@ export function ExaminationLayout({ currentStep, onStepClick, children, appointm
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
-        <Card className="p-6">{children}</Card>
+        <div className={showMedicationHistory ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
+          {/* Main examination form */}
+          <div className={showMedicationHistory ? "lg:col-span-2" : ""}>
+            <Card className="p-6">{children}</Card>
+          </div>
+
+          {/* Medication History Sidebar */}
+          {showMedicationHistory && (
+            <div className="lg:col-span-1">
+              <MedicationHistoryPanel
+                patientId={appointment!.patient.id}
+                onCopyPrescription={onCopyPrescription}
+              />
+            </div>
+          )}
+        </div>
       </div>
       <AppointmentDetailDialog
         open={openDialog}

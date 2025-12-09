@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Gender } from "@/types/patient/enums/patient-gender.enum.dto"
 
 export function SummaryStep({ appointment, examinationData, onComplete, onPrevious }: SummaryStepProps) {
   const formatDate = (dateString: string) => {
@@ -23,7 +24,7 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
       year: "numeric",
     })
   }
-
+  console.log("DỮ liệu: ", examinationData)
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -51,9 +52,9 @@ export function SummaryStep({ appointment, examinationData, onComplete, onPrevio
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Giới tính:</span>
-            <span className="font-medium">{appointment.patient.gender === "male"
+            <span className="font-medium">{appointment.patient.gender === Gender.MALE
               ? "Nam"
-              : appointment.patient.gender === "female"
+              : appointment.patient.gender === Gender.FEMALE
                 ? "Nữ"
                 : "Khác"}</span>
           </div>

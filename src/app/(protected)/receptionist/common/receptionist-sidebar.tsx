@@ -17,35 +17,27 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Clock,
 } from "lucide-react";
 
 const management = [
   {
+    name: "Check-in & Thanh toán",
+    href: "/receptionist/check-in",
+    icon: UserCheck,
+    description: "Trang chính - Check-in và thu tiền",
+  },
+  {
     name: "Bảng điều khiển",
     href: "/receptionist/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    name: "Check-in",
-    href: "/receptionist/check-in",
-    icon: UserCheck,
-    badge: "5",
-  },
-  {
-    name: "Lịch hẹn hôm nay",
-    href: "/receptionist/appointments",
-    icon: Calendar,
-    badge: "12",
-  },
-  {
-    name: "Thanh toán",
-    href: "/receptionist/payments",
-    icon: CreditCard,
+    description: "Thống kê tổng quan",
   },
   {
     name: "Tìm kiếm",
     href: "/receptionist/search",
     icon: Search,
+    description: "Tìm lịch hẹn và bệnh nhân",
   },
 ];
 

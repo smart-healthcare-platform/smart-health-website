@@ -42,6 +42,8 @@ export function CalendarBase({ appointments = [], loading = false, onAppointment
         return "bg-yellow-500"
       case AppointmentStatus.CONFIRMED:
         return "bg-green-500"
+      case AppointmentStatus.CHECKED_IN:
+        return "bg-teal-500"
       case AppointmentStatus.IN_PROGRESS:
         return "bg-purple-500"
       case AppointmentStatus.COMPLETED:

@@ -1,47 +1,41 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { useSelector } from "react-redux"
-import AppointmentFilters from "./components/appointment-filters"
-import AppointmentList from "./components/appointment-list"
-import { Card } from "@/components/ui/card"
-import {
-  Calendar,
-  Clock,
-  CheckCircle,
-  XCircle,
-} from "lucide-react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
+import AppointmentFilters from "./components/appointment-filters";
+import AppointmentList from "./components/appointment-list";
+import { Card } from "@/components/ui/card";
+import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
 
-import { appointmentService } from "@/services/appointment.service"
-import { RootState } from "@/redux"
-import useDebounce from "@/hooks/use-debounce"
-import Loading from "@/components/ui/loading"
-import { AppointmentResponse} from "@/types/appointment/appointment.response"
-import { AppointmentStatus } from "@/types/appointment/index"
+import { appointmentService } from "@/services/appointment.service";
+import { RootState } from "@/redux";
+import useDebounce from "@/hooks/use-debounce";
+import Loading from "@/components/ui/loading";
+import { AppointmentResponse } from "@/types/appointment/appointment.response";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function AppointmentHistoryPage() {
-  const user = useSelector((state: RootState) => state.auth.user)
+  const user = useSelector((state: RootState) => state.auth.user);
 
-  const [apiData, setApiData] = useState<AppointmentResponse | null>(null)
-  const [loadingList, setLoadingList] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [apiData, setApiData] = useState<AppointmentResponse | null>(null);
+  const [loadingList, setLoadingList] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     status: "all",
     dateRange: "all",
     search: "",
-  })
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  });
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const limit = 3
-  const debouncedSearch = useDebounce(filters.search, 500)
-  const debouncedSearchRef = useRef(filters.search)
-
+  const limit = 3;
+  const debouncedSearch = useDebounce(filters.search, 500);
+  const debouncedSearchRef = useRef(filters.search);
 
   const fetchAppointments = useCallback(async () => {
-    if (!user?.referenceId) return
+    if (!user?.referenceId) return;
 
-    setLoadingList(true)
+    setLoadingList(true);
     try {
       const data = await appointmentService.getByPatientId(
         user.referenceId,
@@ -49,16 +43,15 @@ export default function AppointmentHistoryPage() {
         limit,
         debouncedSearch,
         filters.status as any,
-        filters.dateRange as any
-      )
-      console.log(data)
-      setApiData(data)
+        filters.dateRange as any,
+      );
+      setApiData(data);
     } catch (err) {
-      console.error("Failed to fetch appointments:", err)
-      setApiData(null)
+      console.error("Failed to fetch appointments:", err);
+      setApiData(null);
     } finally {
-      setLoadingList(false)
-      setIsSearching(false)
+      setLoadingList(false);
+      setIsSearching(false);
     }
   }, [
     user?.referenceId,
@@ -66,55 +59,60 @@ export default function AppointmentHistoryPage() {
     debouncedSearch,
     filters.status,
     filters.dateRange,
-  ])
+  ]);
 
   useEffect(() => {
     if (debouncedSearchRef.current !== debouncedSearch) {
-      debouncedSearchRef.current = debouncedSearch
-      setCurrentPage(1)
+      debouncedSearchRef.current = debouncedSearch;
+      setCurrentPage(1);
     }
-    fetchAppointments()
-  }, [fetchAppointments, debouncedSearch])
+    fetchAppointments();
+  }, [fetchAppointments, debouncedSearch]);
 
   // 🔹 Xử lý filter, page, search
   const handleFilterChange = useCallback((newFilters: typeof filters) => {
-    setFilters(newFilters)
-    setCurrentPage(1)
-    setIsSearching(true)
-  }, [])
+    setFilters(newFilters);
+    setCurrentPage(1);
+    setIsSearching(true);
+  }, []);
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-    setIsSearching(true)
-  }, [])
+    setCurrentPage(page);
+    setIsSearching(true);
+  }, []);
 
   const handleSearchChange = useCallback((search: string) => {
-    setFilters((prev) => ({ ...prev, search }))
-    setIsSearching(true)
-  }, [])
+    setFilters((prev) => ({ ...prev, search }));
+    setIsSearching(true);
+  }, []);
 
   // 🔹 Tính tổng trang
   const totalPages = useMemo(
     () => (apiData ? Math.ceil(apiData.total / limit) : 0),
-    [apiData, limit]
-  )
+    [apiData, limit],
+  );
 
   // 🔹 Thống kê trạng thái
   const stats = useMemo(() => {
-    if (!apiData)
-      return { total: 0, completed: 0, confirmed: 0, cancelled: 0 }
+    if (!apiData) return { total: 0, completed: 0, confirmed: 0, cancelled: 0 };
 
     return {
       total: apiData.total,
-      completed: apiData.appointments.filter((a) => a.status === AppointmentStatus.COMPLETED).length,
-      confirmed: apiData.appointments.filter((a) => a.status === AppointmentStatus.CONFIRMED).length,
-      cancelled: apiData.appointments.filter((a) => a.status === AppointmentStatus.CANCELLED).length,
-    }
-  }, [apiData])
+      completed: apiData.appointments.filter(
+        (a) => a.status === AppointmentStatus.COMPLETED,
+      ).length,
+      confirmed: apiData.appointments.filter(
+        (a) => a.status === AppointmentStatus.CONFIRMED,
+      ).length,
+      cancelled: apiData.appointments.filter(
+        (a) => a.status === AppointmentStatus.CANCELLED,
+      ).length,
+    };
+  }, [apiData]);
 
   // 🔹 Loading toàn màn hình khi chưa có dữ liệu
   if (loadingList && !apiData) {
-    return <Loading fullScreen />
+    return <Loading fullScreen />;
   }
 
   return (
@@ -205,8 +203,9 @@ export default function AppointmentHistoryPage() {
           totalPages={totalPages}
           onPageChange={handlePageChange}
           loading={loadingList}
+          onPaymentCreated={fetchAppointments}
         />
       </div>
     </div>
-  )
+  );
 }

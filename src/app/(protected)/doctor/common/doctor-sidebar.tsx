@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   LayoutDashboard,
-  Users,
   Calendar,
   Settings,
   Activity,
@@ -17,6 +16,8 @@ import {
   ChevronRight,
   Brain,
   User,
+  TestTube,
+  FilePlus,
 } from "lucide-react"
 
 const management = [
@@ -26,21 +27,30 @@ const management = [
     icon: LayoutDashboard,
   },
   {
-    name: "Lịch hẹn",
+    name: "Lịch khám bệnh",
     href: "/doctor/appointments",
     icon: Calendar,
     badge: "12",
   },
   {
-    name: "Bệnh nhân",
-    href: "/doctor/patients",
-    icon: Users,
-    badge: "48",
+    name: "Lịch làm việc",
+    href: "/doctor/schedule",
+    icon: Calendar,
   },
   {
     name: "Hồ sơ y tế",
     href: "/doctor/medical-records",
     icon: FileText,
+  },
+  {
+    name: "Xét nghiệm",
+    href: "/doctor/lab-tests",
+    icon: TestTube,
+  },
+  {
+    name: "Mẫu đơn thuốc",
+    href: "/doctor/templates",
+    icon: FilePlus,
   },
   {
     name: "Chat History",

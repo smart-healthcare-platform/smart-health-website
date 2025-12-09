@@ -1,5 +1,5 @@
-import { AdminDashboard } from "./common/admin-dashboard";
+import AdminDashboardRealtime from "./common/admin-dashboard-realtime";
 
 export default function AdminPage() {
-  return <AdminDashboard />;
+  return <AdminDashboardRealtime />;
 }

@@ -1,19 +1,20 @@
-"use client"
+"use client";
 
-import { Card } from "@/components/ui/card"
-import AppointmentCard from "./appointment-card"
+import { Card } from "@/components/ui/card";
+import AppointmentCard from "./appointment-card";
 
-import { Skeleton } from "@/components/ui/skeleton"
-import AppPagination from "@/components/ui/global-pagination"
-import { AppointmentDetail } from "@/types/appointment/appointment.type"
+import { Skeleton } from "@/components/ui/skeleton";
+import AppPagination from "@/components/ui/global-pagination";
+import { AppointmentDetail } from "@/types/appointment/appointment.type";
 
 interface AppointmentListProps {
-  appointments: AppointmentDetail[]
-  total: number
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  loading?: boolean
+  appointments: AppointmentDetail[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  loading?: boolean;
+  onPaymentCreated?: () => void;
 }
 
 export default function AppointmentList({
@@ -23,23 +24,23 @@ export default function AppointmentList({
   totalPages,
   onPageChange,
   loading = false,
+  onPaymentCreated,
 }: AppointmentListProps) {
-  const isEmpty = !loading && appointments.length === 0
+  const isEmpty = !loading && appointments.length === 0;
 
   const handlePrevPage = () => {
-    if (currentPage > 1) onPageChange(currentPage - 1)
-  }
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) onPageChange(currentPage + 1)
-  }
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
+  };
 
   return (
     <div className="space-y-6">
       {/* giữ chiều cao ổn định */}
       <div className="min-h-[400px]">
         {loading && !isEmpty ? (
-
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="p-6">
@@ -54,7 +55,11 @@ export default function AppointmentList({
         ) : appointments.length > 0 ? (
           <div className="grid gap-4">
             {appointments.map((appointment) => (
-              <AppointmentCard key={appointment.id} appointment={appointment} />
+              <AppointmentCard
+                key={appointment.id}
+                appointment={appointment}
+                onPaymentCreated={onPaymentCreated}
+              />
             ))}
           </div>
         ) : (
@@ -78,8 +83,7 @@ export default function AppointmentList({
           totalPages={totalPages}
           onPageChange={onPageChange}
         />
-
       )}
     </div>
-  )
+  );
 }

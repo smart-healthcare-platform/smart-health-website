@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { predictionService } from "@/services/prediction.service";
 import { HealthMetricsForm } from "@/app/(public)/diagnosis/components/DiagnosisForm";
 import { AIResultsDisplay } from "@/app/(public)/diagnosis/components/PredictionDisplay";
 import { AIChatInterface } from "@/app/(public)/diagnosis/components/ChatBox";
@@ -35,21 +36,8 @@ export default function DiagnosisPage() {
 
   const handleFormSubmit = async (metrics: HealthMetrics) => {
     setIsLoading(true);
-
     try {
-      const response = await fetch("/api/diagnosis", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(metrics),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get diagnosis");
-      }
-
-      const diagnosisResult = await response.json();
+      const diagnosisResult = await predictionService.predict(metrics);
       setResult(diagnosisResult);
     } catch (error) {
       console.error("Error getting diagnosis:", error);

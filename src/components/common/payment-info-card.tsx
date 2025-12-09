@@ -1,48 +1,64 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { CheckCircle, Clock, CreditCard, ExternalLink, Loader2, UserCheck, AlertCircle } from "lucide-react"
-import type { AppointmentDetail } from "@/types/appointment/appointment.type"
-import { PaymentMethodDialog } from "./payment-method-dialog"
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircle,
+  Clock,
+  CreditCard,
+  ExternalLink,
+  Loader2,
+  UserCheck,
+  AlertCircle,
+} from "lucide-react";
+import type { AppointmentDetail } from "@/types/appointment/appointment.type";
+import { PaymentMethodDialog } from "./payment-method-dialog";
+import { PaymentCountdown } from "./payment-countdown";
 
 interface PaymentInfoCardProps {
-  appointment: AppointmentDetail
-  onPaymentCreated?: () => void
+  appointment: AppointmentDetail;
+  onPaymentCreated?: () => void;
 }
 
-export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCardProps) {
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
-  const [isCreatingPayment, setIsCreatingPayment] = useState(false)
+export function PaymentInfoCard({
+  appointment,
+  onPaymentCreated,
+}: PaymentInfoCardProps) {
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
-  const handlePaymentSuccess = (url: string) => {
-    setPaymentUrl(url)
-    setShowPaymentDialog(false)
+  const handlePaymentSuccess = (url: string, paymentId: string) => {
+    toast.success("Tạo yêu cầu thanh toán thành công!");
+    toast.info("Vui lòng hoàn tất thanh toán trong 15 phút", {
+      autoClose: 5000,
+    });
     
+    setShowPaymentDialog(false);
+
     // Notify parent to refresh data
     if (onPaymentCreated) {
-      onPaymentCreated()
+      onPaymentCreated();
     }
-  }
+  };
 
   const handleCreatePayment = () => {
-    setIsCreatingPayment(true)
-    setShowPaymentDialog(true)
-    setIsCreatingPayment(false)
-  }
+    setIsCreatingPayment(true);
+    setShowPaymentDialog(true);
+    setIsCreatingPayment(false);
+  };
 
   const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   // UNPAID: Hiện nút thanh toán
   if (appointment.paymentStatus === "UNPAID") {
@@ -81,7 +97,7 @@ export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCa
           onSuccess={handlePaymentSuccess}
         />
       </>
-    )
+    );
   }
 
   // PENDING: Hiện trạng thái chờ + link tiếp tục thanh toán + nút tạo mới
@@ -90,30 +106,53 @@ export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCa
       <>
         <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
           <div className="p-3">
-            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 mb-2">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 mb-3">
               <Clock className="h-4 w-4" />
               <span className="text-sm font-medium">Đang chờ thanh toán</span>
             </div>
-            
-            {/* Thông báo về link thanh toán */}
-            <div className="flex items-start gap-2 mb-3">
-              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-amber-600 dark:text-amber-400">
-                {paymentUrl ? (
-                  <p>Link thanh toán có hiệu lực 30 phút. Nếu hết hạn, vui lòng tạo link mới.</p>
-                ) : (
-                  <p>Link thanh toán có thể đã hết hạn. Vui lòng tạo yêu cầu thanh toán mới.</p>
-                )}
+
+            {/* Countdown Timer - nếu có expiredAt */}
+            {appointment.expiredAt && (
+              <div className="mb-3">
+                <PaymentCountdown
+                  expiredAt={appointment.expiredAt}
+                  onExpired={() => {
+                    toast.warning("Link thanh toán đã hết hạn. Vui lòng tạo link mới.");
+                    if (onPaymentCreated) {
+                      onPaymentCreated();
+                    }
+                  }}
+                />
               </div>
-            </div>
+            )}
+
+            {/* Thông báo về link thanh toán - chỉ hiện nếu không có countdown */}
+            {!appointment.expiredAt && (
+              <div className="flex items-start gap-2 mb-3">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-amber-600 dark:text-amber-400">
+                  {appointment.paymentUrl ? (
+                    <p>
+                      Link thanh toán có hiệu lực 15 phút. Nếu hết hạn, vui lòng
+                      tạo link mới.
+                    </p>
+                  ) : (
+                    <p>
+                      Link thanh toán có thể đã hết hạn. Vui lòng tạo yêu cầu
+                      thanh toán mới.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
-              {paymentUrl && (
+              {appointment.paymentUrl && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(paymentUrl, "_blank")}
+                  onClick={() => window.open(appointment.paymentUrl, "_blank")}
                   className="text-amber-700 border-amber-300 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700 dark:hover:bg-amber-900/20"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
@@ -151,7 +190,7 @@ export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCa
           onSuccess={handlePaymentSuccess}
         />
       </>
-    )
+    );
   }
 
   // PAID: Hiện thông tin đã thanh toán
@@ -176,12 +215,14 @@ export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCa
           {appointment.checkedInAt && (
             <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
               <UserCheck className="h-4 w-4" />
-              <span className="text-xs">Đã check-in: {formatDateTime(appointment.checkedInAt)}</span>
+              <span className="text-xs">
+                Đã check-in: {formatDateTime(appointment.checkedInAt)}
+              </span>
             </div>
           )}
         </div>
       </Card>
-    )
+    );
   }
 
   // REFUNDED: Hiện thông tin hoàn tiền
@@ -198,8 +239,8 @@ export function PaymentInfoCard({ appointment, onPaymentCreated }: PaymentInfoCa
           </p>
         </div>
       </Card>
-    )
+    );
   }
 
-  return null
+  return null;
 }

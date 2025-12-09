@@ -1,6 +1,7 @@
 
 import { AppointmentDetail } from "@/types/appointment/appointment.type"
 import { VitalSigns } from "./examnation/vital-sign.type"
+import { LabTestType } from "./examnation/enums/lab-test-type.enum"
 
 /**
  * Prescription Item - Thông tin thuốc trong đơn
@@ -39,6 +40,7 @@ export interface ExaminationData {
     id: string
     name: string
     price: number
+    type: LabTestType
   }[]
 
   // Step 4: Follow-up suggestion
@@ -97,6 +99,7 @@ export interface ExaminationStepData {
     id: string
     name: string
     price: number
+    type: LabTestType
   }[]
 }
 
