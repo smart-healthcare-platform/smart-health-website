@@ -29,13 +29,15 @@ export type PaymentStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | 
 
 export interface CreatePaymentRequest {
   paymentType: PaymentType;
-  referenceId: string; // appointmentId
+  referenceId: string; // appointmentId for APPOINTMENT_FEE, labTestOrderId for LAB_TEST, etc.
+  appointmentId?: string; // Optional: for grouping lab tests and prescriptions to parent appointment
   amount: number;
   paymentMethod: PaymentMethodType;
 }
 
 export interface CashPaymentRequest {
-  referenceId: string; // appointmentId, labTestId, etc.
+  referenceId: string; // appointmentId for APPOINTMENT_FEE, labTestOrderId for LAB_TEST, etc.
+  appointmentId?: string; // Optional: for grouping lab tests and prescriptions to parent appointment
   amount: number;
   paymentType: PaymentType; // Use PaymentType enum to match backend
   notes?: string;
@@ -48,7 +50,8 @@ export interface PaymentResponse {
   paymentType: PaymentType;
   status: PaymentStatus;
   paymentUrl?: string; // Cho MOMO/VNPAY
-  referenceId: string; // appointmentId
+  referenceId: string; // appointmentId for APPOINTMENT_FEE, labTestOrderId for LAB_TEST, etc.
+  appointmentId?: string; // For grouping payments by appointment
   createdAt: string;
   paidAt?: string;
   transactionId?: string;
