@@ -15,6 +15,7 @@ export interface PaymentItem {
   description?: string;
   createdAt: string;
   paidAt?: string;
+  appointmentId?: string; // For grouping payments by appointment
 }
 
 /**
@@ -60,6 +61,7 @@ export interface PaymentResponse {
   status: PaymentStatus;
   paymentUrl?: string;
   referenceId: string;
+  appointmentId?: string; // For grouping payments by appointment
   createdAt: string;
   paidAt?: string;
   transactionId?: string;
