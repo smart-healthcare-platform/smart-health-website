@@ -1,204 +1,199 @@
-// "use client"
+"use client"
 
-// import { useState } from "react"
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Button } from "@/components/ui/button"
-// import { Badge } from "@/components/ui/badge"
-// import { Input } from "@/components/ui/input"
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// import { Clock, User, Phone, MoreHorizontal, Search, Filter } from "lucide-react"
-// import type { Appointment } from "@/types/appointment"
+import { useMemo, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Clock, User, MoreHorizontal, Search, Filter } from "lucide-react"
+import { Appointment } from "@/types/appointment/appointment.type"
+import { AppointmentStatus } from "@/types/appointment/index"
 
-// interface AppointmentTableProps {
-//   appointments: Appointment[]
-//   loading?: boolean
-//   onEdit?: (appointment: Appointment) => void
-//   onDelete?: (id: string) => void
-//   onStatusChange?: (id: string, status: Appointment["status"]) => void
-// }
 
-// export function AppointmentTable({
-//   appointments,
-//   loading = false,
-//   onEdit,
-//   onDelete,
-//   onStatusChange,
-// }: AppointmentTableProps) {
-//   const [searchTerm, setSearchTerm] = useState("")
-//   const [statusFilter, setStatusFilter] = useState<Appointment["status"] | "all">("all")
+interface Props {
+    appointments: Appointment[]
+    loading?: boolean
+}
 
-//   const filteredAppointments = appointments.filter((appointment) => {
-//     const matchesSearch =
-//       appointment.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//       appointment.phone.includes(searchTerm) ||
-//       appointment.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+export function AppointmentTable({ appointments, loading = false }: Props) {
+    const [searchTerm, setSearchTerm] = useState("")
+    const [statusFilter, setStatusFilter] = useState<Appointment["status"] | "all">("all")
 
-//     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 7
 
-//     return matchesSearch && matchesStatus
-//   })
+    // Filter appointments
+    const filtered = useMemo(() => {
+        return appointments.filter((apt) => {
+            const matchSearch =
+                apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apt.notes?.toLowerCase().includes(searchTerm.toLowerCase())
 
-//   const getStatusBadge = (status: Appointment["status"]) => {
-//     const variants = {
-//       confirmed: "bg-green-100 text-green-800 hover:bg-green-100",
-//       pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-//       cancelled: "bg-red-100 text-red-800 hover:bg-red-100",
-//       completed: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-//     }
+            const matchStatus = statusFilter === "all" || apt.status === statusFilter
 
-//     const labels = {
-//       confirmed: "Đã xác nhận",
-//       pending: "Chờ xác nhận",
-//       cancelled: "Đã hủy",
-//       completed: "Hoàn thành",
-//     }
+            return matchSearch && matchStatus
+        })
+    }, [appointments, searchTerm, statusFilter])
 
-//     return <Badge className={variants[status]}>{labels[status]}</Badge>
-//   }
+    // Pagination logic
+    const totalPages = Math.ceil(filtered.length / itemsPerPage)
+    const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-//   const getTypeBadge = (type: Appointment["type"]) => {
-//     return <Badge variant="outline">{type}</Badge>
-//   }
+    const StatusBadge = (status: Appointment["status"]) => {
+        const labels: Record<Appointment["status"], string> = {
+            PENDING: "Chờ xác nhận",
+            CONFIRMED: "Đã xác nhận",
+            IN_PROGRESS: "Đang khám",
+            COMPLETED: "Hoàn thành",
+            CANCELLED: "Đã hủy",
+            NO_SHOW: "Không đến",
+            CHECKED_IN: "Đã check-in",
+        }
+        return <Badge className="bg-green-100 text-green-700">{labels[status]}</Badge>
+    }
 
-//   if (loading) {
-//     return (
-//       <Card>
-//         <CardContent className="p-6">
-//           <div className="flex items-center justify-center h-32">
-//             <div className="text-muted-foreground">Đang tải...</div>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     )
-//   }
+    if (loading) {
+        return (
+            <Card>
+                <CardContent className="py-16 text-center text-muted-foreground">
+                    Đang tải dữ liệu...
+                </CardContent>
+            </Card>
+        )
+    }
 
-//   return (
-//     <Card>
-//       <CardHeader>
-//         <div className="flex items-center justify-between">
-//           <CardTitle className="text-xl font-semibold">Danh sách lịch hẹn</CardTitle>
-//           <div className="flex items-center gap-2">
-//             <div className="relative">
-//               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-//               <Input
-//                 placeholder="Tìm kiếm bệnh nhân..."
-//                 value={searchTerm}
-//                 onChange={(e) => setSearchTerm(e.target.value)}
-//                 className="pl-10 w-64"
-//               />
-//             </div>
-//             <DropdownMenu>
-//               <DropdownMenuTrigger asChild>
-//                 <Button variant="outline" size="sm">
-//                   <Filter className="w-4 h-4 mr-2" />
-//                   Lọc
-//                 </Button>
-//               </DropdownMenuTrigger>
-//               <DropdownMenuContent>
-//                 <DropdownMenuItem onClick={() => setStatusFilter("all")}>Tất cả</DropdownMenuItem>
-//                 <DropdownMenuItem onClick={() => setStatusFilter("confirmed")}>Đã xác nhận</DropdownMenuItem>
-//                 <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Chờ xác nhận</DropdownMenuItem>
-//                 <DropdownMenuItem onClick={() => setStatusFilter("completed")}>Hoàn thành</DropdownMenuItem>
-//                 <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>Đã hủy</DropdownMenuItem>
-//               </DropdownMenuContent>
-//             </DropdownMenu>
-//           </div>
-//         </div>
-//       </CardHeader>
-//       <CardContent>
-//         <div className="rounded-md border">
-//           <Table>
-//             <TableHeader>
-//               <TableRow>
-//                 <TableHead>Thời gian</TableHead>
-//                 <TableHead>Bệnh nhân</TableHead>
-//                 <TableHead>Loại khám</TableHead>
-//                 <TableHead>Trạng thái</TableHead>
-//                 <TableHead>Ghi chú</TableHead>
-//                 <TableHead className="w-[100px]">Thao tác</TableHead>
-//               </TableRow>
-//             </TableHeader>
-//             <TableBody>
-//               {filteredAppointments.length === 0 ? (
-//                 <TableRow>
-//                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-//                     Không có lịch hẹn nào
-//                   </TableCell>
-//                 </TableRow>
-//               ) : (
-//                 filteredAppointments.map((appointment) => (
-//                   <TableRow key={appointment.id}>
-//                     <TableCell>
-//                       <div className="flex items-center gap-2">
-//                         <Clock className="w-4 h-4 text-muted-foreground" />
-//                         <div>
-//                           <div className="font-medium">
-//                             {appointment.startTime} - {appointment.endTime}
-//                           </div>
-//                           <div className="text-sm text-muted-foreground">
-//                             {new Date(appointment.date).toLocaleDateString("vi-VN")}
-//                           </div>
-//                         </div>
-//                       </div>
-//                     </TableCell>
-//                     <TableCell>
-//                       <div>
-//                         <div className="flex items-center gap-2">
-//                           <User className="w-4 h-4 text-muted-foreground" />
-//                           <span className="font-medium">{appointment.patient}</span>
-//                         </div>
-//                         <div className="flex items-center gap-2 mt-1">
-//                           <Phone className="w-4 h-4 text-muted-foreground" />
-//                           <span className="text-sm text-muted-foreground">{appointment.phone}</span>
-//                         </div>
-//                       </div>
-//                     </TableCell>
-//                     <TableCell>{getTypeBadge(appointment.type)}</TableCell>
-//                     <TableCell>{getStatusBadge(appointment.status)}</TableCell>
-//                     <TableCell>
-//                       <div className="max-w-[200px] truncate text-sm text-muted-foreground">
-//                         {appointment.notes || "Không có ghi chú"}
-//                       </div>
-//                     </TableCell>
-//                     <TableCell>
-//                       <DropdownMenu>
-//                         <DropdownMenuTrigger asChild>
-//                           <Button variant="ghost" size="sm">
-//                             <MoreHorizontal className="w-4 h-4" />
-//                           </Button>
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent align="end">
-//                           <DropdownMenuItem onClick={() => onEdit?.(appointment)}>Chỉnh sửa</DropdownMenuItem>
-//                           {appointment.status === "pending" && (
-//                             <DropdownMenuItem onClick={() => onStatusChange?.(appointment.id, "confirmed")}>
-//                               Xác nhận
-//                             </DropdownMenuItem>
-//                           )}
-//                           {appointment.status === "confirmed" && (
-//                             <DropdownMenuItem onClick={() => onStatusChange?.(appointment.id, "completed")}>
-//                               Hoàn thành
-//                             </DropdownMenuItem>
-//                           )}
-//                           <DropdownMenuItem
-//                             onClick={() => onStatusChange?.(appointment.id, "cancelled")}
-//                             className="text-destructive"
-//                           >
-//                             Hủy lịch hẹn
-//                           </DropdownMenuItem>
-//                           <DropdownMenuItem onClick={() => onDelete?.(appointment.id)} className="text-destructive">
-//                             Xóa
-//                           </DropdownMenuItem>
-//                         </DropdownMenuContent>
-//                       </DropdownMenu>
-//                     </TableCell>
-//                   </TableRow>
-//                 ))
-//               )}
-//             </TableBody>
-//           </Table>
-//         </div>
-//       </CardContent>
-//     </Card>
-//   )
-// }
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="text-xl font-semibold">Danh sách lịch hẹn</CardTitle>
+
+                    <div className="flex gap-2">
+                        <div className="relative">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Tìm kiếm..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value)
+                                    setCurrentPage(1)
+                                }}
+                                className="pl-10 w-64"
+                            />
+                        </div>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <Filter className="w-4 h-4 mr-2" />
+                                    Lọc
+                                </Button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => { setStatusFilter("all"); setCurrentPage(1) }}>
+                                    Tất cả
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setStatusFilter(AppointmentStatus.CONFIRMED); setCurrentPage(1) }}>
+                                    Đã xác nhận
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setStatusFilter(AppointmentStatus.PENDING); setCurrentPage(1) }}>
+                                    Chờ xác nhận
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setStatusFilter(AppointmentStatus.COMPLETED); setCurrentPage(1) }}>
+                                    Hoàn thành
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setStatusFilter(AppointmentStatus.CANCELLED); setCurrentPage(1) }}>
+                                    Đã hủy
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+            </CardHeader>
+
+            <CardContent>
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+
+                                <TableHead>Bệnh nhân</TableHead>
+                                <TableHead>Thời gian</TableHead>
+                                <TableHead>Loại</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Ghi chú</TableHead>
+                                <TableHead className="text-right w-[60px]">...</TableHead>
+                            </TableRow>
+                        </TableHeader>
+
+                        <TableBody>
+
+                            {paginated.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                                        Không tìm thấy kết quả
+                                    </TableCell>
+                                </TableRow>
+                            )}
+
+                            {paginated.map((apt) => (
+                                <TableRow key={apt.id}>
+                                    {/* Bệnh nhân */}
+                                    <TableCell className="font-medium flex items-center gap-2">
+                                        <User className="w-4 h-4 text-muted-foreground" />
+                                        {apt.patientName}
+                                    </TableCell>
+
+                                    {/* Thời gian */}
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-sm">
+                                                {new Date(apt.startAt).toLocaleTimeString("vi-VN", {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit"
+                                                })}{" "}
+                                            </span>
+
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(apt.startAt).toLocaleDateString("vi-VN")}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <Badge variant="outline">{apt.type}</Badge>
+                                    </TableCell>
+
+                                    <TableCell>{StatusBadge(apt.status)}</TableCell>
+
+                                    <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                                        {apt.notes || "Không có ghi chú"}
+                                    </TableCell>
+
+                                    <TableCell className="text-right">
+                                        <Button size="sm" variant="ghost">
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+
+                            ))}
+
+                        </TableBody>
+                    </Table>
+                </div>
+
+
+            </CardContent>
+        </Card>
+    )
+}

@@ -91,7 +91,13 @@ const PatientForm: React.FC<PatientFormProps> = ({ formData, onFormChange }) => 
           </label>
           <input
             type="text"
-            value={getGenderDisplay(formData.gender)}
+            value={
+              formData.gender === "MALE"
+                ? "Nam"
+                : formData.gender === "FEMALE"
+                  ? "Nữ"
+                  : "Khác"
+            }
             readOnly
             className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed"
           />

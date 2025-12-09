@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { FileText, Stethoscope, ClipboardCheck, Pill, TestTube, ChevronsUpDown, CalendarIcon } from "lucide-react"
+import { FileText, Stethoscope, ClipboardCheck, Pill, TestTube, ChevronsUpDown } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import type { ExaminationStepProps } from "@/types/examination"
-// import type { LabTest } from "@/types"
+import type { ExaminationStepData, ExaminationStepProps } from "@/types/examination"
 import { PrescriptionBuilder } from "./prescription-builder"
 import { TemplateSelector } from "@/components/doctor/examination/TemplateSelector"
 import { appointmentService } from "@/services/appointment.service"
@@ -17,12 +16,11 @@ import { LabTest } from "@/types/examnation"
 import { PrescriptionTemplate } from "@/types/medicine"
 import type { PrescriptionItem } from "@/types/examination"
 
-
 export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: ExaminationStepProps) {
-  const [formData, setFormData] = useState(data)
+  const [formData, setFormData] = useState<ExaminationStepData>(data)
   const [labTests, setLabTests] = useState<LabTest[]>([])
   const [open, setOpen] = useState(false)
-  const [openFollowUp, setOpenFollowUp] = useState(false)
+  const [errors, setErrors] = useState<Partial<Record<keyof ExaminationStepData, string>>>({})
 
   // Sync formData with data prop when it changes (e.g., from copy prescription)
   useEffect(() => {
@@ -38,8 +36,8 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
     fetchLabTests()
   }, [])
 
-  // Cập nhật formData
-  const handleChange = (field: string, value: any) => {
+  // Cập nhật dữ liệu và gọi callback
+  const handleChange = <K extends keyof ExaminationStepData>(field: K, value: ExaminationStepData[K]) => {
     const newData = { ...formData, [field]: value }
     console.log(`🔄 handleChange - field: ${field}, value:`, value)
     console.log(`🔄 newData.prescriptionItems:`, newData.prescriptionItems)
@@ -47,20 +45,40 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
     onUpdate(newData)
   }
 
-  // Chọn / bỏ chọn xét nghiệm
+  // Validate khi blur input
+  const handleBlur = <K extends keyof ExaminationStepData>(field: K, value: ExaminationStepData[K]) => {
+    let error = ""
+
+    // Các trường bắt buộc
+    if (["chiefComplaint", "symptoms", "examination", "diagnosis"].includes(field as string)) {
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        error = "Bắt buộc nhập"
+      }
+    }
+
+    // Validate diagnosis theo ICD-10
+    if (field === "diagnosis" && typeof value === "string" && value.trim()) {
+      const icdRegex = /^[A-TV-Z][0-9]{2}(\.[0-9A-TV-Z]{1,4})?$/
+      if (!icdRegex.test(value.trim())) {
+        error = "Mã ICD-10 không hợp lệ"
+      }
+    }
+
+    setErrors(prev => ({ ...prev, [field]: error }))
+  }
+
+  // Toggle xét nghiệm
   const handleToggleLabTest = (testId: string) => {
     const selected = formData.labTests || []
-    const exists = selected.some((t: any) => t.id === testId)
-
+    const exists = selected.some(t => t.id === testId)
     let newSelected
     if (exists) {
-      newSelected = selected.filter((t: any) => t.id !== testId)
+      newSelected = selected.filter(t => t.id !== testId)
     } else {
-      const test = labTests.find((t) => t.id === testId)
+      const test = labTests.find(t => t.id === testId)
       if (!test) return
       newSelected = [...selected, { id: test.id, name: test.name, price: test.price, type: test.type }]
     }
-
     handleChange("labTests", newSelected)
   }
 
@@ -107,83 +125,62 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
 
   const selectedNames =
     formData.labTests && formData.labTests.length > 0
-      ? formData.labTests
-        .map((t: any) => t.name)
-        .filter(Boolean)
-        .join(" + ") || "Chọn xét nghiệm..."
+      ? formData.labTests.map(t => t.name).filter(Boolean).join(" + ") || "Chọn xét nghiệm..."
       : "Chọn xét nghiệm..."
+
+  const fieldLabels: Partial<Record<keyof ExaminationStepData, string>> = {
+    chiefComplaint: "Lý do khám chính",
+    symptoms: "Triệu chứng",
+    examination: "Kết quả khám lâm sàng",
+    diagnosis: "Chẩn đoán",
+    labTests: "",
+    prescriptionItems: "",
+  }
+
+  const fieldPlaceholders: Partial<Record<keyof ExaminationStepData, string>> = {
+    chiefComplaint: "Nhập lý do bệnh nhân đến khám...",
+    symptoms: "Nhập triệu chứng bệnh nhân...",
+    examination: "Nhập kết quả khám lâm sàng...",
+    diagnosis: "Nhập chẩn đoán bệnh (mã ICD-10)...",
+    labTests: "",
+    prescriptionItems: "",
+  }
+
+  const requiredFields: (keyof ExaminationStepData)[] = ["chiefComplaint", "symptoms", "examination", "diagnosis"]
+
+  const isFormValid =
+    requiredFields.every(f => formData[f] && (formData[f] as string).trim() !== "") &&
+    Object.values(errors).every(e => !e)
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Khám bệnh và chẩn đoán</h2>
         <p className="text-sm text-muted-foreground">Ghi chú quá trình khám, chẩn đoán và kê đơn thuốc</p>
       </div>
 
-      {/* Lý do khám */}
-      <div className="space-y-2">
-        <Label htmlFor="chiefComplaint" className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-primary" />
-          Lý do khám chính
-        </Label>
-        <Textarea
-          id="chiefComplaint"
-          placeholder="Bệnh nhân đến khám vì..."
-          rows={2}
-          value={formData.chiefComplaint || ""}
-          onChange={(e) => handleChange("chiefComplaint", e.target.value)}
-        />
-      </div>
-
-      {/* Triệu chứng */}
-      <div className="space-y-2">
-        <Label htmlFor="symptoms" className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-primary" />
-          Triệu chứng
-        </Label>
-        <Textarea
-          id="symptoms"
-          placeholder="Mô tả các triệu chứng bệnh nhân đang gặp phải..."
-          rows={3}
-          value={formData.symptoms || ""}
-          onChange={(e) => handleChange("symptoms", e.target.value)}
-        />
-      </div>
+      {requiredFields.map((field, idx) => (
+        <div key={idx} className="space-y-2">
+          <Label htmlFor={field} className="flex items-center gap-2">
+            {field === "chiefComplaint" && <FileText className="w-4 h-4 text-primary" />}
+            {field === "symptoms" && <FileText className="w-4 h-4 text-primary" />}
+            {field === "examination" && <Stethoscope className="w-4 h-4 text-primary" />}
+            {field === "diagnosis" && <ClipboardCheck className="w-4 h-4 text-primary" />}
+            {fieldLabels[field]}
+          </Label>
+          <Textarea
+            id={field}
+            rows={field === "examination" ? 4 : 3}
+            placeholder={fieldPlaceholders[field]}
+            value={(formData[field] as string) || ""}
+            onChange={(e) => handleChange(field, e.target.value as typeof formData[typeof field])}
+            onBlur={(e) => handleBlur(field, e.target.value as typeof formData[typeof field])}
+          />
+          {errors[field] && <p className="text-destructive text-sm">{errors[field]}</p>}
+        </div>
+      ))}
 
       <Separator />
-
-      {/* Kết quả khám lâm sàng */}
-      <div className="space-y-2">
-        <Label htmlFor="examination" className="flex items-center gap-2">
-          <Stethoscope className="w-4 h-4 text-primary" />
-          Kết quả khám lâm sàng
-        </Label>
-        <Textarea
-          id="examination"
-          placeholder="Ghi chú kết quả khám lâm sàng: tim mạch, hô hấp, bụng..."
-          rows={4}
-          value={formData.examination || ""}
-          onChange={(e) => handleChange("examination", e.target.value)}
-        />
-      </div>
-
-      <Separator />
-
-      {/* Chẩn đoán */}
-      <div className="space-y-2">
-        <Label htmlFor="diagnosis" className="flex items-center gap-2">
-          <ClipboardCheck className="w-4 h-4 text-primary" />
-          Chẩn đoán
-        </Label>
-        <Textarea
-          id="diagnosis"
-          placeholder="Chẩn đoán bệnh (có thể bao gồm mã ICD-10)..."
-          rows={3}
-          value={formData.diagnosis || ""}
-          onChange={(e) => handleChange("diagnosis", e.target.value)}
-        />
-      </div>
 
       {/* Xét nghiệm */}
       <div className="space-y-2">
@@ -212,20 +209,14 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
                 <CommandEmpty>Không có kết quả</CommandEmpty>
                 <CommandGroup className="mt-2 space-y-1">
                   {labTests.map((test) => {
-                    const checked = formData.labTests?.some((t: any) => t.id === test.id)
+                    const checked = formData.labTests?.some(t => t.id === test.id)
                     return (
                       <CommandItem
                         key={test.id}
                         onSelect={() => handleToggleLabTest(test.id)}
                         className="flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer hover:bg-accent"
                       >
-                        <input
-                          type="checkbox"
-                          checked={!!formData.labTests?.some((t: any) => t.id === test.id)}
-                          readOnly
-                          className="w-4 h-4 accent-primary rounded"
-                        />
-
+                        <input type="checkbox" checked={checked} readOnly className="w-4 h-4 accent-primary rounded" />
                         <span className="flex-1">{test.name}</span>
                       </CommandItem>
                     )
@@ -257,12 +248,10 @@ export function ExaminationStep({ data, onUpdate, onNext, onPrevious }: Examinat
         />
       </div>
 
-      {/* Nút hành động */}
+      {/* Nút điều hướng */}
       <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onPrevious}>
-          Quay lại
-        </Button>
-        <Button onClick={handleSubmit}>Tiếp tục</Button>
+        <Button variant="outline" onClick={onPrevious}>Quay lại</Button>
+        <Button onClick={handleSubmit} disabled={!isFormValid}>Tiếp tục</Button>
       </div>
     </div>
   )
