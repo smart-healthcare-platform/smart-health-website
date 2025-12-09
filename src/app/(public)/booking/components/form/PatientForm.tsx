@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux";
 import { PatientFormData } from "@/types";
 import { AppointmentCategory, AppointmentType } from "@/types/appointment/index";
+import { getGenderDisplay } from "@/utils/typeGuards";
 
 
 interface PatientFormProps {
@@ -29,7 +30,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ formData, onFormChange }) => 
       }
 
       if (isFollowUp && followUpId) {
-        (baseForm as any).followUpId = followUpId
+        baseForm.followUpId = followUpId
       }
 
       onFormChange(baseForm)
@@ -90,13 +91,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ formData, onFormChange }) => 
           </label>
           <input
             type="text"
-            value={
-              formData.gender === "male"
-                ? "Nam"
-                : formData.gender === "female"
-                  ? "Nữ"
-                  : "Khác"
-            }
+            value={getGenderDisplay(formData.gender)}
             readOnly
             className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed"
           />
