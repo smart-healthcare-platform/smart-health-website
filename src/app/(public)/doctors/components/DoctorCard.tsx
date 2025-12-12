@@ -38,7 +38,7 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
         </div>
 
         {/* Name + Degree */}
-        <h3 className="text-xl font-bold text-gray-900">{doctor.display_name}</h3>
+        <h3 className="text-xl font-bold text-gray-900">{doctor.display_name || doctor.full_name}</h3>
         <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
             <Award className="w-4 h-4" />
