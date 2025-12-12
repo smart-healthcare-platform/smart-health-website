@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, DollarSign, Loader2, Receipt, CheckCircle2, QrCode, ExternalLink, Printer } from "lucide-react";
+import { CreditCard, DollarSign, Loader2, Receipt, CheckCircle2, QrCode, ExternalLink, Printer, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { billingService, type PaymentMethodType } from "@/services/billing.service";
 import type { OutstandingPaymentResponse, BulkPaymentRequest } from "@/types/billing";
@@ -225,12 +226,21 @@ export function BulkPaymentDialog({
     return <Badge className={info.className}>{info.label}</Badge>;
   };
 
+  // Filter payments: Chỉ hiển thị CASH payments trong bulk payment
+  // Online payments (MOMO/VNPAY) cần xử lý riêng
   const unpaidPayments = outstandingData?.payments.filter(
-    p => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
+    p => (p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING") &&
+         (!p.paymentMethod || p.paymentMethod === "CASH")
   ) || [];
   
   const paidPayments = outstandingData?.payments.filter(
     p => p.status === "COMPLETED" || p.status === "PAID"
+  ) || [];
+  
+  // Tách riêng online payments để hiển thị warning
+  const onlinePayments = outstandingData?.payments.filter(
+    p => (p.status === "PENDING" || p.status === "PROCESSING") &&
+         (p.paymentMethod === "MOMO" || p.paymentMethod === "VNPAY")
   ) || [];
 
   return (
@@ -324,6 +334,29 @@ export function BulkPaymentDialog({
               <p className="text-sm text-muted-foreground">Bệnh nhân</p>
               <p className="text-lg font-bold text-blue-700">{appointment.patientName || "Bệnh nhân"}</p>
             </div>
+
+            {/* Warning: Online Payments */}
+            {onlinePayments.length > 0 && (
+              <Alert variant="destructive" className="border-amber-500 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  <strong>Cảnh báo:</strong> Có {onlinePayments.length} khoản thanh toán online (MOMO/VNPAY) đang chờ xử lý.
+                  <br />
+                  <span className="text-sm">
+                    Vui lòng hoàn tất thanh toán online hoặc liên hệ quản trị viên để hủy các thanh toán đã hết hạn 
+                    và tạo thanh toán tiền mặt mới.
+                  </span>
+                  <div className="mt-2 space-y-1">
+                    {onlinePayments.map((payment) => (
+                      <div key={payment.paymentCode} className="text-xs">
+                        • {payment.paymentType === "APPOINTMENT_FEE" ? "Phí khám" : "Xét nghiệm"} - 
+                        {payment.paymentMethod} - {Number(payment.amount).toLocaleString("vi-VN")}đ
+                      </div>
+                    ))}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Outstanding Payments */}
             <div>

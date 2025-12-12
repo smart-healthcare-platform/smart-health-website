@@ -16,6 +16,7 @@ export interface PaymentItem {
   createdAt: string;
   paidAt?: string;
   appointmentId?: string; // For grouping payments by appointment
+  paymentMethod?: PaymentMethodType; // Payment method (CASH, MOMO, VNPAY)
 }
 
 /**
