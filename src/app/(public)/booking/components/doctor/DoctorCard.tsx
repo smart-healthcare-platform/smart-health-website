@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { Clock, Star } from "lucide-react";
 import type { Doctor, DoctorDetail } from "@/types/doctor/doctor.type";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 interface Props {
   doctor: Doctor | DoctorDetail;
@@ -17,29 +18,41 @@ export default function DoctorCard({ doctor, isSelected, onSelect }: Props) {
       `}
       onClick={onSelect}
     >
-      {/* Avatar */}
       <div className="text-center mb-6">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-4 border-emerald-100 shadow-sm">
-          <Image
-            src={doctor.avatar || "/images/doctor-placeholder.png"}
-            alt={doctor.full_name}
-            width={96}
-            height={96}
-            className="w-full h-full object-cover"
-          />
+        <div
+          className="
+      w-24 h-24 mx-auto rounded-full overflow-hidden 
+      bg-gray-100 
+      border-[3px] border-gray-200 
+      shadow-sm 
+      transition-all duration-300 
+      hover:shadow-md hover:border-emerald-300 hover:scale-[1.03]
+    "
+        >
+          <Avatar className="w-full h-full">
+            <AvatarImage
+              src={doctor.avatar || "/placeholder.svg"}
+              alt={doctor.full_name}
+              className="object-cover w-full h-full transition-transform duration-300 hover:scale-110"
+            />
+
+            <AvatarFallback
+              className="
+          w-full h-full flex items-center justify-center 
+          text-lg font-semibold text-gray-700 
+          bg-gradient-to-br from-emerald-300 to-emerald-500
+          text-white
+        "
+            >
+              {doctor.full_name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
         </div>
-
-        {/* Name + Degree */}
-        <h3 className="text-xl font-bold text-gray-900">{doctor.display_name || doctor.full_name}</h3>
-        {/* <div className="mt-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
-            <Award className="w-4 h-4" />
-            {doctor.degree}
-          </span>
-        </div> */}
-
-
       </div>
+
 
       {/* Rating */}
       <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">

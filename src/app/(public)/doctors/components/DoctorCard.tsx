@@ -16,19 +16,33 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
       {/* Avatar + Rating */}
       <div className="text-center mb-6">
         <div className="mx-auto mb-4">
-          <Avatar className="w-24 h-24 ring-4 ring-emerald-100 shadow-sm mx-auto">
-            <AvatarImage
-              src={doctor.avatar || "/placeholder.svg"}
-              alt={doctor.full_name}
-            />
-            <AvatarFallback className="text-xl bg-emerald-500 text-white">
-              {doctor.full_name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
+          <div className="
+    w-24 h-24 mx-auto rounded-full overflow-hidden bg-gray-100 
+    border-[3px] border-gray-200 
+    shadow-sm 
+    transition-all duration-300 
+    hover:shadow-md hover:border-emerald-300 hover:scale-[1.03]
+  ">
+            <Avatar className="w-full h-full">
+              <AvatarImage
+                src={doctor.avatar || "/placeholder.svg"}
+                alt={doctor.full_name}
+                className="object-cover w-full h-full"
+              />
+              <AvatarFallback className="
+        w-full h-full flex items-center justify-center 
+        text-lg font-semibold text-gray-600 bg-gray-200
+      ">
+                {doctor.full_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </div>
+
+
 
         {/* Rating */}
         <div className="flex items-center justify-center gap-2 mb-2">
