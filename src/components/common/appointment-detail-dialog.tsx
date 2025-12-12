@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -27,6 +27,7 @@ import {
   Clock3,
   UserX,
   Loader2,
+  Pill,
 } from "lucide-react"
 
 import Loading from "@/components/ui/loading"
@@ -36,6 +37,9 @@ import { VitalSignStatus } from "@/types/examnation"
 import { AppointmentDetail } from "@/types/appointment/appointment.type"
 import { AppointmentStatus } from "@/types/appointment/index"
 import { Gender } from "@/types/patient/enums/patient-gender.enum.dto"
+import { medicineService } from "@/services/medicine.service"
+import { PrescriptionDetail, PrescriptionStatus } from "@/types/medicine"
+import { format } from "date-fns"
 
 interface AppointmentDetailDialogProps {
   open: boolean
@@ -149,6 +153,48 @@ export default function AppointmentDetailDialog({
   const router = useRouter()
   const { user } = useSelector((state: RootState) => state.auth);
   const isDoctor = user?.role === "DOCTOR"
+  const [prescriptionDetail, setPrescriptionDetail] = useState<PrescriptionDetail | null>(null)
+  const [loadingPrescription, setLoadingPrescription] = useState(false)
+  
+  const isCompleted = appointment?.status === AppointmentStatus.COMPLETED
+
+  // Fetch prescription detail by appointmentId (works even without prescriptionId)
+  useEffect(() => {
+    const fetchPrescriptionDetail = async () => {
+      console.log("[AppointmentDetailDialog] Checking prescription:", {
+        appointmentId: appointment?.id,
+        prescriptionId: appointment?.prescriptionId,
+        status: appointment?.status,
+        isCompleted,
+        open
+      })
+      
+      // Try to fetch by appointmentId first (quick fix for missing prescriptionId)
+      if (appointment?.id && isCompleted) {
+        console.log("[AppointmentDetailDialog] Fetching prescription by appointmentId:", appointment.id)
+        try {
+          setLoadingPrescription(true)
+          const data = await medicineService.getPrescriptionByAppointmentId(appointment.id)
+          console.log("[AppointmentDetailDialog] Prescription fetched:", data)
+          setPrescriptionDetail(data)
+        } catch (error) {
+          console.error("[AppointmentDetailDialog] No prescription found for this appointment:", error)
+          setPrescriptionDetail(null)
+        } finally {
+          setLoadingPrescription(false)
+        }
+      } else {
+        console.log("[AppointmentDetailDialog] Appointment not completed or no appointmentId")
+        setPrescriptionDetail(null)
+        setLoadingPrescription(false)
+      }
+    }
+
+    if (open && appointment) {
+      fetchPrescriptionDetail()
+    }
+  }, [appointment?.id, isCompleted, open, appointment])
+  
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,8 +206,6 @@ export default function AppointmentDetailDialog({
   }
 
   if (!appointment) return null
-
-  const isCompleted = appointment.status === AppointmentStatus.COMPLETED
 
 
   const status = statusConfig[appointment.status as AppointmentStatus] ?? statusConfig[AppointmentStatus.PENDING]
@@ -363,8 +407,154 @@ export default function AppointmentDetailDialog({
                           <p className="text-base">{appointment.medicalRecord.doctorNotes || "—"}</p>
                         </div>
                         <div className="bg-white/80 dark:bg-gray-900/50 p-4 rounded-lg">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Đơn thuốc</p>
-                          <p className="text-base">{appointment.medicalRecord.prescription || "—"}</p>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                            <Pill className="h-4 w-4" />
+                            Đơn thuốc
+                            {prescriptionDetail && (
+                              <Badge variant="outline" className="text-xs">
+                                ID: {prescriptionDetail.id.slice(0, 8)}...
+                              </Badge>
+                            )}
+                          </p>
+                          {loadingPrescription ? (
+                            <div className="flex items-center gap-2 py-2">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">Đang tải thông tin đơn thuốc...</span>
+                            </div>
+                          ) : prescriptionDetail ? (
+                            <div className="space-y-3 mt-3">
+                              {/* Header */}
+                              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    className={
+                                      prescriptionDetail.status === PrescriptionStatus.ACTIVE 
+                                        ? "bg-blue-500" 
+                                        : prescriptionDetail.status === PrescriptionStatus.PRINTED
+                                        ? "bg-green-500"
+                                        : "bg-gray-500"
+                                    }
+                                  >
+                                    {prescriptionDetail.status === PrescriptionStatus.ACTIVE 
+                                      ? "Chưa in" 
+                                      : prescriptionDetail.status === PrescriptionStatus.PRINTED
+                                      ? "Đã in"
+                                      : prescriptionDetail.status}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {prescriptionDetail.items.length} loại thuốc
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(prescriptionDetail.createdAt), "dd/MM/yyyy HH:mm")}
+                                </p>
+                              </div>
+
+                              {/* Prescription Items */}
+                              <div className="space-y-2">
+                                {prescriptionDetail.items.map((item, index) => (
+                                  <div 
+                                    key={`${item.drugId}-${index}`} 
+                                    className="border-l-4 border-blue-500 pl-3 py-2 bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-950/20 rounded"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded min-w-[24px] text-center">
+                                        {index + 1}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <h5 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                                          {item.drugName}
+                                        </h5>
+                                        <div className="text-sm space-y-0.5 text-blue-700 dark:text-blue-300">
+                                          <p>
+                                            <span className="font-medium">Liều lượng:</span> {item.dosage}
+                                          </p>
+                                          <p>
+                                            <span className="font-medium">Tần suất:</span> {item.frequency}
+                                          </p>
+                                          {item.durationDays && (
+                                            <p>
+                                              <span className="font-medium">Thời gian:</span> {item.durationDays} ngày
+                                            </p>
+                                          )}
+                                          {item.quantity && (
+                                            <p>
+                                              <span className="font-medium">Số lượng:</span> {item.quantity}
+                                            </p>
+                                          )}
+                                          {item.route && (
+                                            <p>
+                                              <span className="font-medium">Đường dùng:</span> {item.route}
+                                            </p>
+                                          )}
+                                          {item.timing && (
+                                            <p>
+                                              <span className="font-medium">Thời điểm:</span> {item.timing}
+                                            </p>
+                                          )}
+                                          {item.instructions && (
+                                            <p className="pt-1 border-t border-blue-200 dark:border-blue-800 mt-1">
+                                              <span className="font-medium">Hướng dẫn:</span> {item.instructions}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Notes */}
+                              {prescriptionDetail.notes && (
+                                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase mb-1">
+                                    Ghi chú từ bác sĩ:
+                                  </p>
+                                  <p className="text-sm text-amber-900 dark:text-amber-100">
+                                    {prescriptionDetail.notes}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Legacy prescription text (if exists) */}
+                              {appointment.medicalRecord.prescription && (
+                                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-800">
+                                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                                    Ghi chú bổ sung:
+                                  </p>
+                                  <p className="text-sm">
+                                    {appointment.medicalRecord.prescription}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="p-6 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-3">
+                                  <Pill className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                  Chưa có đơn thuốc
+                                </p>
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                  {appointment.medicalRecord.prescription 
+                                    ? "Bác sĩ đã ghi chú nhưng chưa kê đơn thuốc điện tử"
+                                    : "Bác sĩ không kê đơn thuốc cho lần khám này"}
+                                </p>
+                                {appointment.medicalRecord.prescription && (
+                                  <div className="mt-3 p-3 bg-white dark:bg-gray-900/50 rounded text-left">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                                      Ghi chú từ bác sĩ:
+                                    </p>
+                                    <p className="text-sm text-foreground">
+                                      {appointment.medicalRecord.prescription}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         {/* {appointment.medicalRecord.followUpDate && (
                           <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
@@ -585,7 +775,16 @@ export default function AppointmentDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          {isDoctor && (appointment.status === AppointmentStatus.CONFIRMED || appointment.status === AppointmentStatus.CHECKED_IN) && (
+          {isDoctor && appointment.status === AppointmentStatus.CONFIRMED && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-md">
+              <Clock3 className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-amber-700">
+                Bệnh nhân chưa check-in. Vui lòng chờ lễ tân xác nhận bệnh nhân đã có mặt.
+              </span>
+            </div>
+          )}
+          
+          {isDoctor && appointment.status === AppointmentStatus.CHECKED_IN && (
             <Button onClick={handleStartExamination}>Bắt đầu khám</Button>
           )}
 

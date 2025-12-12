@@ -187,11 +187,13 @@ export const billingService = {
       throw new Error("referenceIds is required and must not be empty");
     }
 
+    // Gửi array đúng format Spring Boot: ?referenceIds=A&referenceIds=B
+    const params = new URLSearchParams();
+    referenceIds.forEach(id => params.append('referenceIds', id));
+
     const response = await apiAuth.get<OutstandingPaymentResponse>(
       "/billings/outstanding",
-      { 
-        params: { referenceIds: referenceIds.join(",") }
-      }
+      { params }
     );
     
     return response.data;
@@ -238,6 +240,17 @@ export const billingService = {
   async getPaymentStatus(paymentId: number): Promise<PaymentResponse> {
     const response = await apiAuth.get<PaymentResponse>(
       `/billings/${paymentId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Hủy một payment (chỉ PENDING hoặc PROCESSING)
+   * Thường dùng để hủy online payments đã expired trước khi tạo cash payment
+   */
+  async cancelPayment(paymentCode: string): Promise<PaymentResponse> {
+    const response = await apiAuth.post<PaymentResponse>(
+      `/billings/${paymentCode}/cancel`
     );
     return response.data;
   },

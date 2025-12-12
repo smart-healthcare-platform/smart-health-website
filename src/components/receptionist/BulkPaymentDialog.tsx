@@ -5,12 +5,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, DollarSign, Loader2, Receipt, CheckCircle2, QrCode, ExternalLink } from "lucide-react";
+import { CreditCard, DollarSign, Loader2, Receipt, CheckCircle2, QrCode, ExternalLink, Printer, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { billingService, type PaymentMethodType } from "@/services/billing.service";
 import type { OutstandingPaymentResponse, BulkPaymentRequest } from "@/types/billing";
 import type { CompositePaymentResponse } from "@/services/billing.service";
+import { PrescriptionPrintDialog } from "./PrescriptionPrintDialog";
+import { AppointmentStatus } from "@/types/appointment/index";
 
 import type { Appointment } from "@/types/appointment/appointment.type";
 
@@ -34,6 +37,7 @@ export function BulkPaymentDialog({
   const [compositePayment, setCompositePayment] = useState<CompositePaymentResponse | null>(null);
   const [showQrCode, setShowQrCode] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
 
   // Build referenceIds helper
   const getReferenceIds = useCallback(() => {
@@ -121,8 +125,14 @@ export function BulkPaymentDialog({
           toast.success("✅ Thanh toán thành công!");
           setShowQrCode(false);
           setCompositePayment(null);
-          onOpenChange(false);
-          onSuccess?.();
+          
+          // Kiểm tra và mở dialog in đơn thuốc nếu có
+          if (appointment.status === AppointmentStatus.COMPLETED && appointment.prescriptionId) {
+            setPrescriptionDialogOpen(true);
+          } else {
+            onOpenChange(false);
+            onSuccess?.();
+          }
         } else if (payment.status === "FAILED") {
           clearInterval(pollingIntervalRef.current!);
           pollingIntervalRef.current = null;
@@ -187,8 +197,13 @@ export function BulkPaymentDialog({
         
         toast.success(`Thanh toán thành công ${Number(result.totalAmount).toLocaleString("vi-VN")} VNĐ!`);
         
-        onOpenChange(false);
-        onSuccess?.();
+        // Kiểm tra và mở dialog in đơn thuốc nếu có
+        if (appointment.status === AppointmentStatus.COMPLETED && appointment.prescriptionId) {
+          setPrescriptionDialogOpen(true);
+        } else {
+          onOpenChange(false);
+          onSuccess?.();
+        }
       }
     } catch (err) {
       console.error("[BulkPaymentDialog] Payment error:", err);
@@ -211,15 +226,25 @@ export function BulkPaymentDialog({
     return <Badge className={info.className}>{info.label}</Badge>;
   };
 
+  // Filter payments: Chỉ hiển thị CASH payments trong bulk payment
+  // Online payments (MOMO/VNPAY) cần xử lý riêng
   const unpaidPayments = outstandingData?.payments.filter(
-    p => p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING"
+    p => (p.status === "PENDING" || p.status === "UNPAID" || p.status === "PROCESSING") &&
+         (!p.paymentMethod || p.paymentMethod === "CASH")
   ) || [];
   
   const paidPayments = outstandingData?.payments.filter(
     p => p.status === "COMPLETED" || p.status === "PAID"
   ) || [];
+  
+  // Tách riêng online payments để hiển thị warning
+  const onlinePayments = outstandingData?.payments.filter(
+    p => (p.status === "PENDING" || p.status === "PROCESSING") &&
+         (p.paymentMethod === "MOMO" || p.paymentMethod === "VNPAY")
+  ) || [];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -310,6 +335,29 @@ export function BulkPaymentDialog({
               <p className="text-lg font-bold text-blue-700">{appointment.patientName || "Bệnh nhân"}</p>
             </div>
 
+            {/* Warning: Online Payments */}
+            {onlinePayments.length > 0 && (
+              <Alert variant="destructive" className="border-amber-500 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  <strong>Cảnh báo:</strong> Có {onlinePayments.length} khoản thanh toán online (MOMO/VNPAY) đang chờ xử lý.
+                  <br />
+                  <span className="text-sm">
+                    Vui lòng hoàn tất thanh toán online hoặc liên hệ quản trị viên để hủy các thanh toán đã hết hạn 
+                    và tạo thanh toán tiền mặt mới.
+                  </span>
+                  <div className="mt-2 space-y-1">
+                    {onlinePayments.map((payment) => (
+                      <div key={payment.paymentCode} className="text-xs">
+                        • {payment.paymentType === "APPOINTMENT_FEE" ? "Phí khám" : "Xét nghiệm"} - 
+                        {payment.paymentMethod} - {Number(payment.amount).toLocaleString("vi-VN")}đ
+                      </div>
+                    ))}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Outstanding Payments */}
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -390,6 +438,18 @@ export function BulkPaymentDialog({
                   </p>
                 </div>
               )}
+              
+              {/* Thông báo có đơn thuốc */}
+              {appointment.status === AppointmentStatus.COMPLETED && appointment.prescriptionId && (
+                <div className="mt-3 pt-3 border-t border-green-200">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <Printer className="h-4 w-4" />
+                    <p className="text-sm font-medium">
+                      Có đơn thuốc - Sẽ tự động mở dialog in sau khi thanh toán thành công
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment Method Selection */}
@@ -446,5 +506,26 @@ export function BulkPaymentDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Prescription Print Dialog - Tự động hiển thị sau khi thanh toán thành công nếu có đơn thuốc */}
+    <PrescriptionPrintDialog
+      open={prescriptionDialogOpen}
+      onOpenChange={(open) => {
+        setPrescriptionDialogOpen(open);
+        if (!open) {
+          // Khi đóng dialog in đơn thuốc, đóng cả bulk payment dialog và gọi onSuccess
+          onOpenChange(false);
+          onSuccess?.();
+        }
+      }}
+      prescriptionId={appointment.prescriptionId || null}
+      onSuccess={() => {
+        // Sau khi in xong, đóng cả 2 dialog
+        setPrescriptionDialogOpen(false);
+        onOpenChange(false);
+        onSuccess?.();
+      }}
+    />
+  </>
   );
 }
