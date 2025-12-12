@@ -172,7 +172,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUserRole }) => {
   const otherParticipant = conversations.find((c: Conversation) => c.id === selectedConversationId)?.participants?.find((p: Participant) => p.userId && p.userId !== user?.id);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
+    <div className="flex h-full bg-background overflow-hidden">
       {/* Conversations List - Left Column */}
       <div className="w-1/3 border-r border-border flex flex-col overflow-hidden">
         <div className="p-4 border-b border-border">

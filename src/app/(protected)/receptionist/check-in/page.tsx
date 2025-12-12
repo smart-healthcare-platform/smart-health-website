@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { toast } from "react-toastify";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
 import { BulkPaymentDialog } from "@/components/receptionist/BulkPaymentDialog";
+import { PrescriptionPrintDialog } from "@/components/receptionist/PrescriptionPrintDialog";
 import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function CheckInPage() {
@@ -35,6 +36,8 @@ export default function CheckInPage() {
   const [filter, setFilter] = useState<"all" | "unpaid" | "unchecked" | "checked_in" | "checkout">("all");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
+  const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
+  const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
 
   // Fetch appointments hôm nay
   const fetchAppointments = useCallback(async () => {
@@ -469,6 +472,22 @@ export default function CheckInPage() {
                       )}
                       <li>Đơn thuốc (nếu có)</li>
                     </ul>
+                    
+                    {/* Nút in đơn thuốc nếu có prescriptionId */}
+                    {selectedAppointment.prescriptionId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-3 bg-white border-purple-300 text-purple-700 hover:bg-purple-50"
+                        onClick={() => {
+                          setSelectedPrescriptionId(selectedAppointment.prescriptionId || null);
+                          setPrescriptionDialogOpen(true);
+                        }}
+                      >
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Xem & In đơn thuốc
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -555,9 +574,26 @@ export default function CheckInPage() {
             toast.success("Thanh toán tổng hợp thành công!");
             fetchAppointments();
             setSelectedAppointment(null);
+            
+            // Tự động mở dialog in đơn thuốc nếu có
+            if (selectedAppointment.prescriptionId) {
+              setSelectedPrescriptionId(selectedAppointment.prescriptionId);
+              setPrescriptionDialogOpen(true);
+            }
           }}
         />
       )}
+
+      {/* 🖨️ Prescription Print Dialog */}
+      <PrescriptionPrintDialog
+        open={prescriptionDialogOpen}
+        onOpenChange={setPrescriptionDialogOpen}
+        prescriptionId={selectedPrescriptionId}
+        onSuccess={() => {
+          fetchAppointments();
+          setSelectedPrescriptionId(null);
+        }}
+      />
     </div>
   );
 }
