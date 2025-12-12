@@ -14,23 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Heart, AlertCircle } from "lucide-react";
-import { predictionService } from "@/services/prediction.service";
+import { HealthMetrics, predictionService } from "@/services/prediction.service";
 
-interface HealthMetrics {
-  age: string;
-  gender: string;
-  chestPainType: string;
-  restingBP: string;
-  cholesterol: string;
-  fastingBS: string;
-  restingECG: string;
-  maxHR: string;
-  exerciseAngina: string;
-  oldpeak: string;
-  stSlope: string;
-  ca: string;
-  thal: string;
-}
 
 interface DiagnosisResult {
   riskLevel: "low" | "medium" | "high";
@@ -67,14 +52,14 @@ export function HealthMetricsForm({
 }: HealthMetricsFormProps) {
   const [metrics, setMetrics] = useState<HealthMetrics>({
     age: "",
-    gender: "",
+    gender: "F",
     chestPainType: "",
     restingBP: "",
     cholesterol: "",
-    fastingBS: "",
+    fastingBS: "0",
     restingECG: "",
     maxHR: "",
-    exerciseAngina: "",
+    exerciseAngina: "Y",
     oldpeak: "",
     stSlope: "",
     ca: "",

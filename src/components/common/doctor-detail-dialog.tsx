@@ -159,7 +159,7 @@ export default function DoctorDetailDialog({
                                             {doctor.certificates.map((ct) => (
                                                 <div key={ct.id} className="p-3 bg-white rounded-lg shadow-sm border">
 
-                                                    <p className="font-medium">{ct.title}</p>
+                                                    <p className="font-medium">{ct.academic_degree}</p>
 
                                                     <p className="text-sm text-muted-foreground">
                                                         Loại: {ct.type === CertificateType.DEGREE ? "Bằng cấp" : "Chứng chỉ hành nghề"}
@@ -191,8 +191,8 @@ export default function DoctorDetailDialog({
                                                     {/* HIỂN THỊ CHO CHỨNG CHỈ HÀNH NGHỀ */}
                                                     {ct.type === CertificateType.LICENSE && (
                                                         <>
-                                                            {ct.certificate_number && (
-                                                                <p className="text-sm">Số chứng chỉ: {ct.certificate_number}</p>
+                                                            {ct.license_number && (
+                                                                <p className="text-sm">Số chứng chỉ: {ct.license_number}</p>
                                                             )}
                                                             {ct.issued_by && (
                                                                 <p className="text-sm">Cơ quan cấp: {ct.issued_by}</p>

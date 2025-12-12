@@ -188,7 +188,7 @@ export const appointmentService = {
    */
   async createPayment(
     appointmentId: string,
-    paymentMethod: "MOMO" | "VNPAY"
+    paymentMethod: "MOMO" | "VNPAY" | "CASH"
   ): Promise<CreatePaymentResponse> {
     const res = await apiAuth.post<{ success: boolean; message: string; data: CreatePaymentResponse }>(
       `/appointments/${appointmentId}/create-payment`,

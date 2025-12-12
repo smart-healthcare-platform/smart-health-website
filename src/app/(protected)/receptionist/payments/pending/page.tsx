@@ -33,8 +33,9 @@ import {
 import { toast } from "react-toastify";
 import { appointmentService } from "@/services/appointment.service";
 import { billingService } from "@/services/billing.service";
-import type { Appointment } from "@/types/appointment";
+
 import type { OutstandingPaymentResponse } from "@/types/billing";
+import { Appointment } from "@/types/appointment/appointment.type";
 
 interface AppointmentWithPayment extends Appointment {
   paymentInfo?: OutstandingPaymentResponse;
@@ -55,7 +56,7 @@ export default function PendingPaymentsPage() {
 
       // Step 1: Get today's appointments
       const todayAppointments = await appointmentService.getTodayAppointments();
-      
+
       if (todayAppointments.length === 0) {
         setAppointments([]);
         return;
@@ -63,7 +64,7 @@ export default function PendingPaymentsPage() {
 
       // Step 2: Get payment info for all appointments
       const appointmentIds = todayAppointments.map((apt) => apt.id);
-      
+
       // Fetch payment info for all appointments in one call
       const paymentPromises = appointmentIds.map(async (id) => {
         try {
@@ -114,8 +115,7 @@ export default function PendingPaymentsPage() {
     const matchesSearch =
       searchTerm === "" ||
       apt.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      apt.patient?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      apt.patient?.phoneNumber?.includes(searchTerm);
+      apt.patientName.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus =
       statusFilter === "all" || apt.status === statusFilter;
@@ -130,7 +130,7 @@ export default function PendingPaymentsPage() {
     avgUnpaid:
       filteredAppointments.length > 0
         ? filteredAppointments.reduce((sum, apt) => sum + (apt.totalUnpaid || 0), 0) /
-          filteredAppointments.length
+        filteredAppointments.length
         : 0,
   };
 
@@ -311,11 +311,11 @@ export default function PendingPaymentsPage() {
                         {apt.id}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {apt.patient?.fullName || "-"}
+                        {apt.patientName || "-"}
                       </TableCell>
-                      <TableCell>{apt.patient?.phoneNumber || "-"}</TableCell>
+
                       <TableCell className="text-sm">
-                        {formatDateTime(apt.appointmentDate)}
+                        {formatDateTime(apt.createdAt)}
                       </TableCell>
                       <TableCell>{getStatusBadge(apt.status)}</TableCell>
                       <TableCell className="text-right font-semibold text-yellow-600">

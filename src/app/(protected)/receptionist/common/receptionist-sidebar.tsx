@@ -26,6 +26,7 @@ const management = [
     href: "/receptionist/check-in",
     icon: UserCheck,
     description: "Trang chính - Check-in và thu tiền",
+    badge: undefined,
   },
   {
     name: "Bảng điều khiển",

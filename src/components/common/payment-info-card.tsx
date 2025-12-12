@@ -34,7 +34,7 @@ export function PaymentInfoCard({
     toast.info("Vui lòng hoàn tất thanh toán trong 15 phút", {
       autoClose: 5000,
     });
-    
+
     setShowPaymentDialog(false);
 
     // Notify parent to refresh data
@@ -111,54 +111,14 @@ export function PaymentInfoCard({
               <span className="text-sm font-medium">Đang chờ thanh toán</span>
             </div>
 
-            {/* Countdown Timer - nếu có expiredAt */}
-            {appointment.expiredAt && (
-              <div className="mb-3">
-                <PaymentCountdown
-                  expiredAt={appointment.expiredAt}
-                  onExpired={() => {
-                    toast.warning("Link thanh toán đã hết hạn. Vui lòng tạo link mới.");
-                    if (onPaymentCreated) {
-                      onPaymentCreated();
-                    }
-                  }}
-                />
-              </div>
-            )}
 
-            {/* Thông báo về link thanh toán - chỉ hiện nếu không có countdown */}
-            {!appointment.expiredAt && (
-              <div className="flex items-start gap-2 mb-3">
-                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-amber-600 dark:text-amber-400">
-                  {appointment.paymentUrl ? (
-                    <p>
-                      Link thanh toán có hiệu lực 15 phút. Nếu hết hạn, vui lòng
-                      tạo link mới.
-                    </p>
-                  ) : (
-                    <p>
-                      Link thanh toán có thể đã hết hạn. Vui lòng tạo yêu cầu
-                      thanh toán mới.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+
+
+
 
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
-              {appointment.paymentUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(appointment.paymentUrl, "_blank")}
-                  className="text-amber-700 border-amber-300 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700 dark:hover:bg-amber-900/20"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Mở link thanh toán
-                </Button>
-              )}
+
               <Button
                 variant="outline"
                 size="sm"

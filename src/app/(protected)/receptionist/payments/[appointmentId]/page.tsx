@@ -84,7 +84,7 @@ export default function PaymentDetailPage() {
       const response = await billingService.processBulkPayment(request);
 
       toast.success(
-        `Thanh toán thành công ${response.paymentCount} khoản, tổng ${response.totalAmount.toLocaleString("vi-VN")} VND`
+        `Thanh toán thành công ${response.paymentCount} khoản, tổng ${Number(response.totalAmount).toLocaleString("vi-VN")} VND`
       );
 
       // Refresh payment data
@@ -102,7 +102,7 @@ export default function PaymentDetailPage() {
   // Handle print invoice
   const handlePrint = () => {
     if (!paymentData) return;
-    
+
     // Create a printable version
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
@@ -141,8 +141,8 @@ export default function PaymentDetailPage() {
             </thead>
             <tbody>
               ${paymentData.payments
-                .map(
-                  (p) => `
+        .map(
+          (p) => `
                 <tr>
                   <td>${p.paymentCode}</td>
                   <td>${p.paymentType}</td>
@@ -151,8 +151,8 @@ export default function PaymentDetailPage() {
                   <td>${p.status}</td>
                 </tr>
               `
-                )
-                .join("")}
+        )
+        .join("")}
             </tbody>
           </table>
           

@@ -7,7 +7,7 @@ import { CertificateType } from "./enums/doctor-certificate.type";
 export interface Doctor {
     id: string;
     full_name: string;
-    display_name?: string;
+    display_name: string;
     avatar: string;
     experience_years: number;
     bio: string;

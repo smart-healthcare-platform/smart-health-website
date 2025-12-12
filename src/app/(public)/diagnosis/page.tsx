@@ -1,26 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { predictionService } from "@/services/prediction.service";
+import { HealthMetrics, predictionService } from "@/services/prediction.service";
 import { HealthMetricsForm } from "@/app/(public)/diagnosis/components/DiagnosisForm";
 import { AIResultsDisplay } from "@/app/(public)/diagnosis/components/PredictionDisplay";
 import { AIChatInterface } from "@/app/(public)/diagnosis/components/ChatBox";
 import { DiagnosisHeader } from "./components/DiagnosisHeader";
-interface HealthMetrics {
-  age: string;
-  gender: string;
-  chestPainType: string;
-  restingBP: string;
-  cholesterol: string;
-  fastingBS: string;
-  restingECG: string;
-  maxHR: string;
-  exerciseAngina: string;
-  oldpeak: string;
-  stSlope: string;
-  ca: string;
-  thal: string;
-}
+
 
 interface DiagnosisResult {
   riskLevel: "low" | "medium" | "high";

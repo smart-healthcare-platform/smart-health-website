@@ -1,8 +1,9 @@
 
 "use client";
+import { Doctor, DoctorDetail } from "@/types/doctor/doctor.type";
 import DoctorList from "./DoctorList";
 import AppPagination from "@/components/ui/global-pagination";
-import { Doctor, DoctorDetail } from "@/types";
+
 
 interface DoctorSelectionProps {
   doctors: Doctor[];

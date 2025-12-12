@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { PatientFormData, Doctor, DoctorDetail} from "@/types";
+import { PatientFormData } from "@/types";
 import { TimeSlot } from "@/types/timeSlot";
 import { AppointmentCategory, AppointmentType } from "@/types/appointment/index";
+import { Doctor, DoctorDetail } from "@/types/doctor/doctor.type";
 
 interface FormData {
   fullName: string;
@@ -70,7 +71,7 @@ const bookingSlice = createSlice({
       action: PayloadAction<{ followUpId: string }>
     ) => {
       state.isFollowUp = true;
-      state.followUpId= action.payload.followUpId
+      state.followUpId = action.payload.followUpId
       state.formData.category = AppointmentCategory.FOLLOW_UP;
     },
     resetBooking: () => initialState,

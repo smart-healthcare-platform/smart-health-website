@@ -9,7 +9,7 @@ export type TimeSlotStatus = "available" | "booked" | "off" | "expired"
 interface TimeSlotGridProps {
   selectedSlotId: string | null
   onSlotSelect: (slot: TimeSlot) => void
-  selectedDate: string | null // <-- sửa từ Date | null thành string | null
+  selectedDate: string | null 
   timeSlots: TimeSlot[]
   loading?: boolean
 }

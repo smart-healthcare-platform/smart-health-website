@@ -16,7 +16,7 @@ interface ExaminationLayoutProps {
   currentStep: 1 | 2 | 3 | 4 | 5
   onStepClick: (step: 1 | 2 | 3 | 4 | 5) => void
   children: React.ReactNode
-  appointment?: Appointment
+  appointment?: AppointmentDetail
   onCopyPrescription?: (history: MedicationHistory) => void
 }
 

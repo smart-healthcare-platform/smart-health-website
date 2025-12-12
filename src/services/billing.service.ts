@@ -23,7 +23,7 @@ export interface PageResponse<T> {
   size: number;
 }
 
-export type PaymentMethodType = "MOMO" | "VNPAY" | "CASH" | "COD";
+export type PaymentMethodType = "MOMO" | "VNPAY" | "CASH";
 export type PaymentType = "APPOINTMENT_FEE" | "LAB_TEST" | "PRESCRIPTION" | "OTHER" | "COMPOSITE_PAYMENT";
 export type PaymentStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED" | "CANCELLED";
 

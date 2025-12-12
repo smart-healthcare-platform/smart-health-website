@@ -1,15 +1,15 @@
 import { apiNoAuth } from "@/lib/axios";
 
-interface HealthMetrics {
+export interface HealthMetrics {
   age: string;
   gender: "M" | "F";
   chestPainType: string;
   restingBP: string;
- cholesterol: string;
- fastingBS: "0" | "1";
+  cholesterol: string;
+  fastingBS: "0" | "1";
   restingECG: string;
   maxHR: string;
- exerciseAngina: "Y" | "N";
+  exerciseAngina: "Y" | "N";
   oldpeak: string;
   stSlope: string;
   ca: string;
@@ -36,7 +36,7 @@ export const predictionService = {
    * @param metrics Dữ liệu sức khỏe của người dùng
    * @returns Kết quả chẩn đoán với mức độ rủi ro và khuyến nghị
    */
- predict: async (metrics: HealthMetrics): Promise<DiagnosisResult> => {
+  predict: async (metrics: HealthMetrics): Promise<DiagnosisResult> => {
     const response = await apiNoAuth.post<PredictionResponse>(`${PREDICTION_BASE_URL}/predict`, {
       input_data: transformMetricsToModelInput(metrics),
     });
@@ -74,14 +74,14 @@ export const predictionService = {
     return result;
   },
 
- /**
-  * Lấy thông tin về mô hình dự đoán (nếu có endpoint này)
-  * @returns Thông tin mô hình
-  */
- getHealthInfo: async (): Promise<{ message: string }> => {
-   const response = await apiNoAuth.get(`${PREDICTION_BASE_URL}/health`);
-   return response.data;
- },
+  /**
+   * Lấy thông tin về mô hình dự đoán (nếu có endpoint này)
+   * @returns Thông tin mô hình
+   */
+  getHealthInfo: async (): Promise<{ message: string }> => {
+    const response = await apiNoAuth.get(`${PREDICTION_BASE_URL}/health`);
+    return response.data;
+  },
 };
 
 // Hàm chuyển đổi dữ liệu từ frontend sang định dạng mà model yêu cầu
@@ -109,7 +109,7 @@ function transformMetricsToModelInput(metrics: HealthMetrics): number[] {
     "1": 1, // Flat
     "2": 2, // Downsloping
   };
- const stSlope = stSlopeMap[metrics.stSlope];
+  const stSlope = stSlopeMap[metrics.stSlope];
 
   // Thứ tự các trường phải khớp với thứ tự mà mô hình AI đã được huấn luyện
   return [
