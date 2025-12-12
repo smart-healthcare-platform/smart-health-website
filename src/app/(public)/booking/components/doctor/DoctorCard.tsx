@@ -51,6 +51,9 @@ export default function DoctorCard({ doctor, isSelected, onSelect }: Props) {
             </AvatarFallback>
           </Avatar>
         </div>
+        <h2 className="text-xl font-bold text-gray-900">
+          {doctor.display_name || doctor.full_name}
+        </h2>
       </div>
 
 
