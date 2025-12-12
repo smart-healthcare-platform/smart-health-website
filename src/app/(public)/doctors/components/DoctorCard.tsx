@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Calendar, Clock, Eye, Star, Award } from "lucide-react"
 import { Doctor } from "@/types/doctor/doctor.type"
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 
 interface DoctorCardProps {
   doctor: Doctor
@@ -14,14 +15,19 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
     <div className="bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 p-6 flex flex-col">
       {/* Avatar + Rating */}
       <div className="text-center mb-6">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-4 border-emerald-100 shadow-sm">
-          <Image
-            src={doctor.avatar || "https://htmediagroup.vn/wp-content/uploads/2022/12/Anh-bac-si-12-min-585x878.jpg.webp"}
-            alt={doctor.full_name}
-            width={96}
-            height={96}
-            className="w-full h-full object-cover"
-          />
+        <div className="mx-auto mb-4">
+          <Avatar className="w-24 h-24 ring-4 ring-emerald-100 shadow-sm mx-auto">
+            <AvatarImage
+              src={doctor.avatar || "/placeholder.svg"}
+              alt={doctor.full_name}
+            />
+            <AvatarFallback className="text-xl bg-emerald-500 text-white">
+              {doctor.full_name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         {/* Rating */}
@@ -37,16 +43,19 @@ export default function DoctorCard({ doctor, onBook }: DoctorCardProps) {
           <span className="text-sm text-gray-600">4.8 (127)</span>
         </div>
 
-        {/* Name + Degree */}
-        <h3 className="text-xl font-bold text-gray-900">{doctor.display_name || doctor.full_name}</h3>
+        {/* Name */}
+        <h3 className="text-xl font-bold text-gray-900">
+          {doctor.display_name || doctor.full_name}
+        </h3>
+
         <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
             <Award className="w-4 h-4" />
             Tim mạch
           </span>
         </div>
-
       </div>
+
 
       {/* Experience */}
       <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-6">
