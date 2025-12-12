@@ -585,7 +585,16 @@ export default function AppointmentDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          {isDoctor && (appointment.status === AppointmentStatus.CONFIRMED || appointment.status === AppointmentStatus.CHECKED_IN) && (
+          {isDoctor && appointment.status === AppointmentStatus.CONFIRMED && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-md">
+              <Clock3 className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-amber-700">
+                Bệnh nhân chưa check-in. Vui lòng chờ lễ tân xác nhận bệnh nhân đã có mặt.
+              </span>
+            </div>
+          )}
+          
+          {isDoctor && appointment.status === AppointmentStatus.CHECKED_IN && (
             <Button onClick={handleStartExamination}>Bắt đầu khám</Button>
           )}
 

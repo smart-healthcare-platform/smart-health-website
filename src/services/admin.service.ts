@@ -402,6 +402,7 @@ class AdminService {
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
