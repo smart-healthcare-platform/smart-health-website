@@ -84,6 +84,17 @@ export const medicineService = {
   },
 
   /**
+   * Fetches prescription by appointment ID.
+   * This is useful when prescriptionId is not available in the appointment object.
+   * @param appointmentId The ID of the appointment.
+   * @returns A promise that resolves to the prescription details.
+   */
+  getPrescriptionByAppointmentId: async (appointmentId: string): Promise<PrescriptionDetail> => {
+    const response = await apiAuth.get(`/medicine/appointments/${appointmentId}/prescription`);
+    return response.data;
+  },
+
+  /**
    * Tạo đơn thuốc mới
    * @param data - Dữ liệu đơn thuốc
    */
