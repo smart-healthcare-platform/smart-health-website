@@ -14,6 +14,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  UserPlus,
 } from "lucide-react";
 import { receptionistService } from "@/services/receptionist.service";
 import { Appointment } from "@/types/appointment/appointment.type";
@@ -22,6 +23,8 @@ import { toast } from "react-toastify";
 import PaymentMethodDialog from "@/components/receptionist/PaymentMethodDialog";
 import { BulkPaymentDialog } from "@/components/receptionist/BulkPaymentDialog";
 import { PrescriptionPrintDialog } from "@/components/receptionist/PrescriptionPrintDialog";
+import { CreateWalkInPatientDialog } from "@/components/receptionist/CreateWalkInPatientDialog";
+import { SelectDoctorSlotDialog } from "@/components/receptionist/SelectDoctorSlotDialog";
 import { AppointmentStatus } from "@/types/appointment/index";
 
 export default function CheckInPage() {
@@ -38,6 +41,12 @@ export default function CheckInPage() {
   const [bulkPaymentDialogOpen, setBulkPaymentDialogOpen] = useState(false);
   const [prescriptionDialogOpen, setPrescriptionDialogOpen] = useState(false);
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
+  
+  // Walk-in patient states
+  const [createPatientDialogOpen, setCreatePatientDialogOpen] = useState(false);
+  const [selectSlotDialogOpen, setSelectSlotDialogOpen] = useState(false);
+  const [newPatientId, setNewPatientId] = useState<string>("");
+  const [newPatientName, setNewPatientName] = useState<string>("");
 
   // Fetch appointments hôm nay
   const fetchAppointments = useCallback(async () => {
@@ -191,7 +200,16 @@ export default function CheckInPage() {
       {/* Search & Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Tìm kiếm bệnh nhân</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Tìm kiếm bệnh nhân</CardTitle>
+            <Button
+              onClick={() => setCreatePatientDialogOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Đăng ký bệnh nhân mới
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -592,6 +610,29 @@ export default function CheckInPage() {
         onSuccess={() => {
           fetchAppointments();
           setSelectedPrescriptionId(null);
+        }}
+      />
+
+      {/* 👤 Create Walk-in Patient Dialog */}
+      <CreateWalkInPatientDialog
+        open={createPatientDialogOpen}
+        onOpenChange={setCreatePatientDialogOpen}
+        onSuccess={(userId, patientName) => {
+          setNewPatientId(userId);
+          setNewPatientName(patientName);
+          setSelectSlotDialogOpen(true);
+        }}
+      />
+
+      {/* 📅 Select Doctor & Slot Dialog */}
+      <SelectDoctorSlotDialog
+        open={selectSlotDialogOpen}
+        onOpenChange={setSelectSlotDialogOpen}
+        patientId={newPatientId}
+        patientName={newPatientName}
+        onSuccess={() => {
+          fetchAppointments();
+          toast.success("Đã tạo lịch khám cho bệnh nhân walk-in!");
         }}
       />
     </div>

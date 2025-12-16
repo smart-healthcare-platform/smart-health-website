@@ -95,7 +95,7 @@ export default function Home() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/booking">
+                <Link href="/booking/step-1">
                   <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2">
                     <CalendarCheck className="w-5 h-5" />
                     <span>Đặt lịch ngay</span>

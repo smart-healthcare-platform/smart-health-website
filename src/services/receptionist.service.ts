@@ -13,6 +13,40 @@ export interface UpdateStatusRequest {
   status: AppointmentStatus;
 }
 
+export interface RegisterWalkInPatientRequest {
+  fullName: string;
+  phone: string;
+  email: string;
+  dateOfBirth: string; // Format: yyyy-MM-dd
+  gender: "MALE" | "FEMALE";
+  address?: string;
+  notes?: string;
+}
+
+export interface RegisterWalkInPatientResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    fullName: string;
+    role: string;
+    createdAt: string;
+  };
+  temporaryPassword: string;
+  patientId: string | null;
+  message: string;
+}
+
+export interface CreateWalkInAppointmentRequest {
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  slotId: string;
+  notes?: string;
+  receptionistNotes?: string;
+}
+
 export interface CashPaymentRequest {
   appointmentId: string;
   amount: number;
@@ -130,6 +164,33 @@ export const receptionistService = {
     
     const response = await api.post("/billings/cash-payment", mappedData);
     return response.data;
+  },
+
+  /**
+   * Đăng ký tài khoản mới cho bệnh nhân walk-in
+   * @param patientData - Thông tin bệnh nhân
+   * @returns Thông tin user và mật khẩu tạm thời
+   */
+  registerWalkInPatient: async (
+    patientData: RegisterWalkInPatientRequest
+  ): Promise<RegisterWalkInPatientResponse> => {
+    const response = await api.post("/auth/register-by-receptionist", patientData);
+    return response.data.data;
+  },
+
+  /**
+   * Tạo appointment cho bệnh nhân walk-in
+   * @param appointmentData - Thông tin appointment
+   * @returns Appointment đã tạo
+   */
+  createWalkInAppointment: async (
+    appointmentData: CreateWalkInAppointmentRequest
+  ): Promise<Appointment> => {
+    const response = await api.post(
+      "/appointments/receptionist/create-walk-in",
+      appointmentData
+    );
+    return response.data.data;
   },
 
   /**
