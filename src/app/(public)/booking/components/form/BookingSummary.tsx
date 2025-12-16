@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
 import { Doctor, DoctorDetail } from '@/types/doctor/doctor.type';
 import { PatientFormData } from '@/types';
 
@@ -24,7 +24,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
       <div className="space-y-6">
 
         {selectedDate && selectedTime && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
               <Calendar className="w-6 h-6 text-emerald-600" />
               <div>
@@ -34,6 +34,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 </p>
               </div>
             </div>
+
             <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
               <Clock className="w-6 h-6 text-emerald-600" />
               <div>
@@ -41,8 +42,19 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <p className="font-semibold">{selectedTime}</p>
               </div>
             </div>
+
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+              <MapPin className="w-6 h-6 text-emerald-600" />
+              <div>
+                <p className="text-sm text-gray-500">Phòng khám</p>
+                <p className="font-semibold">
+                  {selectedDoctor?.room_number || '---'}
+                </p>
+              </div>
+            </div>
           </div>
         )}
+
 
         <div className="p-4 bg-gray-50 rounded-lg">
           <h5 className="font-medium text-gray-900 mb-3">Thông tin bệnh nhân</h5>

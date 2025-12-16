@@ -16,7 +16,8 @@ export interface Doctor {
     phone: string
     gender: Gender,
     date_of_birth: string,
-    user_id: string
+    user_id: string,
+    room_number:string
 }
 
 export interface DoctorDetail {
@@ -28,6 +29,7 @@ export interface DoctorDetail {
     date_of_birth: string
     avatar: string
     experience_years: number
+    room_number:string
     bio: string
     active: boolean
     created_at: string

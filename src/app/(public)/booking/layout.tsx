@@ -63,6 +63,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
     const payload: CreateAppointmentPayload = {
       doctorId: doctor.id,
       doctorName: doctor.display_name || doctor.full_name,
+      roomNumber: doctor.room_number,
       slotId: slot_id,
       startAt: slot_start_time,
       patientId: user.referenceId || "",

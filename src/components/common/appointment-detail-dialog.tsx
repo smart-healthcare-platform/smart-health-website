@@ -28,6 +28,7 @@ import {
   UserX,
   Loader2,
   Pill,
+  MapPin,
 } from "lucide-react"
 
 import Loading from "@/components/ui/loading"
@@ -155,10 +156,10 @@ export default function AppointmentDetailDialog({
   const isDoctor = user?.role === "DOCTOR"
   const [prescriptionDetail, setPrescriptionDetail] = useState<PrescriptionDetail | null>(null)
   const [loadingPrescription, setLoadingPrescription] = useState(false)
-  
+
   const isCompleted = appointment?.status === AppointmentStatus.COMPLETED
 
-  // Fetch prescription detail by appointmentId (works even without prescriptionId)
+
   useEffect(() => {
     const fetchPrescriptionDetail = async () => {
       console.log("[AppointmentDetailDialog] Checking prescription:", {
@@ -168,8 +169,7 @@ export default function AppointmentDetailDialog({
         isCompleted,
         open
       })
-      
-      // Try to fetch by appointmentId first (quick fix for missing prescriptionId)
+
       if (appointment?.id && isCompleted) {
         console.log("[AppointmentDetailDialog] Fetching prescription by appointmentId:", appointment.id)
         try {
@@ -194,7 +194,7 @@ export default function AppointmentDetailDialog({
       fetchPrescriptionDetail()
     }
   }, [appointment?.id, isCompleted, open, appointment])
-  
+
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -349,6 +349,7 @@ export default function AppointmentDetailDialog({
                     </p>
                     <p className="font-medium">{formatDate(appointment.startAt)}</p>
                   </div>
+
                   <div>
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -360,10 +361,23 @@ export default function AppointmentDetailDialog({
                         : formatTime(appointment.startAt)}
                     </p>
                   </div>
-                  <div className="col-span-2">
+
+                  <div>
                     <p className="text-sm text-muted-foreground">Bác sĩ</p>
                     <p className="font-medium">{appointment.doctorName}</p>
                   </div>
+
+                  {/* 👉 PHÒNG KHÁM */}
+                  <div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Phòng khám
+                    </p>
+                    <p className="font-medium">
+                      {appointment.roomNumber || "—"}
+                    </p>
+                  </div>
+
                   {appointment.notes && (
                     <div className="col-span-2">
                       <p className="text-sm text-muted-foreground">Ghi chú / Lý do khám</p>
@@ -371,6 +385,7 @@ export default function AppointmentDetailDialog({
                     </div>
                   )}
                 </div>
+
               </div>
             </TabsContent>
 
@@ -426,20 +441,20 @@ export default function AppointmentDetailDialog({
                               {/* Header */}
                               <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                 <div className="flex items-center gap-2">
-                                  <Badge 
+                                  <Badge
                                     className={
-                                      prescriptionDetail.status === PrescriptionStatus.ACTIVE 
-                                        ? "bg-blue-500" 
+                                      prescriptionDetail.status === PrescriptionStatus.ACTIVE
+                                        ? "bg-blue-500"
                                         : prescriptionDetail.status === PrescriptionStatus.PRINTED
-                                        ? "bg-green-500"
-                                        : "bg-gray-500"
+                                          ? "bg-green-500"
+                                          : "bg-gray-500"
                                     }
                                   >
-                                    {prescriptionDetail.status === PrescriptionStatus.ACTIVE 
-                                      ? "Chưa in" 
+                                    {prescriptionDetail.status === PrescriptionStatus.ACTIVE
+                                      ? "Chưa in"
                                       : prescriptionDetail.status === PrescriptionStatus.PRINTED
-                                      ? "Đã in"
-                                      : prescriptionDetail.status}
+                                        ? "Đã in"
+                                        : prescriptionDetail.status}
                                   </Badge>
                                   <span className="text-xs text-muted-foreground">
                                     {prescriptionDetail.items.length} loại thuốc
@@ -453,8 +468,8 @@ export default function AppointmentDetailDialog({
                               {/* Prescription Items */}
                               <div className="space-y-2">
                                 {prescriptionDetail.items.map((item, index) => (
-                                  <div 
-                                    key={`${item.drugId}-${index}`} 
+                                  <div
+                                    key={`${item.drugId}-${index}`}
                                     className="border-l-4 border-blue-500 pl-3 py-2 bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-950/20 rounded"
                                   >
                                     <div className="flex items-start gap-2">
@@ -538,7 +553,7 @@ export default function AppointmentDetailDialog({
                                   Chưa có đơn thuốc
                                 </p>
                                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                                  {appointment.medicalRecord.prescription 
+                                  {appointment.medicalRecord.prescription
                                     ? "Bác sĩ đã ghi chú nhưng chưa kê đơn thuốc điện tử"
                                     : "Bác sĩ không kê đơn thuốc cho lần khám này"}
                                 </p>
@@ -783,7 +798,7 @@ export default function AppointmentDetailDialog({
               </span>
             </div>
           )}
-          
+
           {isDoctor && appointment.status === AppointmentStatus.CHECKED_IN && (
             <Button onClick={handleStartExamination}>Bắt đầu khám</Button>
           )}

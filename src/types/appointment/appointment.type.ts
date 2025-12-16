@@ -8,6 +8,7 @@ export interface Appointment {
   id: string;
   doctorId: string;
   doctorName: string;
+  roomNumber:string
   patientId: string;
   patientName: string;
   slotId: string;
